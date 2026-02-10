@@ -1,4 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
+import CartCounter from "./components/CartCounter";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -22,7 +24,11 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <header className="border-b px-4 py-3 flex justify-end">
+          <CartCounter />
+        </header>
         {children}
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );
