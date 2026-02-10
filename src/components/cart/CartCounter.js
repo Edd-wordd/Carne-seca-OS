@@ -1,6 +1,6 @@
 import { getCartCount } from '@/lib/supabase/queries';
 import CartDisplay from './CartDisplay';
-import CartSideBarList from './CartSideBarList';
+import CartSideBarList from './CartSideBar';
 
 export default async function CartCounter() {
     const count = await getCartCount();
