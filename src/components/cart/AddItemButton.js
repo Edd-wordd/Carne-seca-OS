@@ -4,7 +4,7 @@ import { useTransition } from 'react';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { addItemToCart } from '../actions/addItemToCart';
+import { addItemToCart } from '../../../app/actions/addItemToCart';
 
 export default function CartButton({ productId }) {
     // useTransition handles the 'loading' state automatically

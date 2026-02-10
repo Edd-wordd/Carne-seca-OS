@@ -22,7 +22,7 @@ export async function addItemToCart(productId) {
     });
 
     if (!error) {
-        revalidatePath('/', 'layout'); // Force the Navbar to see the change
+        revalidatePath('/'); // Force the Navbar to see the change
         return { success: true };
     }
 }
