@@ -9,6 +9,9 @@ export default async function updateCartQuantity(cartItemID, newQuantity) {
     const cookieStore = await cookies();
 
     const guestId = cookieStore.get('guest_id')?.value;
+    console.log('cartItemID', cartItemID);
+    console.log('newQuantity', newQuantity);
+    console.log('guestId', guestId);
 
     if (!guestId) {
         console.error('No guest UUID found in cookies');

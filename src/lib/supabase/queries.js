@@ -9,12 +9,12 @@ export async function getCartCount() {
 
     if (!guestId) return 0;
 
-    const { count } = await supabase
-        .from('cart_items')
-        .select('*', { count: 'exact', head: true })
-        .eq('guest_id', guestId);
+    const { data, error } = await supabase.from('cart_items').select('quantity').eq('guest_id', guestId);
 
-    return count ?? 0;
+    if (error || !data) return 0;
+
+    // Sum all the quantities in the cart for the guest
+    return data.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
 }
 
 // get cart items for the current user, joined with products
@@ -28,7 +28,8 @@ export async function getCartItems() {
         const { data, error } = await supabase
             .from('cart_items')
             .select('*, product:products(*)')
-            .eq('guest_id', guestId);
+            .eq('guest_id', guestId)
+            .order('created_at', { ascending: true });
 
         if (error) {
             console.error('Error fetching cart items:', error);

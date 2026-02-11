@@ -15,14 +15,40 @@ export async function addItemToCart(productId) {
         return { success: false };
     }
 
-    const { error } = await supabase.from('cart_items').insert({
-        product_id: productId,
-        guest_id: guestId, // Map it here
-        user_id: null, // Explicitly null since we aren't using login
-    });
+    // Check if this product already exists in the guest's cart
+    const { data: existing } = await supabase
+        .from('cart_items')
+        .select('id, quantity')
+        .eq('product_id', productId)
+        .eq('guest_id', guestId)
+        .maybeSingle();
 
-    if (!error) {
-        revalidatePath('/'); // Force the Navbar to see the change
-        return { success: true };
+    if (existing) {
+        // Product already in cart — increment quantity
+        const { error } = await supabase
+            .from('cart_items')
+            .update({ quantity: (existing.quantity ?? 1) + 1 })
+            .eq('id', existing.id);
+
+        if (error) {
+            console.error('Error updating cart item quantity:', error);
+            return { success: false, message: 'Failed to update quantity' };
+        }
+    } else {
+        // New product — insert with quantity 1
+        const { error } = await supabase.from('cart_items').insert({
+            product_id: productId,
+            guest_id: guestId,
+            user_id: null,
+            quantity: 1,
+        });
+
+        if (error) {
+            console.error('Error inserting cart item:', error);
+            return { success: false, message: 'Failed to add item' };
+        }
     }
+
+    revalidatePath('/');
+    return { success: true };
 }
