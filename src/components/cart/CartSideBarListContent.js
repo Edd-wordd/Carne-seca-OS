@@ -17,9 +17,9 @@ export default function CartSideBarListContent({ initialItems = [], onDeleteItem
     const itemsRef = useRef(items);
 
     // Sync local state when server provides fresh data (e.g. Sheet reopen, revalidation)
-    useEffect(() => {
-        setItems(initialItems);
-    }, [initialItems]);
+    // useEffect(() => {
+    //     setItems(initialItems);
+    // }, [initialItems]);
 
     useEffect(() => {
         itemsRef.current = items;
@@ -66,9 +66,7 @@ export default function CartSideBarListContent({ initialItems = [], onDeleteItem
             return;
         }
 
-        setItems((prev) =>
-            prev.map((item) => (item.id === cartItemId ? { ...item, quantity: newQuantity } : item)),
-        );
+        setItems((prev) => prev.map((item) => (item.id === cartItemId ? { ...item, quantity: newQuantity } : item)));
 
         if (debounceTimers.current[cartItemId]) {
             clearTimeout(debounceTimers.current[cartItemId]);
@@ -76,10 +74,7 @@ export default function CartSideBarListContent({ initialItems = [], onDeleteItem
         debounceTimers.current[cartItemId] = setTimeout(() => flushQuantityUpdate(cartItemId), DEBOUNCE_MS);
     };
 
-    const subtotal = items.reduce(
-        (acc, item) => acc + (item.quantity ?? 1) * (item.product?.price_cents ?? 0),
-        0,
-    );
+    const subtotal = items.reduce((acc, item) => acc + (item.quantity ?? 1) * (item.product?.price_cents ?? 0), 0);
 
     if (items.length === 0) {
         return (
@@ -130,11 +125,7 @@ export default function CartSideBarListContent({ initialItems = [], onDeleteItem
                                         <Minus className="h-3 w-3" />
                                     </Button>
                                     <span className="w-6 text-center text-xs font-medium tabular-nums">
-                                        {isUpdating ? (
-                                            <Loader2 className="mx-auto h-3 w-3 animate-spin" />
-                                        ) : (
-                                            qty
-                                        )}
+                                        {isUpdating ? <Loader2 className="mx-auto h-3 w-3 animate-spin" /> : qty}
                                     </span>
                                     <Button
                                         variant="outline"

@@ -19,10 +19,6 @@ export default function CartPageContent({ initialItems = [], onDeleteItem, onUpd
     const itemsRef = useRef(items);
 
     useEffect(() => {
-        setItems(initialItems);
-    }, [initialItems]);
-
-    useEffect(() => {
         itemsRef.current = items;
     }, [items]);
 
@@ -60,17 +56,12 @@ export default function CartPageContent({ initialItems = [], onDeleteItem, onUpd
             handleRemove(cartItemId);
             return;
         }
-        setItems((prev) =>
-            prev.map((item) => (item.id === cartItemId ? { ...item, quantity: newQuantity } : item)),
-        );
+        setItems((prev) => prev.map((item) => (item.id === cartItemId ? { ...item, quantity: newQuantity } : item)));
         if (debounceTimers.current[cartItemId]) clearTimeout(debounceTimers.current[cartItemId]);
         debounceTimers.current[cartItemId] = setTimeout(() => flushQuantityUpdate(cartItemId), DEBOUNCE_MS);
     };
 
-    const subtotal = items.reduce(
-        (acc, item) => acc + (item.quantity ?? 1) * (item.product?.price_cents ?? 0),
-        0,
-    );
+    const subtotal = items.reduce((acc, item) => acc + (item.quantity ?? 1) * (item.product?.price_cents ?? 0), 0);
 
     if (items.length === 0) {
         return (
@@ -93,10 +84,7 @@ export default function CartPageContent({ initialItems = [], onDeleteItem, onUpd
                     const isBusy = isDeleting || isUpdating;
 
                     return (
-                        <div
-                            key={item.id}
-                            className="flex gap-6 border-b border-border pb-6 last:border-0 last:pb-0"
-                        >
+                        <div key={item.id} className="flex gap-6 border-b border-border pb-6 last:border-0 last:pb-0">
                             <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md bg-muted">
                                 {item.product?.image_url ? (
                                     <Image
