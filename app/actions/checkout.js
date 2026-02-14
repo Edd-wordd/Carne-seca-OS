@@ -36,35 +36,46 @@ export async function checkout() {
     console.log('DEBUG RPC PAYLOAD:', JSON.stringify(itemsForRpc));
 
     try {
-        // Calculate total price
-        for (const item of cartItems) {
-            totalPrice += item.product.price_cents * item.quantity;
-        }
+        // 1. Get fresh prices from the source of truth
+        const productIds = cartItems.map((item) => item.product_id);
+        const { data: freshProducts, error: priceError } = await supabase
+            .from('products')
+            .select('id, price_cents, name')
+            .in('id', productIds);
 
-        // Call the RPC once with all items
+        if (priceError || !freshProducts) throw new Error('Could not verify prices.');
+
+        // 2. Calculate total and build Stripe line items using FRESH data
+        const lineItems = cartItems.map((item) => {
+            const dbProduct = freshProducts.find((p) => p.id === item.product_id);
+            if (!dbProduct) throw new Error(`Product ${item.product_id} no longer exists.`);
+
+            // We use dbProduct.price_cents, NOT item.product.price_cents
+            totalPrice += dbProduct.price_cents * item.quantity;
+
+            return {
+                price_data: {
+                    currency: 'usd',
+                    product_data: { name: dbProduct.name },
+                    unit_amount: dbProduct.price_cents,
+                },
+                quantity: item.quantity,
+            };
+        });
+
+        // 3. Reserve Stock
         const { error: rpcError } = await supabase.rpc('reserve_stock_bulk', {
             items_to_reserve: itemsForRpc,
         });
         if (rpcError) throw new Error(`STOCK_ERROR: ${rpcError.message}`);
 
-        // ═══════════════════════════════════════════════════════════════════
-        // STRIPE LOGIC — Place your Stripe Checkout Session creation here.
-        // ═══════════════════════════════════════════════════════════════════
+        // 4. Create Stripe Session with the validated lineItems
         const session = await stripe.checkout.sessions.create({
-            line_items: cartItems.map((item) => ({
-                price_data: {
-                    currency: 'usd',
-                    product_data: { name: item.product.name },
-                    unit_amount: item.product.price_cents,
-                },
-                quantity: item.quantity,
-            })),
+            line_items: lineItems, // Use the pre-built array from Step 2
             mode: 'payment',
             success_url: `${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.NEXT_PUBLIC_URL}/products`,
-            metadata: {
-                guest_id: guestId,
-            },
+            metadata: { guest_id: guestId },
         });
 
         return { success: true, url: session.url };
