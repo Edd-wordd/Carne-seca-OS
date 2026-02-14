@@ -8,6 +8,8 @@ export const config = {
     matcher: ['/shop/:path*', '/cart', '/checkout'],
 };
 
+const recentRequests = new Map();
+
 export function middleware(request) {
     const cookieName = 'guest_id';
     const guestId = request.cookies.get(cookieName)?.value;
@@ -43,6 +45,19 @@ export function middleware(request) {
         httpOnly: true,
         path: '/',
     });
+
+    if (request.nextUrl.pathname === '/actions/checkout') {
+        const ip = request.ip || '127.0.0.1';
+        const now = Date.now();
+        const lastRequest = recentRequests.get(ip);
+
+        // Limit to 1 checkout attempt every 10 seconds
+        if (lastRequest && now - lastRequest < 10000) {
+            return new NextResponse('Too many attempts. Slow down.', { status: 429 });
+        }
+
+        recentRequests.set(ip, now);
+    }
 
     return response;
 }
