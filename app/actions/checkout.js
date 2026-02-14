@@ -1,7 +1,11 @@
 'use server';
+
+import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { getCartItems } from '@/lib/supabase/queries';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function checkout() {
     const supabase = await createClient();
@@ -20,10 +24,16 @@ export async function checkout() {
         return { success: false, error: 'No cart items found' };
     }
 
+    // const itemsForRpc = cartItems.map((item) => ({
+    //     product_id: item.product.id,
+    //     quantity: item.quantity,
+    // }));
     const itemsForRpc = cartItems.map((item) => ({
-        product_id: item.product.id,
-        quantity: item.quantity,
+        product_id: String(item.product.id), // Force string UUID
+        quantity: Number(item.quantity), // Force integer
     }));
+
+    console.log('DEBUG RPC PAYLOAD:', JSON.stringify(itemsForRpc));
 
     try {
         // Calculate total price
@@ -33,7 +43,7 @@ export async function checkout() {
 
         // Call the RPC once with all items
         const { error: rpcError } = await supabase.rpc('reserve_stock_bulk', {
-            items: itemsForRpc,
+            items_to_reserve: itemsForRpc,
         });
         if (rpcError) throw new Error(`STOCK_ERROR: ${rpcError.message}`);
 
@@ -51,7 +61,7 @@ export async function checkout() {
             })),
             mode: 'payment',
             success_url: `${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.NEXT_PUBLIC_URL}/cart`,
+            cancel_url: `${process.env.NEXT_PUBLIC_URL}/products`,
             metadata: {
                 guest_id: guestId,
             },
@@ -59,7 +69,6 @@ export async function checkout() {
 
         return { success: true, url: session.url };
     } catch (err) {
-        console.error('Checkout Error:', err.message);
         if (!err.message.includes('STOCK_ERROR')) {
             await supabase.rpc('release_stock_bulk', {
                 items_to_release: itemsForRpc,
