@@ -6,11 +6,9 @@ import Image from 'next/image';
 import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { checkout } from '../../../app/actions/checkout.js';
+import { applyCoupon } from '../../../app/actions/applyCoupon.js';
 
 const DEBOUNCE_MS = 400;
-
-// Demo: SAVE10 = 10% off. Replace with real promo logic when needed.
-const DEMO_PROMO = { code: 'SAVE10', percent: 10 };
 
 export default function CartSideBarListContent({ initialItems = [], onDeleteItem, onUpdateQuantity }) {
     const [items, setItems] = useState(initialItems);
@@ -23,25 +21,39 @@ export default function CartSideBarListContent({ initialItems = [], onDeleteItem
     const debounceTimers = useRef({});
     const itemsRef = useRef(items);
 
-    const handleApplyDiscount = () => {
-        const code = discountCode.trim().toUpperCase();
+    const [isApplying, setIsApplying] = useState(false);
+    const [couponData, setCouponData] = useState(null); // To store { id, stripe_id, percent }
+
+    const handleApplyDiscount = async () => {
+        const code = discountCode.trim();
         if (!code) return;
-        if (code === DEMO_PROMO.code) {
-            setAppliedDiscount(DEMO_PROMO.percent);
+
+        setIsApplying(true);
+        const result = await applyCoupon(code); // Using your imported Server Action
+        setIsApplying(false);
+
+        if (result?.success) {
+            setCouponData(result);
+            setAppliedDiscount(result.discountPercent); // Keeps your existing UI logic working
         } else {
+            setCouponData(null);
             setAppliedDiscount(null);
-            alert('Invalid discount code.');
+            alert(result?.message || 'Invalid code');
         }
+        console.log('SERVER ACTION RESULT:', result); // DEBUG THIS LINE
+        console.log('1. Raw Result from Server:', result);
+        console.log('2. Type of discountPercent:', typeof result?.discountPercent);
     };
 
     const handleCheckout = async () => {
         startTransition(async () => {
-            const result = await checkout();
+            // Pass the Stripe ID for the discount and the DB ID for the fulfillment record
+            const result = await checkout(couponData?.stripeCouponId, couponData?.couponId);
 
             if (result.success && result.url) {
                 window.location.href = result.url;
             } else {
-                alert(result.error || 'Checkout failed. Check server logs.');
+                alert(result.error || 'Checkout failed.');
             }
         });
     };
@@ -103,7 +115,9 @@ export default function CartSideBarListContent({ initialItems = [], onDeleteItem
     };
 
     const subtotal = items.reduce((acc, item) => acc + (item.quantity ?? 1) * (item.product?.price_cents ?? 0), 0);
-    const discountAmount = appliedDiscount ? Math.round((subtotal * appliedDiscount) / 100) : 0;
+    // const discountAmount = appliedDiscount ? Math.round((subtotal * appliedDiscount) / 100) : 0;
+    // Force the discount to be a number using Number()
+    const discountAmount = appliedDiscount ? Math.round((subtotal * Number(appliedDiscount)) / 100) : 0;
     const totalBeforeTax = Math.max(0, subtotal - discountAmount);
 
     if (items.length === 0) {
@@ -232,11 +246,13 @@ export default function CartSideBarListContent({ initialItems = [], onDeleteItem
                         placeholder="Enter code"
                         className="placeholder:text-muted-foreground/60 flex-1 rounded-md border border-input bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
-                    <Button variant="outline" size="sm" onClick={handleApplyDiscount}>
-                        Apply
+                    <Button variant="outline" size="sm" onClick={handleApplyDiscount} disabled={isApplying}>
+                        {isApplying ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply'}
                     </Button>
                 </div>
-                {appliedDiscount && <p className="text-emerald-600 text-xs">Code applied ({appliedDiscount}% off)</p>}
+                {appliedDiscount && (
+                    <p className="text-emerald-600 text-xs">Code applied — {formatPrice(discountAmount)} off</p>
+                )}
             </div>
 
             {/* Order summary */}

@@ -2,6 +2,9 @@ import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
+const session = event.data.object;
+const guestId = session.metadata?.guest_id;
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -11,6 +14,7 @@ const supabaseAdmin = createClient(
 export async function POST(req) {
     const body = await req.text();
     const signature = (await headers()).get('stripe-signature');
+    const db_coupon_id = session.metadata?.db_coupon_id;
 
     let event;
 
@@ -20,9 +24,6 @@ export async function POST(req) {
         console.error(`❌ Webhook Signature Verification Failed: ${err.message}`);
         return new Response(`Webhook Error`, { status: 400 });
     }
-
-    const session = event.data.object;
-    const guestId = session.metadata?.guest_id;
 
     switch (event.type) {
         case 'checkout.session.completed':
@@ -48,6 +49,7 @@ export async function POST(req) {
                 p_stripe_session_id: session.id,
                 p_customer_email: session.customer_details?.email,
                 p_amount_total: session.amount_total,
+                p_coupon_id: db_coupon_id || null, // ADD THIS LINE
             });
 
             if (fulfillError) {
