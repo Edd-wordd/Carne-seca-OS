@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 
 // Only run this middleware on these routes (avoids touching every request).
 export const config = {
-    matcher: ['/shop/:path*', '/cart', '/checkout'],
+    matcher: ['/', '/products/:path*', '/shop/:path*', '/cart', '/checkout'],
 };
 
 const recentRequests = new Map();
