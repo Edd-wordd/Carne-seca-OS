@@ -1,6 +1,19 @@
 'use client';
 
 import * as React from 'react';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import {
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+} from '@/components/ui/chart';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -13,6 +26,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -45,6 +59,12 @@ const FULFILLMENT_OPTIONS = [
     { value: 'delivered', label: 'Delivered' },
 ];
 
+const ORDER_SOURCES = [
+    { value: 'website', label: 'Website' },
+    { value: 'amazon', label: 'Amazon' },
+    { value: 'pos', label: 'POS' },
+];
+
 // Mock orders data
 const MOCK_ORDERS = [
     {
@@ -57,6 +77,7 @@ const MOCK_ORDERS = [
         total: 847,
         items: 3,
         refunded: false,
+        source: 'website',
     },
     {
         id: 'ORD-1081',
@@ -68,6 +89,7 @@ const MOCK_ORDERS = [
         total: 1242,
         items: 5,
         refunded: false,
+        source: 'amazon',
     },
     {
         id: 'ORD-1080',
@@ -79,6 +101,7 @@ const MOCK_ORDERS = [
         total: 389,
         items: 1,
         refunded: false,
+        source: 'website',
     },
     {
         id: 'ORD-1079',
@@ -90,6 +113,7 @@ const MOCK_ORDERS = [
         total: 621,
         items: 2,
         refunded: false,
+        source: 'pos',
     },
     {
         id: 'ORD-1078',
@@ -101,6 +125,7 @@ const MOCK_ORDERS = [
         total: 156,
         items: 1,
         refunded: false,
+        source: 'website',
     },
     {
         id: 'ORD-1077',
@@ -112,6 +137,7 @@ const MOCK_ORDERS = [
         total: 934,
         items: 4,
         refunded: false,
+        source: 'amazon',
     },
     {
         id: 'ORD-1076',
@@ -123,6 +149,7 @@ const MOCK_ORDERS = [
         total: 428,
         items: 2,
         refunded: true,
+        source: 'website',
     },
     {
         id: 'ORD-1075',
@@ -134,6 +161,7 @@ const MOCK_ORDERS = [
         total: 612,
         items: 3,
         refunded: true,
+        source: 'pos',
     },
 ];
 
@@ -239,6 +267,7 @@ function OrdersTable({ orders, hasActiveSearch, pagination, dateSortOrder, onDat
                                     )}
                                 </span>
                             </TableHead>
+                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Source</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Items</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Status</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Fulfillment</TableHead>
@@ -250,7 +279,7 @@ function OrdersTable({ orders, hasActiveSearch, pagination, dateSortOrder, onDat
                     <TableBody>
                         {orders.length === 0 ? (
                             <TableRow className="border-zinc-700/80">
-                                <TableCell colSpan={9} className="text-zinc-400 py-4 text-center text-[11px]">
+                                <TableCell colSpan={10} className="text-zinc-400 py-4 text-center text-[11px]">
                                     {hasActiveSearch ? 'No orders match your search or filters' : 'No orders'}
                                 </TableCell>
                             </TableRow>
@@ -268,6 +297,9 @@ function OrdersTable({ orders, hasActiveSearch, pagination, dateSortOrder, onDat
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] tabular-nums group-hover:text-zinc-300">
                                         {formatDateTime(order.date)}
+                                    </TableCell>
+                                    <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
+                                        {ORDER_SOURCES.find((s) => s.value === (order.source ?? 'website'))?.label ?? 'Website'}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-center text-[11px] tabular-nums group-hover:text-zinc-300">
                                         {order.items ?? 0}
@@ -372,7 +404,7 @@ function OrdersTable({ orders, hasActiveSearch, pagination, dateSortOrder, onDat
                     <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4 text-sm text-zinc-500">
                         Packing slip preview would render here. (Mock)
                     </div>
-                    <DialogFooter>
+                    <DialogFooter className="gap-4">
                         <Button
                             variant="outline"
                             onClick={() => setPackingSlipOrder(null)}
@@ -411,6 +443,13 @@ const FULFILLMENT_FILTER_OPTIONS = [
     { value: 'processing', label: 'Processing' },
     { value: 'shipped', label: 'Shipped' },
     { value: 'delivered', label: 'Delivered' },
+];
+
+const SOURCE_FILTER_OPTIONS = [
+    { value: 'all', label: 'All sources' },
+    { value: 'website', label: 'Website' },
+    { value: 'amazon', label: 'Amazon' },
+    { value: 'pos', label: 'POS' },
 ];
 
 const DATE_FILTER_OPTIONS = [
@@ -474,7 +513,7 @@ function getOrderDate(order) {
     return isNaN(d.getTime()) ? null : d;
 }
 
-function applyOrderFilters(orders, statusFilter, fulfillmentFilter, dateFilter, dateFrom, dateTo) {
+function applyOrderFilters(orders, statusFilter, fulfillmentFilter, sourceFilter, dateFilter, dateFrom, dateTo) {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const todayEnd = new Date(todayStart);
@@ -516,6 +555,7 @@ function applyOrderFilters(orders, statusFilter, fulfillmentFilter, dateFilter, 
     return orders.filter((o) => {
         if (statusFilter !== 'all' && o.status !== statusFilter) return false;
         if (fulfillmentFilter !== 'all' && o.fulfillment !== fulfillmentFilter) return false;
+        if (sourceFilter !== 'all' && (o.source ?? 'website') !== sourceFilter) return false;
 
         const orderDate = getOrderDate(o);
         if (!orderDate) return true;
@@ -574,6 +614,7 @@ export default function OrdersPage() {
     const [searchQuery, setSearchQuery] = React.useState('');
     const [filterStatus, setFilterStatus] = React.useState('all');
     const [filterFulfillment, setFilterFulfillment] = React.useState('all');
+    const [filterSource, setFilterSource] = React.useState('all');
     const [filterDate, setFilterDate] = React.useState('all');
     const [dateFrom, setDateFrom] = React.useState(() => {
         const d = new Date();
@@ -587,10 +628,22 @@ export default function OrdersPage() {
     const [dateSortOrder, setDateSortOrder] = React.useState('desc');
     const [createModalOpen, setCreateModalOpen] = React.useState(false);
     const [orders, setOrders] = React.useState(MOCK_ORDERS);
-    const [newOrderCustomer, setNewOrderCustomer] = React.useState('');
-    const [newOrderItems, setNewOrderItems] = React.useState(1);
-    const [newOrderTotal, setNewOrderTotal] = React.useState('');
-    const [newOrderFulfillment, setNewOrderFulfillment] = React.useState('unfulfilled');
+    const [newOrderForm, setNewOrderForm] = React.useState({
+        customer: '',
+        items: 1,
+        total: '',
+        fulfillment: 'unfulfilled',
+        source: 'website',
+    });
+
+    const resetNewOrderForm = () =>
+        setNewOrderForm({
+            customer: '',
+            items: 1,
+            total: '',
+            fulfillment: 'unfulfilled',
+            source: 'website',
+        });
 
     const allOrders = orders;
 
@@ -601,36 +654,34 @@ export default function OrdersPage() {
     };
 
     const handleCreateOrder = () => {
-        const raw = String(newOrderTotal)
-            .trim()
-            .replace(/[^0-9.]/g, '');
+        const raw = String(newOrderForm.total).trim().replace(/[^0-9.]/g, '');
         const total = Math.round(parseFloat(raw || 0) * 100) || 0;
-        const status = FULFILLMENT_TO_STATUS[newOrderFulfillment] ?? 'pending';
-        const newOrder = {
-            id: getNextOrderId(),
-            customer: newOrderCustomer.trim() || 'Unknown',
-            date: new Date().toISOString().slice(0, 16),
-            status,
-            fulfillment: newOrderFulfillment,
-            tracking: '',
-            total,
-            items: Math.max(1, newOrderItems),
-            refunded: false,
-        };
-        setOrders((prev) => [newOrder, ...prev]);
+        const status = FULFILLMENT_TO_STATUS[newOrderForm.fulfillment] ?? 'pending';
+        setOrders((prev) => [
+            {
+                id: getNextOrderId(),
+                customer: newOrderForm.customer.trim() || 'Unknown',
+                date: new Date().toISOString().slice(0, 16),
+                status,
+                fulfillment: newOrderForm.fulfillment,
+                tracking: '',
+                total,
+                items: Math.max(1, newOrderForm.items),
+                refunded: false,
+                source: newOrderForm.source,
+            },
+            ...prev,
+        ]);
         setCreateModalOpen(false);
-        setNewOrderCustomer('');
-        setNewOrderItems(1);
-        setNewOrderTotal('');
-        setNewOrderFulfillment('unfulfilled');
+        resetNewOrderForm();
     };
     const pendingOrders = MOCK_ORDERS.filter((o) => !o.refunded && ['pending', 'processing'].includes(o.status));
     const refundedOrders = MOCK_ORDERS.filter((o) => o.refunded);
 
     const filteredOrders = React.useMemo(() => {
         const bySearch = filterOrdersBySearch(allOrders, searchQuery);
-        return applyOrderFilters(bySearch, filterStatus, filterFulfillment, filterDate, dateFrom, dateTo);
-    }, [allOrders, searchQuery, filterStatus, filterFulfillment, filterDate, dateFrom, dateTo]);
+        return applyOrderFilters(bySearch, filterStatus, filterFulfillment, filterSource, filterDate, dateFrom, dateTo);
+    }, [allOrders, searchQuery, filterStatus, filterFulfillment, filterSource, filterDate, dateFrom, dateTo]);
 
     const sortedOrders = React.useMemo(() => {
         return [...filteredOrders].sort((a, b) => {
@@ -646,7 +697,7 @@ export default function OrdersPage() {
 
     React.useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, filterStatus, filterFulfillment, filterDate, dateFrom, dateTo]);
+    }, [searchQuery, filterStatus, filterFulfillment, filterSource, filterDate, dateFrom, dateTo]);
 
     const ordersForTab = sortedOrders;
     const totalPages = Math.max(1, Math.ceil(ordersForTab.length / PAGE_SIZE));
@@ -658,6 +709,7 @@ export default function OrdersPage() {
             'Order ID',
             'Customer',
             'Date',
+            'Source',
             'Items',
             'Status',
             'Fulfillment',
@@ -670,6 +722,7 @@ export default function OrdersPage() {
                 o.id,
                 o.customer,
                 formatDateTime(o.date),
+                ORDER_SOURCES.find((s) => s.value === (o.source ?? 'website'))?.label ?? 'Website',
                 o.items ?? 0,
                 o.status,
                 o.fulfillment,
@@ -727,6 +780,19 @@ export default function OrdersPage() {
             },
         ];
     }, [allOrders, pendingOrders, refundedOrders]);
+
+    const ordersBySourceData = React.useMemo(() => {
+        const counts = { website: 0, amazon: 0, pos: 0 };
+        filteredOrders.forEach((o) => {
+            const src = o.source ?? 'website';
+            if (src in counts) counts[src]++;
+        });
+        return ORDER_SOURCES.map((s) => ({
+            source: s.label,
+            count: counts[s.value] ?? 0,
+            fill: s.value === 'website' ? 'var(--chart-1)' : s.value === 'amazon' ? 'var(--chart-2)' : 'var(--chart-3)',
+        }));
+    }, [filteredOrders]);
 
     return (
         <div className="space-y-4">
@@ -797,7 +863,7 @@ export default function OrdersPage() {
                     </Button>
                     <Button
                         size="sm"
-                        className="h-9 gap-1.5 bg-indigo-600 text-white hover:bg-indigo-500 text-xs shrink-0"
+                        className="h-9 gap-1.5 bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 text-xs shrink-0"
                         onClick={() => setCreateModalOpen(true)}
                     >
                         <Plus className="size-3.5" />
@@ -841,6 +907,55 @@ export default function OrdersPage() {
                 })}
             </div>
 
+            <Card className="border-[0.5px] border-zinc-800 overflow-hidden bg-zinc-900">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-semibold text-zinc-100">Orders by Source</CardTitle>
+                    <CardDescription className="text-[10px] text-zinc-500">
+                        Distribution of orders (reflects current filters)
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ChartContainer
+                        config={{
+                            count: { label: 'Orders', color: 'var(--chart-1)' },
+                            website: { label: 'Website', color: 'var(--chart-1)' },
+                            amazon: { label: 'Amazon', color: 'var(--chart-2)' },
+                            pos: { label: 'POS', color: 'var(--chart-3)' },
+                        }}
+                        className="h-[180px] w-full"
+                    >
+                        <AreaChart data={ordersBySourceData} margin={{ top: 4, right: 4, bottom: 4, left: 0 }}>
+                            <defs>
+                                <linearGradient id="sourceAreaFill" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.4} />
+                                    <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.05} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="2 2" stroke="var(--border)" opacity={0.5} vertical={false} />
+                            <XAxis
+                                dataKey="source"
+                                tickLine={false}
+                                axisLine={false}
+                                tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
+                            />
+                            <YAxis
+                                tickLine={false}
+                                axisLine={false}
+                                tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
+                            />
+                            <ChartTooltip content={<ChartTooltipContent formatter={(v) => [`${v} orders`]} />} />
+                            <Area
+                                type="monotone"
+                                dataKey="count"
+                                stroke="var(--chart-1)"
+                                strokeWidth={1.5}
+                                fill="url(#sourceAreaFill)"
+                            />
+                        </AreaChart>
+                    </ChartContainer>
+                </CardContent>
+            </Card>
+
             <div className="flex flex-wrap items-center gap-2">
                 {STATUS_FILTER_OPTIONS.map((opt) => (
                     <button
@@ -871,6 +986,22 @@ export default function OrdersPage() {
                 >
                     Unfulfilled
                 </button>
+                <span className="h-4 w-px bg-zinc-600 shrink-0" />
+                {SOURCE_FILTER_OPTIONS.map((opt) => (
+                    <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setFilterSource(opt.value)}
+                        className={cn(
+                            'rounded border px-2.5 py-1.5 text-[10px] font-medium transition-colors shrink-0',
+                            filterSource === opt.value
+                                ? 'border-zinc-500 bg-zinc-700/80 text-zinc-100'
+                                : 'border-zinc-600/50 bg-zinc-800/50 text-zinc-300 hover:border-zinc-500/50 hover:bg-zinc-700/50 hover:text-zinc-200',
+                        )}
+                    >
+                        {opt.label}
+                    </button>
+                ))}
             </div>
 
             <div className="mt-4">
@@ -880,6 +1011,7 @@ export default function OrdersPage() {
                         !!searchQuery.trim() ||
                         filterStatus !== 'all' ||
                         filterFulfillment !== 'all' ||
+                        filterSource !== 'all' ||
                         filterDate !== 'all'
                     }
                     dateSortOrder={dateSortOrder}
@@ -897,71 +1029,121 @@ export default function OrdersPage() {
                 />
             </div>
 
-            <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-                <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
+            <Dialog
+                open={createModalOpen}
+                onOpenChange={(open) => {
+                    setCreateModalOpen(open);
+                    if (!open) resetNewOrderForm();
+                }}
+            >
+                <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-sm">
                     <DialogHeader>
                         <DialogTitle>Create Order</DialogTitle>
-                        <DialogDescription>Add a new order manually.</DialogDescription>
+                        <DialogDescription>Add a manual order from any channel.</DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-2">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-300">Customer</label>
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            handleCreateOrder();
+                        }}
+                        className="space-y-5"
+                    >
+                        <div className="space-y-1.5">
+                            <Label htmlFor="order-customer" className="text-xs text-zinc-400">
+                                Customer
+                            </Label>
                             <Input
-                                placeholder="Customer name"
-                                value={newOrderCustomer}
-                                onChange={(e) => setNewOrderCustomer(e.target.value)}
-                                className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
+                                id="order-customer"
+                                placeholder="Name"
+                                value={newOrderForm.customer}
+                                onChange={(e) => setNewOrderForm((f) => ({ ...f, customer: e.target.value }))}
+                                className="h-9 border-zinc-700 bg-zinc-950/80"
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Items</label>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="order-items" className="text-xs text-zinc-400">
+                                    Items
+                                </Label>
                                 <Input
+                                    id="order-items"
                                     type="number"
                                     min={1}
-                                    value={newOrderItems}
-                                    onChange={(e) => setNewOrderItems(parseInt(e.target.value, 10) || 1)}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100"
+                                    value={newOrderForm.items}
+                                    onChange={(e) =>
+                                        setNewOrderForm((f) => ({ ...f, items: parseInt(e.target.value, 10) || 1 }))
+                                    }
+                                    className="h-9 border-zinc-700 bg-zinc-950/80"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Total ($)</label>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="order-total" className="text-xs text-zinc-400">
+                                    Total ($)
+                                </Label>
                                 <Input
-                                    placeholder="e.g. 12.50"
-                                    value={newOrderTotal}
-                                    onChange={(e) => setNewOrderTotal(e.target.value)}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
+                                    id="order-total"
+                                    placeholder="0.00"
+                                    value={newOrderForm.total}
+                                    onChange={(e) => setNewOrderForm((f) => ({ ...f, total: e.target.value }))}
+                                    className="h-9 border-zinc-700 bg-zinc-950/80"
                                 />
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-300">Fulfillment</label>
-                            <Select value={newOrderFulfillment} onValueChange={setNewOrderFulfillment}>
-                                <SelectTrigger className="border-zinc-700 bg-zinc-900/80 text-zinc-100">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {FULFILLMENT_OPTIONS.map((opt) => (
-                                        <SelectItem key={opt.value} value={opt.value}>
-                                            {opt.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-zinc-400">Source</Label>
+                                <Select
+                                    value={newOrderForm.source}
+                                    onValueChange={(v) => setNewOrderForm((f) => ({ ...f, source: v }))}
+                                >
+                                    <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {ORDER_SOURCES.map((opt) => (
+                                            <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                                {opt.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-zinc-400">Fulfillment</Label>
+                                <Select
+                                    value={newOrderForm.fulfillment}
+                                    onValueChange={(v) => setNewOrderForm((f) => ({ ...f, fulfillment: v }))}
+                                >
+                                    <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {FULFILLMENT_OPTIONS.map((opt) => (
+                                            <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                                {opt.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
-                    </div>
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => setCreateModalOpen(false)}
-                            className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                        >
-                            Cancel
-                        </Button>
-                        <Button onClick={handleCreateOrder} className="bg-indigo-600 text-white hover:bg-indigo-500">
-                            Create Order
-                        </Button>
-                    </DialogFooter>
+                        <DialogFooter className="gap-4 pt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setCreateModalOpen(false)}
+                                className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
+                            >
+                                Create Order
+                            </Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
         </div>

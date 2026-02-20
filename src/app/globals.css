@@ -125,6 +125,16 @@
     }
 }
 
+/* Admin layout: ensure input text is visible on dark backgrounds */
+[data-admin-layout] input,
+[data-admin-layout] textarea {
+    color: rgb(244 244 245); /* zinc-100 */
+}
+[data-admin-layout] input::placeholder,
+[data-admin-layout] textarea::placeholder {
+    color: rgb(113 113 122); /* zinc-500 */
+}
+
 @media print {
     [data-admin-layout] aside,
     [data-admin-layout] header {

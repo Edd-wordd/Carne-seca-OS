@@ -50,6 +50,7 @@ import {
     AlertTriangle,
     CheckCircle2,
     CircleX,
+    Trophy,
 } from 'lucide-react';
 
 const PARTNER_PAGE_SIZE = 5;
@@ -414,6 +415,34 @@ export default function PartnersPage() {
     }, [partners, partnerSearch]);
 
     React.useEffect(() => setPartnerPage(1), [partnerSearch]);
+
+    const partnerStats = React.useMemo(() => {
+        const active = partners.filter((p) => p.status !== 'ended');
+        const totalConsignment = active.reduce(
+            (sum, p) => sum + getConsignmentTotal(p.consignmentByFlavor),
+            0,
+        );
+        const totalSales = active.reduce((sum, p) => sum + (p.totalSales ?? 0), 0);
+        const topPartner = active.length
+            ? active.reduce((a, b) =>
+                  (a.totalSales ?? 0) >= (b.totalSales ?? 0) ? a : b,
+              )
+            : null;
+        return { totalConsignment, totalSales, topPartner };
+    }, [partners]);
+
+    const checkupsNext7Days = React.useMemo(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const in7Days = new Date(today);
+        in7Days.setDate(in7Days.getDate() + 7);
+        return partners.filter((p) => {
+            if (p.status === 'ended' || !p.nextCheckup) return false;
+            const d = new Date(p.nextCheckup);
+            d.setHours(0, 0, 0, 0);
+            return d >= today && d <= in7Days;
+        });
+    }, [partners]);
 
     const partnerTotalPages = Math.max(1, Math.ceil(filteredPartners.length / PARTNER_PAGE_SIZE));
     const safePartnerPage = Math.min(partnerPage, partnerTotalPages);
@@ -857,6 +886,85 @@ export default function PartnersPage() {
                     </Button>
                 </div>
             </div>
+
+            {/* Summary Cards */}
+            <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
+                    <Package className="size-4 shrink-0 text-zinc-500" />
+                    <div className="min-w-0">
+                        <p className="truncate text-zinc-400 text-[10px]">Total Consignment</p>
+                        <p className="text-zinc-100 text-sm font-semibold tabular-nums">
+                            {partnerStats.totalConsignment}
+                        </p>
+                    </div>
+                </div>
+                <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
+                    <DollarSign className="size-4 shrink-0 text-indigo-400/80" />
+                    <div className="min-w-0">
+                        <p className="truncate text-zinc-400 text-[10px]">Total Sales</p>
+                        <p className="text-zinc-100 text-sm font-semibold tabular-nums">
+                            ${partnerStats.totalSales.toLocaleString()}
+                        </p>
+                    </div>
+                </div>
+                <div
+                    className="flex min-w-0 cursor-pointer items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5 transition-colors hover:bg-zinc-800/60"
+                    onClick={() =>
+                        partnerStats.topPartner && setSelectedPartner(partnerStats.topPartner)
+                    }
+                >
+                    <Trophy className="size-4 shrink-0 text-amber-400/80" />
+                    <div className="min-w-0">
+                        <p className="truncate text-zinc-400 text-[10px]">Top Partner</p>
+                        <p className="truncate text-zinc-200 text-sm font-medium">
+                            {partnerStats.topPartner?.name ?? '—'}
+                        </p>
+                    </div>
+                </div>
+                <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
+                    <CalendarClock className="size-4 shrink-0 text-amber-400/80" />
+                    <div className="min-w-0">
+                        <p className="truncate text-zinc-400 text-[10px]">Checkups (next 7 days)</p>
+                        <p className="text-zinc-100 text-sm font-semibold tabular-nums">
+                            {checkupsNext7Days.length}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Checkups coming up — partner cards */}
+            {checkupsNext7Days.length > 0 && (
+                <div className="flex flex-col gap-2">
+                    <h2 className="text-zinc-400 text-[10px] font-medium uppercase tracking-wider">
+                        Checkups in next 7 days
+                    </h2>
+                    <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {checkupsNext7Days.map((p) => (
+                            <div
+                                key={p.id}
+                                className="flex min-w-0 cursor-pointer items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5 transition-colors hover:bg-zinc-800/60"
+                                onClick={() => setSelectedPartner(p)}
+                            >
+                                <div className="flex size-8 shrink-0 items-center justify-center rounded bg-zinc-800 text-xs font-semibold text-zinc-400">
+                                    {(p.name || 'P').charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-zinc-200 text-sm font-medium">{p.name}</p>
+                                    <p className="truncate text-zinc-500 text-[10px]">
+                                        {p.nextCheckup
+                                            ? new Date(p.nextCheckup).toLocaleDateString('en-US', {
+                                                  month: 'short',
+                                                  day: 'numeric',
+                                                  year: 'numeric',
+                                              })
+                                            : '—'}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Payout Schedule */}
             <div className="overflow-hidden rounded border border-zinc-800">

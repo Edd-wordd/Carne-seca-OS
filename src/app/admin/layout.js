@@ -14,6 +14,10 @@ import {
     ScrollText,
     Wrench,
     FileText,
+    BarChart2,
+    DollarSign,
+    Share2,
+    UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -33,14 +37,46 @@ const MOCK_LOGS = [
     { id: 5, type: "error", msg: "Stripe webhook: Rate limit exceeded (retry scheduled)", time: "2h ago" },
 ];
 
-const navItems = [
-    { href: "/admin", label: "Overview", icon: LayoutDashboard },
-    { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
-    { href: "/admin/inventory", label: "Inventory", icon: Box },
-    { href: "/admin/supplies", label: "Supplies", icon: Wrench },
-    { href: "/admin/partners", label: "Partners", icon: Users2 },
-    { href: "/admin/catalog", label: "Catalog", icon: Package },
-    { href: "/admin/reports", label: "Reports", icon: FileText },
+const navSections = [
+    {
+        title: "Analytics",
+        icon: BarChart2,
+        items: [
+            { href: "/admin", label: "Overview", icon: LayoutDashboard },
+            { href: "/admin/reports", label: "Reports", icon: FileText },
+        ],
+    },
+    {
+        title: "Finance",
+        icon: DollarSign,
+        items: [
+            { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
+        ],
+    },
+    {
+        title: "Social Platforms",
+        icon: Share2,
+        items: [
+            { href: "/admin/social", label: "Social", icon: Share2 },
+        ],
+    },
+    {
+        title: "Lead Generator",
+        icon: UserPlus,
+        items: [
+            { href: "/admin/leads", label: "Leads", icon: UserPlus },
+        ],
+    },
+    {
+        title: "Operations",
+        icon: Box,
+        items: [
+            { href: "/admin/inventory", label: "Inventory", icon: Box },
+            { href: "/admin/supplies", label: "Supplies", icon: Wrench },
+            { href: "/admin/partners", label: "Partners", icon: Users2 },
+            { href: "/admin/catalog", label: "Catalog", icon: Package },
+        ],
+    },
 ];
 
 export default function AdminLayout({ children }) {
@@ -62,27 +98,39 @@ export default function AdminLayout({ children }) {
                     </div>
 
                     {/* Nav */}
-                    <nav className="flex flex-1 flex-col gap-0.5">
-                        {navItems.map(({ href, label, icon: Icon }) => {
-                            const isActive =
-                                pathname === href ||
-                                (href !== "/admin" && pathname.startsWith(href));
-                            return (
-                                <Link
-                                    key={href}
-                                    href={href}
-                                    className={cn(
-                                        "flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
-                                        isActive
-                                            ? "bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30"
-                                            : "text-zinc-400 hover:bg-zinc-700/70 hover:text-zinc-100"
-                                    )}
-                                >
-                                    <Icon className="size-3.5 shrink-0" />
-                                    {label}
-                                </Link>
-                            );
-                        })}
+                    <nav className="flex flex-1 flex-col gap-4 overflow-y-auto">
+                        {navSections.map(({ title, icon: SectionIcon, items }) => (
+                            <div key={title}>
+                                <div className="mb-1 flex items-center gap-2 px-3 py-1">
+                                    <SectionIcon className="size-3 shrink-0 text-zinc-500" />
+                                    <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                                        {title}
+                                    </span>
+                                </div>
+                                <div className="flex flex-col gap-0.5">
+                                    {items.map(({ href, label, icon: Icon }) => {
+                                        const isActive =
+                                            pathname === href ||
+                                            (href !== "/admin" && pathname.startsWith(href));
+                                        return (
+                                            <Link
+                                                key={href}
+                                                href={href}
+                                                className={cn(
+                                                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
+                                                    isActive
+                                                        ? "bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30"
+                                                        : "text-zinc-400 hover:bg-zinc-700/70 hover:text-zinc-100"
+                                                )}
+                                            >
+                                                <Icon className="size-3.5 shrink-0" />
+                                                {label}
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
                     </nav>
 
                     {/* Footer */}
