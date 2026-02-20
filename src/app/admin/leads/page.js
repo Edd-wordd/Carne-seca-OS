@@ -11,13 +11,7 @@ import {
     DialogDescription,
     DialogFooter,
 } from '@/components/ui/dialog';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -157,9 +151,7 @@ const MOCK_LEADS = [
         combedAt: '2025-02-16T11:00',
         validatedAt: '2025-02-16T14:30',
         nextFollowUp: '2025-02-25',
-        contactLog: [
-            { id: 'c1', date: '2025-02-18', type: 'email', summary: 'Sent intro email' },
-        ],
+        contactLog: [{ id: 'c1', date: '2025-02-18', type: 'email', summary: 'Sent intro email' }],
     },
     {
         id: 'L-6',
@@ -225,11 +217,9 @@ export default function LeadsPage() {
     const [webhookModalOpen, setWebhookModalOpen] = React.useState(false);
     const [apiKeyVisible, setApiKeyVisible] = React.useState(false);
     const [testWebhookStatus, setTestWebhookStatus] = React.useState(null);
-    const [outboundUrls, setOutboundUrls] = React.useState(
-        Object.fromEntries(OUTBOUND_EVENTS.map((e) => [e.id, ''])),
-    );
+    const [outboundUrls, setOutboundUrls] = React.useState(Object.fromEntries(OUTBOUND_EVENTS.map((e) => [e.id, ''])));
     const webhookUrl = 'https://yoursite.com/api/webhooks/leads';
-    const placeholderApiKey = 'sk_live_xxxxxxxxxxxxxxxxxxxxxxxx';
+    const placeholderApiKey = '';
 
     const stats = React.useMemo(() => {
         const combed = leads.filter((l) => l.status === 'combed_through').length;
@@ -262,10 +252,7 @@ export default function LeadsPage() {
 
     const totalPages = Math.max(1, Math.ceil(filteredLeads.length / PAGE_SIZE));
     const safePage = Math.min(page, totalPages);
-    const paginatedLeads = filteredLeads.slice(
-        (safePage - 1) * PAGE_SIZE,
-        safePage * PAGE_SIZE,
-    );
+    const paginatedLeads = filteredLeads.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
     React.useEffect(() => setPage(1), [statusFilter, search]);
 
@@ -284,16 +271,12 @@ export default function LeadsPage() {
             ),
         );
         if (selectedLead?.id === leadId) {
-            setSelectedLead((prev) =>
-                prev ? { ...prev, status: newStatus } : null,
-            );
+            setSelectedLead((prev) => (prev ? { ...prev, status: newStatus } : null));
         }
     };
 
     const updateLead = (leadId, updates) => {
-        setLeads((prev) =>
-            prev.map((l) => (l.id === leadId ? { ...l, ...updates } : l)),
-        );
+        setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, ...updates } : l)));
         if (selectedLead?.id === leadId) {
             setSelectedLead((prev) => (prev ? { ...prev, ...updates } : null));
         }
@@ -462,12 +445,8 @@ export default function LeadsPage() {
         <div className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-lg font-semibold tracking-tight text-zinc-100">
-                        Lead Generator
-                    </h1>
-                    <p className="mt-0.5 text-xs text-zinc-500">
-                        AI-combed leads · Validate & make contact
-                    </p>
+                    <h1 className="text-lg font-semibold tracking-tight text-zinc-100">Lead Generator</h1>
+                    <p className="mt-0.5 text-xs text-zinc-500">AI-combed leads · Validate & make contact</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                     <Button
@@ -543,7 +522,9 @@ export default function LeadsPage() {
                                         <span
                                             className={cn(
                                                 'shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium',
-                                                log.status === 200 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400',
+                                                log.status === 200
+                                                    ? 'bg-emerald-500/20 text-emerald-400'
+                                                    : 'bg-red-500/20 text-red-400',
                                             )}
                                         >
                                             {log.status}
@@ -566,9 +547,7 @@ export default function LeadsPage() {
                                 <Input
                                     placeholder="https://..."
                                     value={outboundUrls[ev.id] || ''}
-                                    onChange={(e) =>
-                                        setOutboundUrls((prev) => ({ ...prev, [ev.id]: e.target.value }))
-                                    }
+                                    onChange={(e) => setOutboundUrls((prev) => ({ ...prev, [ev.id]: e.target.value }))}
                                     className="h-7 flex-1 border-zinc-700 bg-zinc-950 text-[10px] font-mono"
                                 />
                             </div>
@@ -656,7 +635,9 @@ export default function LeadsPage() {
                                 <SelectValue placeholder="Status" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all" className="text-xs">All</SelectItem>
+                                <SelectItem value="all" className="text-xs">
+                                    All
+                                </SelectItem>
                                 {LEAD_STATUSES.map((s) => (
                                     <SelectItem key={s.value} value={s.value} className="text-xs">
                                         {s.label}
@@ -669,9 +650,7 @@ export default function LeadsPage() {
 
                 {selectedIds.size > 0 && (
                     <div className="flex items-center gap-2 border-b border-zinc-700/60 bg-zinc-800/40 px-3 py-2">
-                        <span className="text-[10px] text-zinc-400">
-                            {selectedIds.size} selected
-                        </span>
+                        <span className="text-[10px] text-zinc-400">{selectedIds.size} selected</span>
                         <Select onValueChange={(v) => bulkUpdateStatus(v)}>
                             <SelectTrigger className="h-7 w-[140px] border-zinc-700 bg-zinc-900 text-[10px]">
                                 <SelectValue placeholder="Change status…" />
@@ -702,8 +681,7 @@ export default function LeadsPage() {
                                 <input
                                     type="checkbox"
                                     checked={
-                                        paginatedLeads.length > 0 &&
-                                        paginatedLeads.every((l) => selectedIds.has(l.id))
+                                        paginatedLeads.length > 0 && paginatedLeads.every((l) => selectedIds.has(l.id))
                                     }
                                     onChange={toggleSelectAll}
                                     className="rounded border-zinc-600 bg-zinc-900"
@@ -1007,7 +985,10 @@ export default function LeadsPage() {
                                                     <p className="text-zinc-200">
                                                         {selectedLead.company}
                                                         {selectedLead.role && (
-                                                            <span className="text-zinc-500"> · {selectedLead.role}</span>
+                                                            <span className="text-zinc-500">
+                                                                {' '}
+                                                                · {selectedLead.role}
+                                                            </span>
                                                         )}
                                                     </p>
                                                 </div>
@@ -1051,17 +1032,21 @@ export default function LeadsPage() {
                                     <div className="flex flex-wrap items-end gap-2 pt-1">
                                         <Select
                                             value={newContactEntry.type}
-                                            onValueChange={(v) =>
-                                                setNewContactEntry((p) => ({ ...p, type: v }))
-                                            }
+                                            onValueChange={(v) => setNewContactEntry((p) => ({ ...p, type: v }))}
                                         >
                                             <SelectTrigger className="h-7 w-24 border-zinc-700 text-[10px]">
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="email" className="text-xs">Email</SelectItem>
-                                                <SelectItem value="call" className="text-xs">Call</SelectItem>
-                                                <SelectItem value="meeting" className="text-xs">Meeting</SelectItem>
+                                                <SelectItem value="email" className="text-xs">
+                                                    Email
+                                                </SelectItem>
+                                                <SelectItem value="call" className="text-xs">
+                                                    Call
+                                                </SelectItem>
+                                                <SelectItem value="meeting" className="text-xs">
+                                                    Meeting
+                                                </SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <Input
@@ -1126,9 +1111,7 @@ export default function LeadsPage() {
                 <DialogContent className="max-w-sm border-zinc-800 bg-zinc-950">
                     <DialogHeader>
                         <DialogTitle>Make Contact</DialogTitle>
-                        <DialogDescription>
-                            Select a template or open email client
-                        </DialogDescription>
+                        <DialogDescription>Select a template or open email client</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-2">
                         {EMAIL_TEMPLATES.map((t) => (
