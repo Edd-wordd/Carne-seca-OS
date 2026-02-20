@@ -218,8 +218,8 @@ export default function LeadsPage() {
     const [apiKeyVisible, setApiKeyVisible] = React.useState(false);
     const [testWebhookStatus, setTestWebhookStatus] = React.useState(null);
     const [outboundUrls, setOutboundUrls] = React.useState(Object.fromEntries(OUTBOUND_EVENTS.map((e) => [e.id, ''])));
-    const webhookUrl = 'https://yoursite.com/api/webhooks/leads';
-    const placeholderApiKey = '';
+    // const webhookUrl = '';
+    // const placeholderApiKey = '';
 
     const stats = React.useMemo(() => {
         const combed = leads.filter((l) => l.status === 'combed_through').length;
