@@ -1,5 +1,5 @@
-import deleteCartItem from '../../../app/actions/deleteCartItem';
-import updateCartQuantity from '../../../app/actions/updateCartQuantity';
+import deleteCartItem from '../../app/actions/deleteCartItem';
+import updateCartQuantity from '../../app/actions/updateCartQuantity';
 import { getCartItems } from '@/lib/supabase/queries';
 import CartSideBarListContent from './CartSideBarListContent';
 

@@ -124,3 +124,14 @@
         @apply bg-background text-foreground;
     }
 }
+
+@media print {
+    [data-admin-layout] aside,
+    [data-admin-layout] header {
+        display: none !important;
+    }
+    [data-admin-layout] main {
+        margin-left: 0 !important;
+        max-width: none !important;
+    }
+}
