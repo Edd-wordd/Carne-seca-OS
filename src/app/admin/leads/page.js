@@ -216,6 +216,14 @@ export default function LeadsPage() {
     const [newContactEntry, setNewContactEntry] = React.useState({ type: 'email', summary: '' });
     const [webhookModalOpen, setWebhookModalOpen] = React.useState(false);
     const [apiKeyVisible, setApiKeyVisible] = React.useState(false);
+    const [webhookUrl, setWebhookUrl] = React.useState('');
+    const placeholderApiKey = 'Configure in Settings';
+
+    React.useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setWebhookUrl(`${window.location.origin}/api/leads/webhook`);
+        }
+    }, []);
     const [testWebhookStatus, setTestWebhookStatus] = React.useState(null);
     const [outboundUrls, setOutboundUrls] = React.useState(Object.fromEntries(OUTBOUND_EVENTS.map((e) => [e.id, ''])));
 
