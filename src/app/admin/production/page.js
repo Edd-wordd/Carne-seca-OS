@@ -44,6 +44,7 @@ import { cn } from '@/lib/utils';
 import { submitProductionBatch } from '@/app/actions/submitProductionBatch';
 import { getSuppliers } from '@/app/actions/getSuppliers';
 import { useActionState } from 'react';
+import { getBatches } from '@/app/actions/getBatches';
 
 const COST_PER_LB = 8.5;
 const MAX_YIELD_RATE = 0.6;
@@ -201,7 +202,7 @@ function escapeCsv(val) {
 const PAGE_SIZE = 5;
 
 export default function ProductionDashboard() {
-    const [batches] = React.useState(MOCK_BATCHES);
+    const [batches, setBatches] = React.useState([]);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [statusFilter, setStatusFilter] = React.useState('all');
     const [currentPage, setCurrentPage] = React.useState(1);
@@ -224,6 +225,9 @@ export default function ProductionDashboard() {
     const createBatchFormRef = React.useRef(null);
 
     const [suppliers, setSuppliers] = React.useState([]);
+    React.useEffect(() => {
+        getBatches().then(setBatches);
+    }, []);
 
     React.useEffect(() => {
         getSuppliers().then(setSuppliers);
@@ -248,6 +252,7 @@ export default function ProductionDashboard() {
 
     const filteredBatches = React.useMemo(() => {
         let result = batches;
+        console.log('edwar', batches);
 
         if (searchTerm.trim()) {
             const q = searchTerm.toLowerCase();
@@ -555,15 +560,15 @@ export default function ProductionDashboard() {
                                             <TableCell className="px-4 py-3">
                                                 <div className="flex flex-col">
                                                     <span className="font-mono text-sm font-medium text-zinc-200">
-                                                        {batch.id}
+                                                        {batch.batch_number}
                                                     </span>
                                                     <span className="text-[10px] text-zinc-500 md:hidden">
-                                                        {batch.supplier}
+                                                        {batch.suppliers.name}
                                                     </span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="px-4 py-3 hidden md:table-cell">
-                                                <span className="text-sm text-zinc-300">{batch.supplier}</span>
+                                                <span className="text-sm text-zinc-300">{batch.suppliers.name}</span>
                                             </TableCell>
                                             <TableCell className="px-4 py-3">
                                                 <span className="text-sm text-zinc-100 tabular-nums">
@@ -572,7 +577,7 @@ export default function ProductionDashboard() {
                                             </TableCell>
                                             <TableCell className="px-4 py-3 hidden sm:table-cell">
                                                 <span className="text-sm text-zinc-300 tabular-nums">
-                                                    {formatCurrency(batch.cost_per_lb)}
+                                                    {formatCurrency(batch.cost_per_pound)}
                                                 </span>
                                             </TableCell>
                                             <TableCell className="px-4 py-3">
@@ -585,7 +590,7 @@ export default function ProductionDashboard() {
                                                     {yieldConfig.label}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="px-4 py-3">
+                                            {/* <TableCell className="px-4 py-3">
                                                 <span
                                                     className={cn(
                                                         'inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium',
@@ -594,10 +599,10 @@ export default function ProductionDashboard() {
                                                 >
                                                     {statusConfig.label}
                                                 </span>
-                                            </TableCell>
+                                            </TableCell> */}
                                             <TableCell className="px-4 py-3 hidden xl:table-cell">
                                                 <span className="text-sm text-zinc-300 tabular-nums">
-                                                    {formatCurrency(batch.total_cost)}
+                                                    {batch.total_cost}
                                                 </span>
                                             </TableCell>
                                             <TableCell className="px-4 py-3 text-right">
