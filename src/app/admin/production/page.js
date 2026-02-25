@@ -43,7 +43,6 @@ import {
 import { cn } from '@/lib/utils';
 import { submitProductionBatch } from '@/app/actions/submitProductionBatch';
 import { getSuppliers } from '@/app/actions/getSuppliers';
-import { useActionState } from 'react';
 import { getBatches } from '@/app/actions/getBatches';
 
 const COST_PER_LB = 8.5;
@@ -214,12 +213,19 @@ export default function ProductionDashboard() {
     const [newSupplier, setNewSupplier] = React.useState('');
     const [newRawWeight, setNewRawWeight] = React.useState('');
     const [newCost, setNewCost] = React.useState('');
+    const [newSupplierName, setNewSupplierName] = React.useState('');
+    const [newSupplierAddress, setNewSupplierAddress] = React.useState('');
+    const [newSupplierPhone, setNewSupplierPhone] = React.useState('');
+    const [newSupplierEmail, setNewSupplierEmail] = React.useState('');
+
+    const isNewSupplier = newSupplier === '__new__';
 
     const [convertYield, setConvertYield] = React.useState('');
     const [convertProduct, setConvertProduct] = React.useState('');
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [batchToDelete, setBatchToDelete] = React.useState(null);
     const [confirmBatchOpen, setConfirmBatchOpen] = React.useState(false);
+    const [toastVisible, setToastVisible] = React.useState(false);
 
     const [state, formAction] = React.useActionState(submitProductionBatch, null);
     const createBatchFormRef = React.useRef(null);
@@ -234,7 +240,9 @@ export default function ProductionDashboard() {
     }, []);
 
     const costPerPound = newCost && parseFloat(newCost) >= 0 ? parseFloat(newCost) : COST_PER_LB;
-    const supplierName = suppliers.find((s) => s.supplier_id === newSupplier)?.name ?? newSupplier;
+    const supplierName = isNewSupplier
+        ? newSupplierName
+        : (suppliers.find((s) => s.supplier_id === newSupplier)?.name ?? newSupplier);
     const confirmSummary =
         newSupplier && newRawWeight
             ? `Confirming: ${parseFloat(newRawWeight).toFixed(1)} lbs from ${supplierName} at ${formatCurrency(costPerPound)}/lb. `
@@ -247,12 +255,25 @@ export default function ProductionDashboard() {
             setNewSupplier('');
             setNewRawWeight('');
             setNewCost('');
+            setNewSupplierName('');
+            setNewSupplierAddress('');
+            setNewSupplierPhone('');
+            setNewSupplierEmail('');
+            getBatches().then(setBatches);
+            setToastVisible(true);
+            const t = setTimeout(() => setToastVisible(false), 4000);
+            return () => clearTimeout(t);
+        } else {
+            setToastVisible(false);
         }
     }, [state]);
 
+    React.useEffect(() => {
+        if (createDialogOpen) setToastVisible(false);
+    }, [createDialogOpen]);
+
     const filteredBatches = React.useMemo(() => {
         let result = batches;
-        console.log('edwar', batches);
 
         if (searchTerm.trim()) {
             const q = searchTerm.toLowerCase();
@@ -352,6 +373,15 @@ export default function ProductionDashboard() {
                     Create Batch
                 </Button>
             </div>
+
+            {toastVisible && state?.success && (
+                <div
+                    className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-right fade-in-0 duration-300 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400 shadow-lg"
+                    role="status"
+                >
+                    {state.message}
+                </div>
+            )}
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -716,13 +746,8 @@ export default function ProductionDashboard() {
                                 {state.message}
                             </div>
                         )}
-                        {state?.success && (
-                            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
-                                {state.message}
-                            </div>
-                        )}
-                        <div className="space-y-4 py-4">
-                            <div className="space-y-2">
+                        <div className="space-y-6 py-6">
+                            <div className="space-y-2.5">
                                 <label className="text-sm font-medium text-zinc-300">Supplier</label>
                                 <select
                                     name="supplierId"
@@ -736,10 +761,64 @@ export default function ProductionDashboard() {
                                             {supplier.name}
                                         </option>
                                     ))}
+                                    <option value="__new__">Add new supplier</option>
                                 </select>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
+                            {isNewSupplier && (
+                                <div className="space-y-5 rounded-lg border border-zinc-700/80 bg-zinc-800/50 p-5">
+                                    <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                                        New supplier details
+                                    </p>
+                                    <div className="grid gap-5">
+                                        <div className="space-y-2.5">
+                                            <label className="text-sm font-medium text-zinc-300">Name</label>
+                                            <Input
+                                                name="newSupplierName"
+                                                value={newSupplierName}
+                                                onChange={(e) => setNewSupplierName(e.target.value)}
+                                                placeholder="Supplier name"
+                                                className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
+                                            />
+                                        </div>
+                                        <div className="space-y-2.5">
+                                            <label className="text-sm font-medium text-zinc-300">Address</label>
+                                            <Input
+                                                name="newSupplierAddress"
+                                                value={newSupplierAddress}
+                                                onChange={(e) => setNewSupplierAddress(e.target.value)}
+                                                placeholder="Street address"
+                                                className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-5">
+                                            <div className="space-y-2.5">
+                                                <label className="text-sm font-medium text-zinc-300">Phone</label>
+                                                <Input
+                                                    name="newSupplierPhone"
+                                                    type="tel"
+                                                    value={newSupplierPhone}
+                                                    onChange={(e) => setNewSupplierPhone(e.target.value)}
+                                                    placeholder="(555) 555-5555"
+                                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
+                                                />
+                                            </div>
+                                            <div className="space-y-2.5">
+                                                <label className="text-sm font-medium text-zinc-300">Email</label>
+                                                <Input
+                                                    name="newSupplierEmail"
+                                                    type="email"
+                                                    value={newSupplierEmail}
+                                                    onChange={(e) => setNewSupplierEmail(e.target.value)}
+                                                    placeholder="email@example.com"
+                                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="space-y-2.5">
                                     <label className="text-sm font-medium text-zinc-300">Raw Weight (lbs)</label>
                                     <Input
                                         name="rawWeight"
@@ -752,7 +831,7 @@ export default function ProductionDashboard() {
                                         className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
                                     />
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-2.5">
                                     <label className="text-sm font-medium text-zinc-300">Cost Per Pound</label>
                                     <div className="flex h-10 items-center rounded-md border border-zinc-700 bg-zinc-900/80">
                                         <span className="pl-3 text-sm text-zinc-400">$</span>
@@ -778,7 +857,7 @@ export default function ProductionDashboard() {
                                 Cancel
                             </Button>
                             <Button
-                                disabled={!newSupplier || !newRawWeight}
+                                disabled={!newRawWeight || (isNewSupplier ? !newSupplierName.trim() : !newSupplier)}
                                 className="bg-indigo-600 text-white hover:bg-indigo-500"
                                 type="button"
                                 onClick={() => setConfirmBatchOpen(true)}
