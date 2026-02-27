@@ -44,111 +44,13 @@ import { cn } from '@/lib/utils';
 import { submitProductionBatch } from '@/app/actions/submitProductionBatch';
 import { getSuppliers } from '@/app/actions/getSuppliers';
 import { getBatches } from '@/app/actions/getBatches';
+import { deleteBatch } from '@/app/actions/deleteBatch';
+import { updateBatch } from '@/app/actions/updateBatch';
+import { handleDamagedGoods } from '@/app/actions/handleDamagedGoods';
+import { useTransition } from 'react';
 
 const COST_PER_LB = 8.5;
 const MAX_YIELD_RATE = 0.6;
-
-const MOCK_BATCHES = [
-    {
-        id: 'RB-2026-001',
-        supplier: 'Ranch Del Sol',
-        raw_weight: 45.5,
-        total_cost: 386.75,
-        cost_per_lb: 8.5,
-        yield_percent: 44,
-        status: 'finished',
-        created_at: '2026-02-18',
-    },
-    {
-        id: 'RB-2026-002',
-        supplier: 'Valley Meats Co',
-        raw_weight: 32.0,
-        total_cost: 272.0,
-        cost_per_lb: 8.5,
-        yield_percent: null,
-        status: 'smoking',
-        created_at: '2026-02-20',
-    },
-    {
-        id: 'RB-2026-003',
-        supplier: 'Premium Cuts LLC',
-        raw_weight: 28.5,
-        total_cost: 242.25,
-        cost_per_lb: 8.5,
-        yield_percent: 28,
-        status: 'finished',
-        created_at: '2026-02-15',
-    },
-    {
-        id: 'RB-2026-004',
-        supplier: 'Ranch Del Sol',
-        raw_weight: 50.0,
-        total_cost: 425.0,
-        cost_per_lb: 8.5,
-        yield_percent: null,
-        status: 'drying',
-        created_at: '2026-02-19',
-    },
-    {
-        id: 'RB-2026-005',
-        supplier: 'Valley Meats Co',
-        raw_weight: 22.0,
-        total_cost: 187.0,
-        cost_per_lb: 8.5,
-        yield_percent: 36,
-        status: 'packaging',
-        created_at: '2026-02-21',
-    },
-    {
-        id: 'RB-2026-006',
-        supplier: 'Premium Cuts LLC',
-        raw_weight: 38.0,
-        total_cost: 323.0,
-        cost_per_lb: 8.5,
-        yield_percent: null,
-        status: 'smoking',
-        created_at: '2026-02-22',
-    },
-    {
-        id: 'RB-2026-007',
-        supplier: 'Ranch Del Sol',
-        raw_weight: 42.0,
-        total_cost: 357.0,
-        cost_per_lb: 8.5,
-        yield_percent: 41,
-        status: 'finished',
-        created_at: '2026-02-10',
-    },
-    {
-        id: 'RB-2026-008',
-        supplier: 'Valley Meats Co',
-        raw_weight: 55.0,
-        total_cost: 467.5,
-        cost_per_lb: 8.5,
-        yield_percent: null,
-        status: 'drying',
-        created_at: '2026-02-23',
-    },
-];
-
-const STATUS_CONFIG = {
-    smoking: {
-        label: 'Smoking',
-        className: 'border-amber-500/30 bg-amber-500/10 text-amber-400',
-    },
-    drying: {
-        label: 'Drying',
-        className: 'border-orange-500/30 bg-orange-500/10 text-orange-400',
-    },
-    packaging: {
-        label: 'Packaging',
-        className: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
-    },
-    finished: {
-        label: 'Finished',
-        className: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-    },
-};
 
 function getYieldBadgeConfig(yieldPercent) {
     if (yieldPercent === null || yieldPercent === undefined) {
@@ -183,19 +85,36 @@ function formatCurrency(n) {
     }).format(n ?? 0);
 }
 
-function formatDate(dateStr) {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-    });
-}
-
 function escapeCsv(val) {
     const s = String(val ?? '');
     if (s.includes(',') || s.includes('"') || s.includes('\n')) {
         return `"${s.replace(/"/g, '""')}"`;
     }
     return s;
+}
+
+function isProcessingStatus(status) {
+    if (!status) return false;
+    const s = String(status).toLowerCase();
+    return s === 'pending' || s === 'processing' || s === 'partial_damaged' || s === 'partial';
+}
+
+function getStatusConfig(status) {
+    if (status == null || status === '') {
+        return { label: '—', className: 'text-zinc-500' };
+    }
+    const s = String(status).toLowerCase();
+    if (isProcessingStatus(status)) {
+        return { label: 'Processing', className: 'text-amber-400' };
+    }
+    if (s === 'damaged' || s === 'full_damaged') {
+        return { label: 'Damaged', className: 'text-red-400' };
+    }
+    if (s === 'finished' || s === 'completed') {
+        return { label: 'Finished', className: 'text-emerald-400' };
+    }
+    const label = s.charAt(0).toUpperCase() + s.slice(1);
+    return { label, className: 'text-zinc-400' };
 }
 
 const PAGE_SIZE = 5;
@@ -217,20 +136,75 @@ export default function ProductionDashboard() {
     const [newSupplierAddress, setNewSupplierAddress] = React.useState('');
     const [newSupplierPhone, setNewSupplierPhone] = React.useState('');
     const [newSupplierEmail, setNewSupplierEmail] = React.useState('');
+    const [supplierNameError, setSupplierNameError] = React.useState('');
+    const [supplierPhoneError, setSupplierPhoneError] = React.useState('');
+    const [supplierEmailError, setSupplierEmailError] = React.useState('');
 
     const isNewSupplier = newSupplier === '__new__';
+
+    const validateSupplierName = (value) => {
+        if (/\d/.test(value)) {
+            setSupplierNameError('Name cannot contain numbers');
+            return false;
+        }
+        setSupplierNameError('');
+        return true;
+    };
+
+    const validateSupplierPhone = (value) => {
+        if (value && /[a-zA-Z]/.test(value)) {
+            setSupplierPhoneError('Phone cannot contain letters');
+            return false;
+        }
+        setSupplierPhoneError('');
+        return true;
+    };
+
+    const validateSupplierEmail = (value) => {
+        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            setSupplierEmailError('Please enter a valid email');
+            return false;
+        }
+        setSupplierEmailError('');
+        return true;
+    };
+
+    const isNewSupplierValid = !isNewSupplier || (
+        newSupplierName.trim() &&
+        !supplierNameError &&
+        !supplierPhoneError &&
+        !supplierEmailError &&
+        (!newSupplierEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newSupplierEmail)) &&
+        (!newSupplierPhone || !/[a-zA-Z]/.test(newSupplierPhone))
+    );
 
     const [convertYield, setConvertYield] = React.useState('');
     const [convertProduct, setConvertProduct] = React.useState('');
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [batchToDelete, setBatchToDelete] = React.useState(null);
+    const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+    const [batchToEdit, setBatchToEdit] = React.useState(null);
+    const [editRawWeight, setEditRawWeight] = React.useState('');
+    const [editCostPerPound, setEditCostPerPound] = React.useState('');
+    const [damagedDialogOpen, setDamagedDialogOpen] = React.useState(false);
+    const [batchToDamage, setBatchToDamage] = React.useState(null);
+    const [damagedType, setDamagedType] = React.useState('full');
+    const [damagedWeight, setDamagedWeight] = React.useState('');
+    const [damagedReason, setDamagedReason] = React.useState('');
     const [confirmBatchOpen, setConfirmBatchOpen] = React.useState(false);
     const [toastVisible, setToastVisible] = React.useState(false);
+    const [deleteToastVisible, setDeleteToastVisible] = React.useState(false);
+    const [deleteToastMessage, setDeleteToastMessage] = React.useState('');
+    const [editToastVisible, setEditToastVisible] = React.useState(false);
+    const [editToastMessage, setEditToastMessage] = React.useState('');
+    const [damagedToastVisible, setDamagedToastVisible] = React.useState(false);
+    const [damagedToastMessage, setDamagedToastMessage] = React.useState('');
 
     const [state, formAction] = React.useActionState(submitProductionBatch, null);
     const createBatchFormRef = React.useRef(null);
 
     const [suppliers, setSuppliers] = React.useState([]);
+
     React.useEffect(() => {
         getBatches().then(setBatches);
     }, []);
@@ -277,11 +251,17 @@ export default function ProductionDashboard() {
 
         if (searchTerm.trim()) {
             const q = searchTerm.toLowerCase();
-            result = result.filter((b) => b.id.toLowerCase().includes(q) || b.supplier.toLowerCase().includes(q));
+            const batchId = (b) => (b.batch_number ?? b.id ?? '').toString().toLowerCase();
+            const supplierName = (b) => (b.suppliers?.name ?? '').toLowerCase();
+            result = result.filter((b) => batchId(b).includes(q) || supplierName(b).includes(q));
         }
 
         if (statusFilter !== 'all') {
-            result = result.filter((b) => b.status === statusFilter);
+            if (statusFilter === 'pending') {
+                result = result.filter((b) => isProcessingStatus(b.tracking_status));
+            } else {
+                result = result.filter((b) => b.tracking_status?.toLowerCase() === statusFilter.toLowerCase());
+            }
         }
 
         return result;
@@ -326,12 +306,12 @@ export default function ProductionDashboard() {
 
         const rows = filteredBatches.map((batch) => {
             return [
-                batch.id,
-                batch.supplier,
+                batch.batch_number ?? batch.id,
+                batch.suppliers?.name ?? '',
                 batch.raw_weight.toFixed(1),
                 formatCurrency(batch.total_cost),
                 formatCurrency(batch.cost_per_lb),
-                batch.status.charAt(0).toUpperCase() + batch.status.slice(1),
+                batch.tracking_status ? getStatusConfig(batch.tracking_status).label : '—',
                 batch.yield_percent !== null ? `${batch.yield_percent}%` : '—',
                 batch.created_at,
             ]
@@ -354,6 +334,55 @@ export default function ProductionDashboard() {
         setConvertYield('');
         setConvertProduct('');
         setConvertDialogOpen(true);
+    };
+
+    const openEditDialog = (batch) => {
+        setBatchToEdit(batch);
+        setEditRawWeight(String(batch.raw_weight ?? ''));
+        setEditCostPerPound(String(batch.cost_per_pound ?? ''));
+        setEditDialogOpen(true);
+    };
+
+    const openDamagedDialog = (batch) => {
+        setBatchToDamage(batch);
+        setDamagedType('full');
+        setDamagedWeight('');
+        setDamagedReason('');
+        setDamagedDialogOpen(true);
+    };
+
+    // Inside your Client Component (Modal)
+    const [isPending, startTransition] = useTransition();
+
+    const onConfirm = () => {
+        if (!batchToDamage) return;
+        
+        const batchNumber = batchToDamage.batch_number;
+        const weight = damagedType === 'full' ? batchToDamage.raw_weight : parseFloat(damagedWeight);
+        const isPartial = damagedType === 'partial';
+        const productionId = batchToDamage.production_id;
+
+        startTransition(async () => {
+            const result = await handleDamagedGoods(productionId, weight, damagedReason);
+
+            if (result.success) {
+                setDamagedDialogOpen(false);
+                setBatchToDamage(null);
+                setDamagedType('full');
+                setDamagedWeight('');
+                setDamagedReason('');
+                const freshBatches = await getBatches();
+                setBatches(freshBatches);
+                const toastMsg = isPartial
+                    ? `Batch ${batchNumber} partially damaged (${weight} lbs)`
+                    : `Batch ${batchNumber} marked as damaged`;
+                setDamagedToastMessage(toastMsg);
+                setDamagedToastVisible(true);
+                setTimeout(() => setDamagedToastVisible(false), 4000);
+            } else {
+                console.error(result.message);
+            }
+        });
     };
 
     return (
@@ -380,6 +409,33 @@ export default function ProductionDashboard() {
                     role="status"
                 >
                     {state.message}
+                </div>
+            )}
+
+            {deleteToastVisible && (
+                <div
+                    className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-right fade-in-0 duration-300 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400 shadow-lg"
+                    role="status"
+                >
+                    {deleteToastMessage}
+                </div>
+            )}
+
+            {editToastVisible && (
+                <div
+                    className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-right fade-in-0 duration-300 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400 shadow-lg"
+                    role="status"
+                >
+                    {editToastMessage}
+                </div>
+            )}
+
+            {damagedToastVisible && (
+                <div
+                    className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-right fade-in-0 duration-300 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-400 shadow-lg"
+                    role="status"
+                >
+                    {damagedToastMessage}
                 </div>
             )}
 
@@ -444,22 +500,13 @@ export default function ProductionDashboard() {
                             <SelectItem value="all" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">
                                 All Status
                             </SelectItem>
-                            <SelectItem value="smoking" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">
-                                Smoking
+                            <SelectItem value="pending" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">
+                                Processing
                             </SelectItem>
-                            <SelectItem value="drying" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">
-                                Drying
+                            <SelectItem value="damaged" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">
+                                Damaged
                             </SelectItem>
-                            <SelectItem
-                                value="packaging"
-                                className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                            >
-                                Packaging
-                            </SelectItem>
-                            <SelectItem
-                                value="finished"
-                                className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                            >
+                            <SelectItem value="finished" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">
                                 Finished
                             </SelectItem>
                         </SelectContent>
@@ -572,19 +619,22 @@ export default function ProductionDashboard() {
                         </TableHeader>
                         <TableBody>
                             {paginatedBatches.length === 0 ? (
-                                <TableRow className="border-zinc-700/80">
+                                <TableRow
+                                    key="empty"
+                                    className="border-zinc-700/80 cursor-default hover:!bg-transparent"
+                                >
                                     <TableCell colSpan={8} className="text-zinc-400 py-12 text-center text-sm">
                                         No batches found matching your filters.
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 paginatedBatches.map((batch) => {
-                                    const statusConfig = STATUS_CONFIG[batch.status];
+                                    const statusConfig = getStatusConfig(batch.tracking_status);
                                     const yieldConfig = getYieldBadgeConfig(batch.yield_percent);
 
                                     return (
                                         <TableRow
-                                            key={batch.id}
+                                            key={batch.production_id ?? batch.id ?? batch.batch_number}
                                             className="group border-zinc-700/80 transition-colors hover:!bg-zinc-800/50"
                                         >
                                             <TableCell className="px-4 py-3">
@@ -620,73 +670,81 @@ export default function ProductionDashboard() {
                                                     {yieldConfig.label}
                                                 </span>
                                             </TableCell>
-                                            {/* <TableCell className="px-4 py-3">
-                                                <span
-                                                    className={cn(
-                                                        'inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium',
-                                                        statusConfig.className,
-                                                    )}
-                                                >
+                                            <TableCell className="px-4 py-3">
+                                                <span className={cn('text-sm', statusConfig.className)}>
                                                     {statusConfig.label}
                                                 </span>
-                                            </TableCell> */}
+                                            </TableCell>
                                             <TableCell className="px-4 py-3 hidden xl:table-cell">
                                                 <span className="text-sm text-zinc-300 tabular-nums">
-                                                    {batch.total_cost}
+                                                    ${(batch.initial_weight * batch.cost_per_pound).toFixed(2)}
                                                 </span>
                                             </TableCell>
                                             <TableCell className="px-4 py-3 text-right">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700"
-                                                        >
-                                                            <MoreHorizontal className="size-4" />
-                                                            <span className="sr-only">Actions</span>
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent
-                                                        align="end"
-                                                        className="w-52 border-zinc-700 bg-zinc-900"
-                                                    >
-                                                        {batch.status !== 'finished' && (
-                                                            <DropdownMenuItem
-                                                                className={cn(
-                                                                    'cursor-pointer',
-                                                                    batch.status === 'smoking' ||
-                                                                        batch.status === 'drying'
-                                                                        ? 'bg-amber-500/10 text-amber-400 font-medium focus:bg-amber-500/20 focus:text-amber-300'
-                                                                        : 'text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100',
-                                                                )}
-                                                                onClick={() => openConvertDialog(batch)}
+                                                {batch.tracking_status?.toLowerCase() !== 'damaged' && (
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700"
                                                             >
-                                                                <Package className="size-4 mr-2" />
-                                                                Convert to Finished Goods
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                        <DropdownMenuItem className="text-zinc-200 cursor-pointer focus:bg-zinc-800 focus:text-zinc-100">
-                                                            <Pencil className="size-4 mr-2" />
-                                                            Edit Batch Details
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem className="text-amber-400 cursor-pointer focus:bg-amber-500/10 focus:text-amber-300">
-                                                            <AlertTriangle className="size-4 mr-2" />
-                                                            Mark as Damaged
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator className="bg-zinc-700" />
-                                                        <DropdownMenuItem
-                                                            className="text-red-400 cursor-pointer focus:bg-red-500/10 focus:text-red-400"
-                                                            onClick={() => {
-                                                                setBatchToDelete(batch);
-                                                                setDeleteDialogOpen(true);
-                                                            }}
+                                                                <MoreHorizontal className="size-4" />
+                                                                <span className="sr-only">Actions</span>
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent
+                                                            align="end"
+                                                            className="w-52 border-zinc-700 bg-zinc-900"
                                                         >
-                                                            <Trash2 className="size-4 mr-2" />
-                                                            Delete Batch
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                            {batch.tracking_status &&
+                                                                batch.tracking_status?.toLowerCase() !== 'finished' && (
+                                                                    <DropdownMenuItem
+                                                                        className={cn(
+                                                                            'cursor-pointer',
+                                                                            batch.tracking_status?.toLowerCase() === 'smoking' ||
+                                                                                batch.tracking_status?.toLowerCase() === 'drying'
+                                                                                ? 'bg-amber-500/10 text-amber-400 font-medium focus:bg-amber-500/20 focus:text-amber-300'
+                                                                                : 'text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100',
+                                                                        )}
+                                                                        onClick={() => openConvertDialog(batch)}
+                                                                    >
+                                                                        <Package className="size-4 mr-2" />
+                                                                        Convert to Finished Goods
+                                                                    </DropdownMenuItem>
+                                                                )}
+                                                            {isProcessingStatus(batch.tracking_status) && (
+                                                                <DropdownMenuItem
+                                                                    className="text-zinc-200 cursor-pointer focus:bg-zinc-800 focus:text-zinc-100"
+                                                                    onClick={() => openEditDialog(batch)}
+                                                                >
+                                                                    <Pencil className="size-4 mr-2" />
+                                                                    Edit Batch Details
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                            {isProcessingStatus(batch.tracking_status) && (
+                                                                <DropdownMenuItem
+                                                                    className="text-amber-400 cursor-pointer focus:bg-amber-500/10 focus:text-amber-300"
+                                                                    onClick={() => openDamagedDialog(batch)}
+                                                                >
+                                                                    <AlertTriangle className="size-4 mr-2" />
+                                                                    Mark as Damaged
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                            <DropdownMenuSeparator className="bg-zinc-700" />
+                                                            <DropdownMenuItem
+                                                                className="text-red-400 cursor-pointer focus:bg-red-500/10 focus:text-red-400"
+                                                                onClick={() => {
+                                                                    setBatchToDelete(batch);
+                                                                    setDeleteDialogOpen(true);
+                                                                }}
+                                                            >
+                                                                <Trash2 className="size-4 mr-2" />
+                                                                Delete Batch
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     );
@@ -775,10 +833,19 @@ export default function ProductionDashboard() {
                                             <Input
                                                 name="newSupplierName"
                                                 value={newSupplierName}
-                                                onChange={(e) => setNewSupplierName(e.target.value)}
+                                                onChange={(e) => {
+                                                    setNewSupplierName(e.target.value);
+                                                    validateSupplierName(e.target.value);
+                                                }}
                                                 placeholder="Supplier name"
-                                                className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
+                                                className={cn(
+                                                    "border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500",
+                                                    supplierNameError && "border-red-500"
+                                                )}
                                             />
+                                            {supplierNameError && (
+                                                <p className="text-xs text-red-400">{supplierNameError}</p>
+                                            )}
                                         </div>
                                         <div className="space-y-2.5">
                                             <label className="text-sm font-medium text-zinc-300">Address</label>
@@ -797,10 +864,19 @@ export default function ProductionDashboard() {
                                                     name="newSupplierPhone"
                                                     type="tel"
                                                     value={newSupplierPhone}
-                                                    onChange={(e) => setNewSupplierPhone(e.target.value)}
+                                                    onChange={(e) => {
+                                                        setNewSupplierPhone(e.target.value);
+                                                        validateSupplierPhone(e.target.value);
+                                                    }}
                                                     placeholder="(555) 555-5555"
-                                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
+                                                    className={cn(
+                                                        "border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500",
+                                                        supplierPhoneError && "border-red-500"
+                                                    )}
                                                 />
+                                                {supplierPhoneError && (
+                                                    <p className="text-xs text-red-400">{supplierPhoneError}</p>
+                                                )}
                                             </div>
                                             <div className="space-y-2.5">
                                                 <label className="text-sm font-medium text-zinc-300">Email</label>
@@ -808,10 +884,19 @@ export default function ProductionDashboard() {
                                                     name="newSupplierEmail"
                                                     type="email"
                                                     value={newSupplierEmail}
-                                                    onChange={(e) => setNewSupplierEmail(e.target.value)}
+                                                    onChange={(e) => {
+                                                        setNewSupplierEmail(e.target.value);
+                                                        validateSupplierEmail(e.target.value);
+                                                    }}
                                                     placeholder="email@example.com"
-                                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
+                                                    className={cn(
+                                                        "border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500",
+                                                        supplierEmailError && "border-red-500"
+                                                    )}
                                                 />
+                                                {supplierEmailError && (
+                                                    <p className="text-xs text-red-400">{supplierEmailError}</p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -857,7 +942,7 @@ export default function ProductionDashboard() {
                                 Cancel
                             </Button>
                             <Button
-                                disabled={!newRawWeight || (isNewSupplier ? !newSupplierName.trim() : !newSupplier)}
+                                disabled={!newRawWeight || !newSupplier || !isNewSupplierValid}
                                 className="bg-indigo-600 text-white hover:bg-indigo-500"
                                 type="button"
                                 onClick={() => setConfirmBatchOpen(true)}
@@ -898,6 +983,202 @@ export default function ProductionDashboard() {
                             Confirm & Submit
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Batch Dialog */}
+            <Dialog
+                open={editDialogOpen}
+                onOpenChange={(open) => {
+                    setEditDialogOpen(open);
+                    if (!open) setBatchToEdit(null);
+                }}
+            >
+                <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-zinc-100">Edit Batch</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            Edit batch details for the selected production batch.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {batchToEdit && (
+                        <div className="space-y-5 py-4">
+                            <div className="rounded-md border border-zinc-700/50 bg-zinc-800/50 px-3 py-2">
+                                <p className="text-xs text-zinc-500">Batch</p>
+                                <p className="font-mono text-sm text-zinc-200">{batchToEdit.batch_number}</p>
+                                <p className="text-xs text-zinc-400">{batchToEdit.suppliers?.name ?? '—'}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="space-y-2.5">
+                                    <label className="text-sm font-medium text-zinc-300">Raw Weight (lbs)</label>
+                                    <Input
+                                        type="number"
+                                        step="0.1"
+                                        min="0.1"
+                                        value={editRawWeight}
+                                        onChange={(e) => setEditRawWeight(e.target.value)}
+                                        className="border-zinc-700 bg-zinc-900/80 text-zinc-100 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                                    />
+                                </div>
+                                <div className="space-y-2.5">
+                                    <label className="text-sm font-medium text-zinc-300">Cost Per Pound</label>
+                                    <div className="flex h-10 items-center rounded-md border border-zinc-700 bg-zinc-900/80">
+                                        <span className="pl-3 text-sm text-zinc-400">$</span>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={editCostPerPound}
+                                            onChange={(e) => setEditCostPerPound(e.target.value)}
+                                            className="h-full flex-1 border-0 bg-transparent pr-3 text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setEditDialogOpen(false)}
+                                    className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                                >
+                                    Close
+                                </Button>
+                                <Button
+                                    onClick={async () => {
+                                        const batchNumber = batchToEdit.batch_number;
+                                        const result = await updateBatch(
+                                            batchToEdit.production_id,
+                                            parseFloat(editRawWeight),
+                                            parseFloat(editCostPerPound),
+                                        );
+                                        if (result.success) {
+                                            setEditDialogOpen(false);
+                                            setBatchToEdit(null);
+                                            const freshBatches = await getBatches();
+                                            setBatches(freshBatches);
+                                            setEditToastMessage(`Batch ${batchNumber} updated successfully`);
+                                            setEditToastVisible(true);
+                                            setTimeout(() => setEditToastVisible(false), 4000);
+                                        }
+                                    }}
+                                    className="bg-indigo-600 text-white hover:bg-indigo-500"
+                                >
+                                    Save Changes
+                                </Button>
+                            </DialogFooter>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Mark as Damaged Dialog */}
+            <Dialog
+                open={damagedDialogOpen}
+                onOpenChange={(open) => {
+                    setDamagedDialogOpen(open);
+                    if (!open) setBatchToDamage(null);
+                }}
+            >
+                <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-zinc-100">Mark as Damaged</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            Record damage for this production batch.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {batchToDamage && (
+                        <div className="space-y-5 py-4">
+                            <div className="rounded-md border border-zinc-700/50 bg-zinc-800/50 px-3 py-2">
+                                <p className="text-xs text-zinc-500">Batch</p>
+                                <p className="font-mono text-sm text-zinc-200">{batchToDamage.batch_number}</p>
+                                <p className="text-xs text-zinc-400">
+                                    {batchToDamage.raw_weight?.toFixed(1)} lbs — {batchToDamage.suppliers?.name ?? '—'}
+                                </p>
+                            </div>
+                            <div className="space-y-2.5">
+                                <label className="text-sm font-medium text-zinc-300">Damage Type</label>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="damagedType"
+                                            value="full"
+                                            checked={damagedType === 'full'}
+                                            onChange={() => setDamagedType('full')}
+                                            className="size-4 accent-red-500"
+                                        />
+                                        <span className="text-sm text-zinc-200">Full Batch</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="damagedType"
+                                            value="partial"
+                                            checked={damagedType === 'partial'}
+                                            onChange={() => setDamagedType('partial')}
+                                            className="size-4 accent-amber-500"
+                                        />
+                                        <span className="text-sm text-zinc-200">Partial</span>
+                                    </label>
+                                </div>
+                            </div>
+                            {damagedType === 'partial' && (
+                                <div className="space-y-2.5">
+                                    <label className="text-sm font-medium text-zinc-300">
+                                        Damaged Weight (lbs) <span className="text-red-400">*</span>
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        step="0.1"
+                                        min="0.1"
+                                        max={batchToDamage.raw_weight}
+                                        placeholder={`Max: ${batchToDamage.raw_weight?.toFixed(1)}`}
+                                        value={damagedWeight}
+                                        onChange={(e) => setDamagedWeight(e.target.value)}
+                                        required
+                                        className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                                    />
+                                </div>
+                            )}
+                            <div className="space-y-2.5">
+                                <label className="text-sm font-medium text-zinc-300">
+                                    Reason <span className="text-red-400">*</span>
+                                </label>
+                                <textarea
+                                    value={damagedReason}
+                                    onChange={(e) => setDamagedReason(e.target.value)}
+                                    placeholder="Describe the damage or cause..."
+                                    rows={3}
+                                    required
+                                    className="flex w-full rounded-md border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 outline-none focus:border-zinc-600 focus:ring-1 focus:ring-zinc-500 resize-none"
+                                />
+                            </div>
+                            <DialogFooter>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setDamagedDialogOpen(false)}
+                                    className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={onConfirm}
+                                    disabled={
+                                        isPending ||
+                                        !damagedReason.trim() ||
+                                        (damagedType === 'partial' &&
+                                            (!damagedWeight || parseFloat(damagedWeight) <= 0)) ||
+                                        (damagedType === 'partial' &&
+                                            parseFloat(damagedWeight) > batchToDamage.raw_weight) // Extra Safety!
+                                    }
+                                    className="bg-red-600 text-white hover:bg-red-500"
+                                >
+                                    <AlertTriangle className="size-4 mr-1.5" />
+                                    {isPending ? 'Processing...' : 'Mark as Damaged'}
+                                </Button>
+                            </DialogFooter>
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
 
@@ -1080,7 +1361,14 @@ export default function ProductionDashboard() {
             </Dialog>
 
             {/* Delete Confirmation Dialog */}
-            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <Dialog
+                open={deleteDialogOpen}
+                onOpenChange={(open) => {
+                    setDeleteDialogOpen(open);
+                    if (!open) setBatchToDelete(null);
+                }}
+            >
+                {' '}
                 <DialogContent className="bg-zinc-900 border-zinc-700 sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="text-zinc-100 flex items-center gap-2">
@@ -1098,11 +1386,11 @@ export default function ProductionDashboard() {
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
                                     <span className="text-zinc-400">Batch ID</span>
-                                    <span className="font-mono text-zinc-200">{batchToDelete.id}</span>
+                                    <span className="font-mono text-zinc-200">{batchToDelete.batch_number}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-zinc-400">Supplier</span>
-                                    <span className="text-zinc-200">{batchToDelete.supplier}</span>
+                                    <span className="text-zinc-200">{batchToDelete.supplier_name}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-zinc-400">Raw Weight</span>
@@ -1129,11 +1417,20 @@ export default function ProductionDashboard() {
                         </Button>
                         <Button
                             variant="destructive"
-                            onClick={() => {
+                            disabled={!batchToDelete}
+                            onClick={async () => {
+                                if (!batchToDelete) return;
+                                const batchNumber = batchToDelete.batch_number;
+                                const id = batchToDelete.production_id ?? batchToDelete.id;
                                 setDeleteDialogOpen(false);
                                 setBatchToDelete(null);
+                                await deleteBatch(id);
+                                await getBatches().then(setBatches);
+                                setDeleteToastMessage(`Batch ${batchNumber} deleted successfully`);
+                                setDeleteToastVisible(true);
+                                setTimeout(() => setDeleteToastVisible(false), 4000);
                             }}
-                            className="bg-red-600 text-white hover:bg-red-500"
+                            className="bg-red-600 text-white hover:bg-red-500 disabled:opacity-50"
                         >
                             <Trash2 className="size-4 mr-1.5" />
                             Delete Batch
