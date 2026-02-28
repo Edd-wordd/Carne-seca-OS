@@ -180,6 +180,7 @@ export default function ProductionDashboard() {
 
     const [convertYield, setConvertYield] = React.useState('');
     const [convertProduct, setConvertProduct] = React.useState('');
+    const [flavorSplits, setFlavorSplits] = React.useState([{ id: 1, product: '', weight: '', bags: '' }]);
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [batchToDelete, setBatchToDelete] = React.useState(null);
     const [editDialogOpen, setEditDialogOpen] = React.useState(false);
@@ -333,6 +334,7 @@ export default function ProductionDashboard() {
         setSelectedBatch(batch);
         setConvertYield('');
         setConvertProduct('');
+        setFlavorSplits([{ id: 1, product: '', weight: '', bags: '' }]);
         setConvertDialogOpen(true);
     };
 
@@ -1229,110 +1231,122 @@ export default function ProductionDashboard() {
                             </div>
                         </div>
 
-                        {/* Conversion Data */}
+                        {/* Flavor Splits */}
                         <div className="space-y-3">
-                            <div className="flex items-center gap-2 pb-1 border-b border-zinc-800">
-                                <Package className="size-4 text-zinc-500" />
-                                <h3 className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
-                                    Conversion Data
-                                </h3>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-zinc-300">Finished Product</label>
-                                    <Select value={convertProduct} onValueChange={setConvertProduct}>
-                                        <SelectTrigger className="border-zinc-700 bg-zinc-900/80 text-zinc-100">
-                                            <SelectValue placeholder="Select product" />
-                                        </SelectTrigger>
-                                        <SelectContent className="border-zinc-700 bg-zinc-900 text-zinc-100">
-                                            <SelectItem
-                                                value="premium-brisket"
-                                                className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                            >
-                                                Premium Brisket 12oz
-                                            </SelectItem>
-                                            <SelectItem
-                                                value="seasoned-classic"
-                                                className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                            >
-                                                Seasoned Classic 8oz
-                                            </SelectItem>
-                                            <SelectItem
-                                                value="original"
-                                                className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                            >
-                                                Original 6oz
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                            <div className="flex items-center justify-between pb-1 border-b border-zinc-800">
+                                <div className="flex items-center gap-2">
+                                    <Package className="size-4 text-zinc-500" />
+                                    <h3 className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                                        Flavor Splits
+                                    </h3>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-zinc-300">Finished Bags</label>
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            placeholder={`Max: ${maxYieldBags}`}
-                                            value={convertYield}
-                                            onChange={(e) => setConvertYield(e.target.value)}
-                                            className={cn(
-                                                'border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]',
-                                                yieldExceedsCapacity &&
-                                                    'border-red-500/50 focus-visible:ring-red-500/30',
-                                            )}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-zinc-300">
-                                            Total Finished Weight
-                                        </label>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setFlavorSplits([...flavorSplits, { id: Date.now(), product: '', weight: '', bags: '' }])}
+                                    className="h-7 px-2 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10"
+                                >
+                                    <Plus className="size-3 mr-1" />
+                                    Add Flavor
+                                </Button>
+                            </div>
+                            <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
+                                {flavorSplits.map((split, index) => (
+                                    <div key={split.id} className="flex items-center gap-2 rounded-md border border-zinc-700/50 bg-zinc-800/30 px-2 py-1.5">
+                                        <span className="text-[10px] font-medium text-zinc-500 w-4">{index + 1}</span>
+                                        <Select
+                                            value={split.product}
+                                            onValueChange={(value) => {
+                                                const updated = flavorSplits.map(s =>
+                                                    s.id === split.id ? { ...s, product: value } : s
+                                                );
+                                                setFlavorSplits(updated);
+                                            }}
+                                        >
+                                            <SelectTrigger className="h-8 w-[120px] border-zinc-700 bg-zinc-900/80 text-zinc-100 text-xs">
+                                                <SelectValue placeholder="Flavor" />
+                                            </SelectTrigger>
+                                            <SelectContent className="border-zinc-700 bg-zinc-900 text-zinc-100">
+                                                <SelectItem value="original" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">Original</SelectItem>
+                                                <SelectItem value="spicy" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">Spicy</SelectItem>
+                                                <SelectItem value="teriyaki" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">Teriyaki</SelectItem>
+                                                <SelectItem value="peppered" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">Peppered</SelectItem>
+                                                <SelectItem value="garlic" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">Garlic</SelectItem>
+                                                <SelectItem value="smoky-bbq" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">Smoky BBQ</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                         <Input
                                             type="number"
                                             min="0"
                                             step="0.1"
-                                            placeholder="e.g. 18.5 lbs"
-                                            className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                                            placeholder="lbs"
+                                            value={split.weight}
+                                            onChange={(e) => {
+                                                const updated = flavorSplits.map(s =>
+                                                    s.id === split.id ? { ...s, weight: e.target.value } : s
+                                                );
+                                                setFlavorSplits(updated);
+                                            }}
+                                            className="h-8 w-20 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-xs placeholder:text-zinc-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
                                         />
-                                    </div>
-                                </div>
-                                {yieldExceedsCapacity && (
-                                    <div className="flex items-center gap-1.5 text-red-400 text-xs">
-                                        <AlertTriangle className="size-3.5" />
-                                        <span>Exceeds max capacity of {maxYieldBags} bags.</span>
-                                    </div>
-                                )}
-
-                                {convertYield && !yieldExceedsCapacity && (
-                                    <div className="rounded-lg border border-zinc-700/50 bg-zinc-800/30 p-3">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-zinc-400 text-xs">Calculated Yield Rate</span>
-                                            <span
-                                                className={cn(
-                                                    'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium tabular-nums',
-                                                    getYieldBadgeConfig(calculatedYieldPercent).className,
-                                                )}
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            placeholder="bags"
+                                            value={split.bags}
+                                            onChange={(e) => {
+                                                const updated = flavorSplits.map(s =>
+                                                    s.id === split.id ? { ...s, bags: e.target.value } : s
+                                                );
+                                                setFlavorSplits(updated);
+                                            }}
+                                            className="h-8 w-16 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-xs placeholder:text-zinc-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                                        />
+                                        {flavorSplits.length > 1 && (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setFlavorSplits(flavorSplits.filter(s => s.id !== split.id))}
+                                                className="h-6 w-6 p-0 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 ml-auto"
                                             >
-                                                {calculatedYieldPercent}%
+                                                <Trash2 className="size-3" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            {/* Summary */}
+                            {flavorSplits.some(s => s.weight || s.bags) && (
+                                <div className="rounded-lg border border-zinc-700/50 bg-zinc-800/30 p-3 mt-3">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-zinc-400">Total Allocated</span>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-zinc-300">
+                                                {flavorSplits.reduce((sum, s) => sum + (parseFloat(s.weight) || 0), 0).toFixed(1)} lbs
+                                            </span>
+                                            <span className="text-zinc-500">|</span>
+                                            <span className="text-zinc-300">
+                                                {flavorSplits.reduce((sum, s) => sum + (parseInt(s.bags) || 0), 0)} bags
                                             </span>
                                         </div>
-                                        <div className="mt-2 h-1.5 rounded-full bg-zinc-700 overflow-hidden">
-                                            <div
-                                                className={cn(
-                                                    'h-full rounded-full transition-all',
-                                                    calculatedYieldPercent >= 40
-                                                        ? 'bg-emerald-500'
-                                                        : calculatedYieldPercent >= 30
-                                                          ? 'bg-amber-500'
-                                                          : 'bg-red-500',
-                                                )}
-                                                style={{
-                                                    width: `${Math.min(calculatedYieldPercent, 100)}%`,
-                                                }}
-                                            />
-                                        </div>
                                     </div>
-                                )}
-                            </div>
+                                    {selectedBatch && (
+                                        <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-zinc-700/50">
+                                            <span className="text-zinc-400">Remaining Raw</span>
+                                            <span className={cn(
+                                                "font-medium",
+                                                (selectedBatch.raw_weight - flavorSplits.reduce((sum, s) => sum + (parseFloat(s.weight) || 0), 0)) < 0
+                                                    ? "text-red-400"
+                                                    : "text-emerald-400"
+                                            )}>
+                                                {(selectedBatch.raw_weight - flavorSplits.reduce((sum, s) => sum + (parseFloat(s.weight) || 0), 0)).toFixed(1)} lbs
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 
