@@ -117,7 +117,7 @@ function getStatusConfig(status) {
     return { label, className: 'text-zinc-400' };
 }
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
 
 export default function ProductionDashboard() {
     const [batches, setBatches] = React.useState([]);
@@ -169,14 +169,14 @@ export default function ProductionDashboard() {
         return true;
     };
 
-    const isNewSupplierValid = !isNewSupplier || (
-        newSupplierName.trim() &&
-        !supplierNameError &&
-        !supplierPhoneError &&
-        !supplierEmailError &&
-        (!newSupplierEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newSupplierEmail)) &&
-        (!newSupplierPhone || !/[a-zA-Z]/.test(newSupplierPhone))
-    );
+    const isNewSupplierValid =
+        !isNewSupplier ||
+        (newSupplierName.trim() &&
+            !supplierNameError &&
+            !supplierPhoneError &&
+            !supplierEmailError &&
+            (!newSupplierEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newSupplierEmail)) &&
+            (!newSupplierPhone || !/[a-zA-Z]/.test(newSupplierPhone)));
 
     const [convertYield, setConvertYield] = React.useState('');
     const [convertProduct, setConvertProduct] = React.useState('');
@@ -358,7 +358,7 @@ export default function ProductionDashboard() {
 
     const onConfirm = () => {
         if (!batchToDamage) return;
-        
+
         const batchNumber = batchToDamage.batch_number;
         const weight = damagedType === 'full' ? batchToDamage.raw_weight : parseFloat(damagedWeight);
         const isPartial = damagedType === 'partial';
@@ -442,91 +442,17 @@ export default function ProductionDashboard() {
             )}
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <div className="flex items-center gap-3 rounded-lg border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
-                    <Scale className="size-4 text-indigo-400 shrink-0" />
-                    <div className="min-w-0">
-                        <p className="text-[10px] text-zinc-500 uppercase tracking-wider">MTD Throughput</p>
-                        <p className="text-sm font-semibold text-zinc-100 tabular-nums">
-                            {mtdThroughput.toLocaleString()} lbs
-                            <span className="text-emerald-400 text-[10px] font-normal ml-1.5">+12.5%</span>
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3 rounded-lg border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
-                    <TrendingUp className="size-4 text-emerald-400 shrink-0" />
-                    <div className="min-w-0">
-                        <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Avg Yield</p>
-                        <p className="text-sm font-semibold text-zinc-100 tabular-nums">
-                            {avgYield}%
-                            <span className="text-amber-400 text-[10px] font-normal ml-1.5">-2.1% vs target</span>
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3 rounded-lg border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
-                    <DollarSign className="size-4 text-violet-400 shrink-0" />
-                    <div className="min-w-0">
-                        <p className="text-[10px] text-zinc-500 uppercase tracking-wider">MTD Cost</p>
-                        <p className="text-sm font-semibold text-zinc-100 tabular-nums">
-                            {formatCurrency(mtdCost)}
-                            <span className="text-zinc-500 text-[10px] font-normal ml-1.5">
-                                ${(mtdCost / mtdThroughput).toFixed(2)}/lb
-                            </span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Filters & Controls */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-1 flex-wrap items-center gap-2">
-                    {/* Search */}
-                    <div className="relative w-full sm:w-64">
-                        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
-                        <Input
-                            placeholder="Search Batch ID or Supplier..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="h-9 border-zinc-700 bg-zinc-900/80 pl-10 text-sm text-zinc-100 placeholder:text-zinc-500"
-                        />
-                    </div>
-
-                    {/* Status Filter */}
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="h-9 w-full sm:w-40 border-zinc-700 bg-zinc-900/80 text-zinc-100">
-                            <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent className="border-zinc-700 bg-zinc-900 text-zinc-100">
-                            <SelectItem value="all" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">
-                                All Status
-                            </SelectItem>
-                            <SelectItem value="pending" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">
-                                Processing
-                            </SelectItem>
-                            <SelectItem value="damaged" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">
-                                Damaged
-                            </SelectItem>
-                            <SelectItem value="finished" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">
-                                Finished
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    {/* Date Range */}
+            <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Overview</span>
                     <Popover open={dateRangeOpen} onOpenChange={setDateRangeOpen}>
                         <PopoverTrigger asChild>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-9 gap-2 border-zinc-700 bg-zinc-900/80 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
-                            >
-                                <CalendarDays className="size-4" />
-                                <span className="hidden sm:inline">Date Range</span>
-                            </Button>
+                            <button className="flex items-center gap-1.5 text-[11px] text-blue-400 hover:text-blue-300 transition-colors">
+                                <CalendarDays className="size-3" />
+                                <span>This Month</span>
+                            </button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-80 border-zinc-700 bg-zinc-900 p-4" align="start">
+                        <PopoverContent className="w-80 border-zinc-700 bg-zinc-900 p-4" align="end">
                             <div className="space-y-4">
                                 <h4 className="text-sm font-medium text-zinc-200">Select Date Range</h4>
                                 <div className="grid grid-cols-2 gap-2">
@@ -549,6 +475,70 @@ export default function ProductionDashboard() {
                         </PopoverContent>
                     </Popover>
                 </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <div className="flex items-center gap-3 rounded-lg border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
+                        <Scale className="size-4 text-indigo-400 shrink-0" />
+                        <div className="min-w-0">
+                            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">MTD Throughput</p>
+                            <p className="text-sm font-semibold text-zinc-100 tabular-nums">
+                                {mtdThroughput.toLocaleString()} lbs
+                                <span className="text-emerald-400 text-[10px] font-normal ml-1.5">+12.5%</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 rounded-lg border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
+                        <TrendingUp className="size-4 text-emerald-400 shrink-0" />
+                        <div className="min-w-0">
+                            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Avg Yield</p>
+                            <p className="text-sm font-semibold text-zinc-100 tabular-nums">
+                                {avgYield}%
+                                <span className="text-amber-400 text-[10px] font-normal ml-1.5">-2.1% vs target</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 rounded-lg border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
+                        <DollarSign className="size-4 text-violet-400 shrink-0" />
+                        <div className="min-w-0">
+                            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">MTD Cost</p>
+                            <p className="text-sm font-semibold text-zinc-100 tabular-nums">
+                                {formatCurrency(mtdCost)}
+                                <span className="text-zinc-500 text-[10px] font-normal ml-1.5">
+                                    ${(mtdCost / mtdThroughput).toFixed(2)}/lb
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filters & Controls */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-1 flex-wrap items-center gap-2">
+                    {/* Status Filter Buttons */}
+                    <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
+                        {[
+                            { value: 'all', label: 'All' },
+                            { value: 'pending', label: 'Processing' },
+                            { value: 'damaged', label: 'Damaged' },
+                            { value: 'finished', label: 'Finished' },
+                        ].map((status) => (
+                            <button
+                                key={status.value}
+                                onClick={() => setStatusFilter(status.value)}
+                                className={cn(
+                                    'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                                    statusFilter === status.value
+                                        ? 'bg-zinc-700 text-zinc-100'
+                                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
+                                )}
+                            >
+                                {status.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
                 {/* Export */}
                 <Button
@@ -558,208 +548,190 @@ export default function ProductionDashboard() {
                     onClick={handleExportCsv}
                 >
                     <Download className="size-4" />
-                    Export
+                    Export CSV
                 </Button>
             </div>
 
             {/* Data Table */}
-            <div className="overflow-hidden rounded-lg border border-zinc-700/80">
-                <div className="border-b border-zinc-700/80 bg-zinc-900/80 px-4 py-3">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Flame className="size-4 text-amber-400" />
-                            <h2 className="text-sm font-medium text-zinc-100">Production Batches</h2>
-                            <span className="rounded-full bg-zinc-700/50 px-2 py-0.5 text-xs text-zinc-400">
-                                {filteredBatches.length}
-                            </span>
-                        </div>
-                        <div className="hidden sm:flex items-center gap-4 text-[10px]">
+            <div className="overflow-hidden rounded border border-zinc-800">
+                <div className="border-b border-zinc-800 bg-zinc-900/80 px-3 py-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h2 className="text-zinc-200 text-sm font-medium">Production Batches</h2>
+                        <div className="hidden sm:flex items-center gap-3 text-[11px]">
                             <span className="flex items-center gap-1.5">
                                 <span className="size-2 rounded-full bg-emerald-500" />
-                                <span className="text-zinc-400">≥40%</span>
+                                <span className="text-zinc-500">≥40%</span>
                             </span>
                             <span className="flex items-center gap-1.5">
                                 <span className="size-2 rounded-full bg-amber-500" />
-                                <span className="text-zinc-400">30-39%</span>
+                                <span className="text-zinc-500">30-39%</span>
                             </span>
                             <span className="flex items-center gap-1.5">
                                 <span className="size-2 rounded-full bg-red-500" />
-                                <span className="text-zinc-400">&lt;30%</span>
+                                <span className="text-zinc-500">&lt;30%</span>
                             </span>
+                        </div>
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-zinc-500" />
+                            <Input
+                                placeholder="Search batches…"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="h-7 w-[160px] border-zinc-700 bg-zinc-950 pl-8 text-[10px] text-zinc-100 placeholder:text-zinc-500"
+                            />
                         </div>
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="border-zinc-700/80 hover:!bg-transparent">
-                                <TableHead className="text-zinc-400 h-10 px-4 text-xs font-medium">
-                                    <button className="flex items-center gap-1 hover:text-zinc-200 transition-colors">
-                                        Batch ID
-                                        <ArrowUpDown className="size-3" />
-                                    </button>
-                                </TableHead>
-                                <TableHead className="text-zinc-400 h-10 px-4 text-xs font-medium hidden md:table-cell">
-                                    Supplier
-                                </TableHead>
-                                <TableHead className="text-zinc-400 h-10 px-4 text-xs font-medium">
-                                    Raw Weight
-                                </TableHead>
-                                <TableHead className="text-zinc-400 h-10 px-4 text-xs font-medium hidden sm:table-cell">
-                                    Cost / lb
-                                </TableHead>
-                                <TableHead className="text-zinc-400 h-10 px-4 text-xs font-medium">Yield %</TableHead>
-                                <TableHead className="text-zinc-400 h-10 px-4 text-xs font-medium">Status</TableHead>
-                                <TableHead className="text-zinc-400 h-10 px-4 text-xs font-medium hidden xl:table-cell">
-                                    Total Cost
-                                </TableHead>
-                                <TableHead className="text-zinc-400 h-10 px-4 text-xs font-medium text-right">
-                                    Actions
-                                </TableHead>
+                <Table>
+                    <TableHeader>
+                        <TableRow className="border-zinc-700/80 hover:!bg-transparent">
+                            <TableHead className="text-zinc-500 h-8 px-2 text-xs">
+                                <button className="flex items-center gap-1 hover:text-zinc-300 transition-colors">
+                                    Batch ID
+                                    <ArrowUpDown className="size-2.5" />
+                                </button>
+                            </TableHead>
+                            <TableHead className="text-zinc-500 h-8 px-2 text-xs hidden md:table-cell">
+                                Supplier
+                            </TableHead>
+                            <TableHead className="text-zinc-500 h-8 px-2 text-xs">Raw Weight</TableHead>
+                            <TableHead className="text-zinc-500 h-8 px-2 text-xs hidden sm:table-cell">
+                                Cost / lb
+                            </TableHead>
+                            <TableHead className="text-zinc-500 h-8 px-2 text-xs">Yield %</TableHead>
+                            <TableHead className="text-zinc-500 h-8 px-2 text-xs">Status</TableHead>
+                            <TableHead className="text-zinc-500 h-8 px-2 text-xs hidden xl:table-cell">
+                                Total Cost
+                            </TableHead>
+                            <TableHead className="text-zinc-500 h-8 px-2 text-xs w-12">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {paginatedBatches.length === 0 ? (
+                            <TableRow className="border-zinc-700/80">
+                                <TableCell colSpan={8} className="text-zinc-400 py-8 text-center text-xs">
+                                    No batches found matching your filters.
+                                </TableCell>
                             </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {paginatedBatches.length === 0 ? (
-                                <TableRow
-                                    key="empty"
-                                    className="border-zinc-700/80 cursor-default hover:!bg-transparent"
-                                >
-                                    <TableCell colSpan={8} className="text-zinc-400 py-12 text-center text-sm">
-                                        No batches found matching your filters.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                paginatedBatches.map((batch) => {
-                                    const statusConfig = getStatusConfig(batch.tracking_status);
-                                    const yieldConfig = getYieldBadgeConfig(batch.yield_percent);
+                        ) : (
+                            paginatedBatches.map((batch) => {
+                                const statusConfig = getStatusConfig(batch.tracking_status);
+                                const yieldConfig = getYieldBadgeConfig(batch.yield_percent);
 
-                                    return (
-                                        <TableRow
-                                            key={batch.production_id ?? batch.id ?? batch.batch_number}
-                                            className="group border-zinc-700/80 transition-colors hover:!bg-zinc-800/50"
-                                        >
-                                            <TableCell className="px-4 py-3">
-                                                <div className="flex flex-col">
-                                                    <span className="font-mono text-sm font-medium text-zinc-200">
-                                                        {batch.batch_number}
-                                                    </span>
-                                                    <span className="text-[10px] text-zinc-500 md:hidden">
-                                                        {batch.suppliers.name}
-                                                    </span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="px-4 py-3 hidden md:table-cell">
-                                                <span className="text-sm text-zinc-300">{batch.suppliers.name}</span>
-                                            </TableCell>
-                                            <TableCell className="px-4 py-3">
-                                                <span className="text-sm text-zinc-100 tabular-nums">
-                                                    {batch.raw_weight.toFixed(1)} lbs
+                                return (
+                                    <TableRow
+                                        key={batch.production_id ?? batch.id ?? batch.batch_number}
+                                        className="group border-zinc-700/80 transition-colors hover:!bg-zinc-700/50"
+                                    >
+                                        <TableCell className="text-zinc-200 px-2 py-2.5 text-xs font-medium group-hover:text-zinc-100">
+                                            <div className="flex flex-col">
+                                                <span className="font-mono">{batch.batch_number}</span>
+                                                <span className="text-[10px] text-zinc-500 md:hidden group-hover:text-zinc-400">
+                                                    {batch.suppliers.name}
                                                 </span>
-                                            </TableCell>
-                                            <TableCell className="px-4 py-3 hidden sm:table-cell">
-                                                <span className="text-sm text-zinc-300 tabular-nums">
-                                                    {formatCurrency(batch.cost_per_pound)}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="px-4 py-3">
-                                                <span
-                                                    className={cn(
-                                                        'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium tabular-nums',
-                                                        yieldConfig.className,
-                                                    )}
-                                                >
-                                                    {yieldConfig.label}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="px-4 py-3">
-                                                <span className={cn('text-sm', statusConfig.className)}>
-                                                    {statusConfig.label}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="px-4 py-3 hidden xl:table-cell">
-                                                <span className="text-sm text-zinc-300 tabular-nums">
-                                                    ${(batch.initial_weight * batch.cost_per_pound).toFixed(2)}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="px-4 py-3 text-right">
-                                                {batch.tracking_status?.toLowerCase() !== 'damaged' && (
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700"
-                                                            >
-                                                                <MoreHorizontal className="size-4" />
-                                                                <span className="sr-only">Actions</span>
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent
-                                                            align="end"
-                                                            className="w-52 border-zinc-700 bg-zinc-900"
-                                                        >
-                                                            {batch.tracking_status &&
-                                                                batch.tracking_status?.toLowerCase() !== 'finished' && (
-                                                                    <DropdownMenuItem
-                                                                        className={cn(
-                                                                            'cursor-pointer',
-                                                                            batch.tracking_status?.toLowerCase() === 'smoking' ||
-                                                                                batch.tracking_status?.toLowerCase() === 'drying'
-                                                                                ? 'bg-amber-500/10 text-amber-400 font-medium focus:bg-amber-500/20 focus:text-amber-300'
-                                                                                : 'text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100',
-                                                                        )}
-                                                                        onClick={() => openConvertDialog(batch)}
-                                                                    >
-                                                                        <Package className="size-4 mr-2" />
-                                                                        Convert to Finished Goods
-                                                                    </DropdownMenuItem>
-                                                                )}
-                                                            {isProcessingStatus(batch.tracking_status) && (
-                                                                <DropdownMenuItem
-                                                                    className="text-zinc-200 cursor-pointer focus:bg-zinc-800 focus:text-zinc-100"
-                                                                    onClick={() => openEditDialog(batch)}
-                                                                >
-                                                                    <Pencil className="size-4 mr-2" />
-                                                                    Edit Batch Details
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                            {isProcessingStatus(batch.tracking_status) && (
-                                                                <DropdownMenuItem
-                                                                    className="text-amber-400 cursor-pointer focus:bg-amber-500/10 focus:text-amber-300"
-                                                                    onClick={() => openDamagedDialog(batch)}
-                                                                >
-                                                                    <AlertTriangle className="size-4 mr-2" />
-                                                                    Mark as Damaged
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                            <DropdownMenuSeparator className="bg-zinc-700" />
-                                                            <DropdownMenuItem
-                                                                className="text-red-400 cursor-pointer focus:bg-red-500/10 focus:text-red-400"
-                                                                onClick={() => {
-                                                                    setBatchToDelete(batch);
-                                                                    setDeleteDialogOpen(true);
-                                                                }}
-                                                            >
-                                                                <Trash2 className="size-4 mr-2" />
-                                                                Delete Batch
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-zinc-400 px-2 py-2.5 text-xs hidden md:table-cell group-hover:text-zinc-300">
+                                            {batch.suppliers.name}
+                                        </TableCell>
+                                        <TableCell className="text-zinc-100 px-2 py-2.5 tabular-nums text-xs font-medium group-hover:text-white">
+                                            {batch.raw_weight.toFixed(1)} lbs
+                                        </TableCell>
+                                        <TableCell className="text-zinc-400 px-2 py-2.5 tabular-nums text-xs hidden sm:table-cell group-hover:text-zinc-300">
+                                            {formatCurrency(batch.cost_per_pound)}
+                                        </TableCell>
+                                        <TableCell className="px-2 py-2.5">
+                                            <span
+                                                className={cn(
+                                                    'inline-flex items-center rounded-full border px-1.5 py-0.5 text-[11px] font-medium tabular-nums',
+                                                    yieldConfig.className,
                                                 )}
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+                                            >
+                                                {yieldConfig.label}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="px-2 py-2.5 text-xs">
+                                            <span className={statusConfig.className}>{statusConfig.label}</span>
+                                        </TableCell>
+                                        <TableCell className="text-zinc-400 px-2 py-2.5 tabular-nums text-xs hidden xl:table-cell group-hover:text-zinc-300">
+                                            ${(batch.initial_weight * batch.cost_per_pound).toFixed(2)}
+                                        </TableCell>
+                                        <TableCell className="px-2 py-2.5">
+                                            {batch.tracking_status?.toLowerCase() !== 'damaged' && (
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-600/50"
+                                                        >
+                                                            <MoreHorizontal className="size-3.5" />
+                                                            <span className="sr-only">Actions</span>
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent
+                                                        align="end"
+                                                        className="w-48 border-zinc-800 bg-zinc-900"
+                                                    >
+                                                        {batch.tracking_status &&
+                                                            batch.tracking_status?.toLowerCase() !== 'finished' && (
+                                                                <DropdownMenuItem
+                                                                    className={cn(
+                                                                        'cursor-pointer',
+                                                                        batch.tracking_status?.toLowerCase() ===
+                                                                            'smoking' ||
+                                                                            batch.tracking_status?.toLowerCase() ===
+                                                                                'drying'
+                                                                            ? 'bg-amber-500/10 text-amber-400 font-medium focus:bg-amber-500/20 focus:text-amber-300'
+                                                                            : 'text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100',
+                                                                    )}
+                                                                    onClick={() => openConvertDialog(batch)}
+                                                                >
+                                                                    Convert to Finished Goods
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                        {isProcessingStatus(batch.tracking_status) && (
+                                                            <DropdownMenuItem
+                                                                className="text-zinc-200 cursor-pointer focus:bg-zinc-800 focus:text-zinc-100"
+                                                                onClick={() => openEditDialog(batch)}
+                                                            >
+                                                                Edit Batch Details
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        {isProcessingStatus(batch.tracking_status) && (
+                                                            <DropdownMenuItem
+                                                                className="text-amber-400 cursor-pointer focus:bg-amber-500/10 focus:text-amber-300"
+                                                                onClick={() => openDamagedDialog(batch)}
+                                                            >
+                                                                Mark as Damaged
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        <DropdownMenuSeparator className="bg-zinc-800" />
+                                                        <DropdownMenuItem
+                                                            className="text-red-400 cursor-pointer focus:bg-red-500/10 focus:text-red-400"
+                                                            onClick={() => {
+                                                                setBatchToDelete(batch);
+                                                                setDeleteDialogOpen(true);
+                                                            }}
+                                                        >
+                                                            Delete Batch
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
+                        )}
+                    </TableBody>
+                </Table>
 
                 {/* Pagination */}
                 {filteredBatches.length > 0 && (
-                    <div className="flex items-center justify-between border-t border-zinc-700/80 bg-zinc-900/50 px-4 py-3">
-                        <p className="text-xs text-zinc-500">
+                    <div className="flex w-full items-center justify-between gap-4 border-t border-zinc-800/80 px-4 py-3">
+                        <p className="text-zinc-500 text-xs">
                             Showing {(safePage - 1) * PAGE_SIZE + 1}–
                             {Math.min(safePage * PAGE_SIZE, filteredBatches.length)} of {filteredBatches.length}
                         </p>
@@ -767,23 +739,25 @@ export default function ProductionDashboard() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 w-8 p-0 border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-50"
+                                className="h-8 gap-1 border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 hover:border-zinc-600 disabled:opacity-50 disabled:hover:bg-zinc-900/80 text-xs"
                                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                                 disabled={safePage <= 1}
                             >
-                                <ChevronLeft className="size-4" />
+                                <ChevronLeft className="size-3.5" />
+                                Prev
                             </Button>
-                            <span className="px-3 text-xs text-zinc-500">
-                                {safePage} / {totalPages}
+                            <span className="px-2 text-xs text-zinc-500">
+                                Page {safePage} of {totalPages}
                             </span>
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 w-8 p-0 border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-50"
+                                className="h-8 gap-1 border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 hover:border-zinc-600 disabled:opacity-50 disabled:hover:bg-zinc-900/80 text-xs"
                                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                                 disabled={safePage >= totalPages}
                             >
-                                <ChevronRight className="size-4" />
+                                Next
+                                <ChevronRight className="size-3.5" />
                             </Button>
                         </div>
                     </div>
@@ -841,8 +815,8 @@ export default function ProductionDashboard() {
                                                 }}
                                                 placeholder="Supplier name"
                                                 className={cn(
-                                                    "border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500",
-                                                    supplierNameError && "border-red-500"
+                                                    'border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500',
+                                                    supplierNameError && 'border-red-500',
                                                 )}
                                             />
                                             {supplierNameError && (
@@ -872,8 +846,8 @@ export default function ProductionDashboard() {
                                                     }}
                                                     placeholder="(555) 555-5555"
                                                     className={cn(
-                                                        "border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500",
-                                                        supplierPhoneError && "border-red-500"
+                                                        'border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500',
+                                                        supplierPhoneError && 'border-red-500',
                                                     )}
                                                 />
                                                 {supplierPhoneError && (
@@ -892,8 +866,8 @@ export default function ProductionDashboard() {
                                                     }}
                                                     placeholder="email@example.com"
                                                     className={cn(
-                                                        "border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500",
-                                                        supplierEmailError && "border-red-500"
+                                                        'border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500',
+                                                        supplierEmailError && 'border-red-500',
                                                     )}
                                                 />
                                                 {supplierEmailError && (
@@ -1244,7 +1218,9 @@ export default function ProductionDashboard() {
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => setFlavorSplits([...flavorSplits, { id: Date.now(), product: '', bags: '' }])}
+                                    onClick={() =>
+                                        setFlavorSplits([...flavorSplits, { id: Date.now(), product: '', bags: '' }])
+                                    }
                                     className="h-7 px-2 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10"
                                 >
                                     <Plus className="size-3 mr-1" />
@@ -1253,13 +1229,16 @@ export default function ProductionDashboard() {
                             </div>
                             <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
                                 {flavorSplits.map((split, index) => (
-                                    <div key={split.id} className="flex items-center gap-2 rounded-md border border-zinc-700/50 bg-zinc-800/30 px-2 py-1.5">
+                                    <div
+                                        key={split.id}
+                                        className="flex items-center gap-2 rounded-md border border-zinc-700/50 bg-zinc-800/30 px-2 py-1.5"
+                                    >
                                         <span className="text-[10px] font-medium text-zinc-500 w-4">{index + 1}</span>
                                         <Select
                                             value={split.product}
                                             onValueChange={(value) => {
-                                                const updated = flavorSplits.map(s =>
-                                                    s.id === split.id ? { ...s, product: value } : s
+                                                const updated = flavorSplits.map((s) =>
+                                                    s.id === split.id ? { ...s, product: value } : s,
                                                 );
                                                 setFlavorSplits(updated);
                                             }}
@@ -1268,18 +1247,78 @@ export default function ProductionDashboard() {
                                                 <SelectValue placeholder="Select product" />
                                             </SelectTrigger>
                                             <SelectContent className="border-zinc-700 bg-zinc-900 text-zinc-100">
-                                                <SelectItem value="5oz-original" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">5oz Original</SelectItem>
-                                                <SelectItem value="5oz-spicy" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">5oz Spicy</SelectItem>
-                                                <SelectItem value="5oz-teriyaki" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">5oz Teriyaki</SelectItem>
-                                                <SelectItem value="5oz-peppered" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">5oz Peppered</SelectItem>
-                                                <SelectItem value="5oz-garlic" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">5oz Garlic</SelectItem>
-                                                <SelectItem value="5oz-smoky-bbq" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">5oz Smoky BBQ</SelectItem>
-                                                <SelectItem value="8oz-original" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">8oz Original</SelectItem>
-                                                <SelectItem value="8oz-spicy" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">8oz Spicy</SelectItem>
-                                                <SelectItem value="8oz-teriyaki" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">8oz Teriyaki</SelectItem>
-                                                <SelectItem value="8oz-peppered" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">8oz Peppered</SelectItem>
-                                                <SelectItem value="8oz-garlic" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">8oz Garlic</SelectItem>
-                                                <SelectItem value="8oz-smoky-bbq" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">8oz Smoky BBQ</SelectItem>
+                                                <SelectItem
+                                                    value="5oz-original"
+                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
+                                                >
+                                                    5oz Original
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="5oz-spicy"
+                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
+                                                >
+                                                    5oz Spicy
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="5oz-teriyaki"
+                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
+                                                >
+                                                    5oz Teriyaki
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="5oz-peppered"
+                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
+                                                >
+                                                    5oz Peppered
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="5oz-garlic"
+                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
+                                                >
+                                                    5oz Garlic
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="5oz-smoky-bbq"
+                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
+                                                >
+                                                    5oz Smoky BBQ
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="8oz-original"
+                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
+                                                >
+                                                    8oz Original
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="8oz-spicy"
+                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
+                                                >
+                                                    8oz Spicy
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="8oz-teriyaki"
+                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
+                                                >
+                                                    8oz Teriyaki
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="8oz-peppered"
+                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
+                                                >
+                                                    8oz Peppered
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="8oz-garlic"
+                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
+                                                >
+                                                    8oz Garlic
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="8oz-smoky-bbq"
+                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
+                                                >
+                                                    8oz Smoky BBQ
+                                                </SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <Input
@@ -1288,8 +1327,8 @@ export default function ProductionDashboard() {
                                             placeholder="bags"
                                             value={split.bags}
                                             onChange={(e) => {
-                                                const updated = flavorSplits.map(s =>
-                                                    s.id === split.id ? { ...s, bags: e.target.value } : s
+                                                const updated = flavorSplits.map((s) =>
+                                                    s.id === split.id ? { ...s, bags: e.target.value } : s,
                                                 );
                                                 setFlavorSplits(updated);
                                             }}
@@ -1300,7 +1339,9 @@ export default function ProductionDashboard() {
                                                 type="button"
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => setFlavorSplits(flavorSplits.filter(s => s.id !== split.id))}
+                                                onClick={() =>
+                                                    setFlavorSplits(flavorSplits.filter((s) => s.id !== split.id))
+                                                }
                                                 className="h-6 w-6 p-0 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 ml-auto"
                                             >
                                                 <Trash2 className="size-3" />
@@ -1310,17 +1351,24 @@ export default function ProductionDashboard() {
                                 ))}
                             </div>
                             {/* Summary */}
-                            {flavorSplits.some(s => s.product || s.bags) && (
+                            {flavorSplits.some((s) => s.product || s.bags) && (
                                 <div className="rounded-lg border border-zinc-700/50 bg-zinc-800/30 p-3 mt-3">
                                     <div className="flex items-center justify-between text-xs">
                                         <span className="text-zinc-400">Total Allocated</span>
                                         <div className="flex items-center gap-3">
                                             <span className="text-zinc-300">
-                                                {flavorSplits.reduce((sum, s) => {
-                                                    const bags = parseInt(s.bags) || 0;
-                                                    const ozPerBag = s.product?.startsWith('8oz') ? 8 : s.product?.startsWith('5oz') ? 5 : 0;
-                                                    return sum + (bags * ozPerBag / 16);
-                                                }, 0).toFixed(2)} lbs
+                                                {flavorSplits
+                                                    .reduce((sum, s) => {
+                                                        const bags = parseInt(s.bags) || 0;
+                                                        const ozPerBag = s.product?.startsWith('8oz')
+                                                            ? 8
+                                                            : s.product?.startsWith('5oz')
+                                                              ? 5
+                                                              : 0;
+                                                        return sum + (bags * ozPerBag) / 16;
+                                                    }, 0)
+                                                    .toFixed(2)}{' '}
+                                                lbs
                                             </span>
                                             <span className="text-zinc-500">|</span>
                                             <span className="text-zinc-300">
@@ -1331,21 +1379,37 @@ export default function ProductionDashboard() {
                                     {selectedBatch && (
                                         <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-zinc-700/50">
                                             <span className="text-zinc-400">Remaining Raw</span>
-                                            <span className={cn(
-                                                "font-medium",
-                                                (selectedBatch.raw_weight - flavorSplits.reduce((sum, s) => {
-                                                    const bags = parseInt(s.bags) || 0;
-                                                    const ozPerBag = s.product?.startsWith('8oz') ? 8 : s.product?.startsWith('5oz') ? 5 : 0;
-                                                    return sum + (bags * ozPerBag / 16);
-                                                }, 0)) < 0
-                                                    ? "text-red-400"
-                                                    : "text-emerald-400"
-                                            )}>
-                                                {(selectedBatch.raw_weight - flavorSplits.reduce((sum, s) => {
-                                                    const bags = parseInt(s.bags) || 0;
-                                                    const ozPerBag = s.product?.startsWith('8oz') ? 8 : s.product?.startsWith('5oz') ? 5 : 0;
-                                                    return sum + (bags * ozPerBag / 16);
-                                                }, 0)).toFixed(2)} lbs
+                                            <span
+                                                className={cn(
+                                                    'font-medium',
+                                                    selectedBatch.raw_weight -
+                                                        flavorSplits.reduce((sum, s) => {
+                                                            const bags = parseInt(s.bags) || 0;
+                                                            const ozPerBag = s.product?.startsWith('8oz')
+                                                                ? 8
+                                                                : s.product?.startsWith('5oz')
+                                                                  ? 5
+                                                                  : 0;
+                                                            return sum + (bags * ozPerBag) / 16;
+                                                        }, 0) <
+                                                        0
+                                                        ? 'text-red-400'
+                                                        : 'text-emerald-400',
+                                                )}
+                                            >
+                                                {(
+                                                    selectedBatch.raw_weight -
+                                                    flavorSplits.reduce((sum, s) => {
+                                                        const bags = parseInt(s.bags) || 0;
+                                                        const ozPerBag = s.product?.startsWith('8oz')
+                                                            ? 8
+                                                            : s.product?.startsWith('5oz')
+                                                              ? 5
+                                                              : 0;
+                                                        return sum + (bags * ozPerBag) / 16;
+                                                    }, 0)
+                                                ).toFixed(2)}{' '}
+                                                lbs
                                             </span>
                                         </div>
                                     )}
@@ -1422,7 +1486,7 @@ export default function ProductionDashboard() {
                         </div>
                     )}
 
-                    <DialogFooter className="gap-2 sm:gap-0">
+                    <DialogFooter className="gap-3">
                         <Button
                             variant="outline"
                             onClick={() => {
