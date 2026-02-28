@@ -17,7 +17,7 @@ export async function handleDamagedGoods(production_id, amount_lost, reason) {
         }
         revalidatePath('/admin/production');
         return { success: true, message: 'Batch inventory updated successfully' };
-    } catch {
+    } catch (error) {
         if (error) return { success: false, message: error.message };
     }
 }

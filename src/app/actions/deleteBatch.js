@@ -11,5 +11,5 @@ export async function deleteBatch(batchId) {
     });
     if (error) return { success: false, message: error.message };
     revalidatePath('/admin/production');
-    return { success: true, message: `${data}fully deleted batch!` };
+    return { success: true, message: `Batch deleted batch!` };
 }

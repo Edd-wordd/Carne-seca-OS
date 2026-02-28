@@ -180,7 +180,7 @@ export default function ProductionDashboard() {
 
     const [convertYield, setConvertYield] = React.useState('');
     const [convertProduct, setConvertProduct] = React.useState('');
-    const [flavorSplits, setFlavorSplits] = React.useState([{ id: 1, product: '', weight: '', bags: '' }]);
+    const [flavorSplits, setFlavorSplits] = React.useState([{ id: 1, product: '', bags: '' }]);
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [batchToDelete, setBatchToDelete] = React.useState(null);
     const [editDialogOpen, setEditDialogOpen] = React.useState(false);
@@ -334,7 +334,7 @@ export default function ProductionDashboard() {
         setSelectedBatch(batch);
         setConvertYield('');
         setConvertProduct('');
-        setFlavorSplits([{ id: 1, product: '', weight: '', bags: '' }]);
+        setFlavorSplits([{ id: 1, product: '', bags: '' }]);
         setConvertDialogOpen(true);
     };
 
@@ -1244,7 +1244,7 @@ export default function ProductionDashboard() {
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => setFlavorSplits([...flavorSplits, { id: Date.now(), product: '', weight: '', bags: '' }])}
+                                    onClick={() => setFlavorSplits([...flavorSplits, { id: Date.now(), product: '', bags: '' }])}
                                     className="h-7 px-2 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10"
                                 >
                                     <Plus className="size-3 mr-1" />
@@ -1264,32 +1264,24 @@ export default function ProductionDashboard() {
                                                 setFlavorSplits(updated);
                                             }}
                                         >
-                                            <SelectTrigger className="h-8 w-[120px] border-zinc-700 bg-zinc-900/80 text-zinc-100 text-xs">
-                                                <SelectValue placeholder="Flavor" />
+                                            <SelectTrigger className="h-8 flex-1 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-xs">
+                                                <SelectValue placeholder="Select product" />
                                             </SelectTrigger>
                                             <SelectContent className="border-zinc-700 bg-zinc-900 text-zinc-100">
-                                                <SelectItem value="original" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">Original</SelectItem>
-                                                <SelectItem value="spicy" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">Spicy</SelectItem>
-                                                <SelectItem value="teriyaki" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">Teriyaki</SelectItem>
-                                                <SelectItem value="peppered" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">Peppered</SelectItem>
-                                                <SelectItem value="garlic" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">Garlic</SelectItem>
-                                                <SelectItem value="smoky-bbq" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">Smoky BBQ</SelectItem>
+                                                <SelectItem value="5oz-original" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">5oz Original</SelectItem>
+                                                <SelectItem value="5oz-spicy" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">5oz Spicy</SelectItem>
+                                                <SelectItem value="5oz-teriyaki" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">5oz Teriyaki</SelectItem>
+                                                <SelectItem value="5oz-peppered" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">5oz Peppered</SelectItem>
+                                                <SelectItem value="5oz-garlic" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">5oz Garlic</SelectItem>
+                                                <SelectItem value="5oz-smoky-bbq" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">5oz Smoky BBQ</SelectItem>
+                                                <SelectItem value="8oz-original" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">8oz Original</SelectItem>
+                                                <SelectItem value="8oz-spicy" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">8oz Spicy</SelectItem>
+                                                <SelectItem value="8oz-teriyaki" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">8oz Teriyaki</SelectItem>
+                                                <SelectItem value="8oz-peppered" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">8oz Peppered</SelectItem>
+                                                <SelectItem value="8oz-garlic" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">8oz Garlic</SelectItem>
+                                                <SelectItem value="8oz-smoky-bbq" className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100">8oz Smoky BBQ</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            step="0.1"
-                                            placeholder="lbs"
-                                            value={split.weight}
-                                            onChange={(e) => {
-                                                const updated = flavorSplits.map(s =>
-                                                    s.id === split.id ? { ...s, weight: e.target.value } : s
-                                                );
-                                                setFlavorSplits(updated);
-                                            }}
-                                            className="h-8 w-20 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-xs placeholder:text-zinc-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
-                                        />
                                         <Input
                                             type="number"
                                             min="0"
@@ -1301,7 +1293,7 @@ export default function ProductionDashboard() {
                                                 );
                                                 setFlavorSplits(updated);
                                             }}
-                                            className="h-8 w-16 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-xs placeholder:text-zinc-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                                            className="h-8 w-20 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-xs placeholder:text-zinc-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
                                         />
                                         {flavorSplits.length > 1 && (
                                             <Button
@@ -1318,13 +1310,17 @@ export default function ProductionDashboard() {
                                 ))}
                             </div>
                             {/* Summary */}
-                            {flavorSplits.some(s => s.weight || s.bags) && (
+                            {flavorSplits.some(s => s.product || s.bags) && (
                                 <div className="rounded-lg border border-zinc-700/50 bg-zinc-800/30 p-3 mt-3">
                                     <div className="flex items-center justify-between text-xs">
                                         <span className="text-zinc-400">Total Allocated</span>
                                         <div className="flex items-center gap-3">
                                             <span className="text-zinc-300">
-                                                {flavorSplits.reduce((sum, s) => sum + (parseFloat(s.weight) || 0), 0).toFixed(1)} lbs
+                                                {flavorSplits.reduce((sum, s) => {
+                                                    const bags = parseInt(s.bags) || 0;
+                                                    const ozPerBag = s.product?.startsWith('8oz') ? 8 : s.product?.startsWith('5oz') ? 5 : 0;
+                                                    return sum + (bags * ozPerBag / 16);
+                                                }, 0).toFixed(2)} lbs
                                             </span>
                                             <span className="text-zinc-500">|</span>
                                             <span className="text-zinc-300">
@@ -1337,11 +1333,19 @@ export default function ProductionDashboard() {
                                             <span className="text-zinc-400">Remaining Raw</span>
                                             <span className={cn(
                                                 "font-medium",
-                                                (selectedBatch.raw_weight - flavorSplits.reduce((sum, s) => sum + (parseFloat(s.weight) || 0), 0)) < 0
+                                                (selectedBatch.raw_weight - flavorSplits.reduce((sum, s) => {
+                                                    const bags = parseInt(s.bags) || 0;
+                                                    const ozPerBag = s.product?.startsWith('8oz') ? 8 : s.product?.startsWith('5oz') ? 5 : 0;
+                                                    return sum + (bags * ozPerBag / 16);
+                                                }, 0)) < 0
                                                     ? "text-red-400"
                                                     : "text-emerald-400"
                                             )}>
-                                                {(selectedBatch.raw_weight - flavorSplits.reduce((sum, s) => sum + (parseFloat(s.weight) || 0), 0)).toFixed(1)} lbs
+                                                {(selectedBatch.raw_weight - flavorSplits.reduce((sum, s) => {
+                                                    const bags = parseInt(s.bags) || 0;
+                                                    const ozPerBag = s.product?.startsWith('8oz') ? 8 : s.product?.startsWith('5oz') ? 5 : 0;
+                                                    return sum + (bags * ozPerBag / 16);
+                                                }, 0)).toFixed(2)} lbs
                                             </span>
                                         </div>
                                     )}
