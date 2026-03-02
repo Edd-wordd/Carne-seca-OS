@@ -21,6 +21,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import {
     Flame,
     Plus,
@@ -29,7 +30,6 @@ import {
     TrendingUp,
     DollarSign,
     Search,
-    CalendarDays,
     MoreHorizontal,
     Download,
     Eye,
@@ -48,17 +48,20 @@ import { deleteBatch } from '@/app/actions/deleteBatch';
 import { updateBatch } from '@/app/actions/updateBatch';
 import { handleDamagedGoods } from '@/app/actions/handleDamagedGoods';
 import { useTransition } from 'react';
+import { getProducts } from '@/app/actions/getProducts';
+import { convertToFinishedGoods } from '@/app/actions/convertToFinishedGoods';
 
 const COST_PER_LB = 8.5;
 const MAX_YIELD_RATE = 0.6;
 
-function getYieldBadgeConfig(yieldPercent) {
-    if (yieldPercent === null || yieldPercent === undefined) {
+function getYieldBadgeConfig(yieldDecimal) {
+    if (yieldDecimal === null || yieldDecimal === undefined) {
         return {
             label: '—',
             className: 'border-zinc-600/30 bg-zinc-600/10 text-zinc-500',
         };
     }
+    const yieldPercent = Math.round(yieldDecimal * 100);
     if (yieldPercent >= 40) {
         return {
             label: `${yieldPercent}%`,
@@ -121,13 +124,14 @@ const PAGE_SIZE = 10;
 
 export default function ProductionDashboard() {
     const [batches, setBatches] = React.useState([]);
+    const [products, setProducts] = React.useState([]);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [statusFilter, setStatusFilter] = React.useState('all');
     const [currentPage, setCurrentPage] = React.useState(1);
     const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
     const [convertDialogOpen, setConvertDialogOpen] = React.useState(false);
     const [selectedBatch, setSelectedBatch] = React.useState(null);
-    const [dateRangeOpen, setDateRangeOpen] = React.useState(false);
+    const [dateRange, setDateRange] = React.useState({ from: undefined, to: undefined });
 
     const [newSupplier, setNewSupplier] = React.useState('');
     const [newRawWeight, setNewRawWeight] = React.useState('');
@@ -214,6 +218,10 @@ export default function ProductionDashboard() {
         getSuppliers().then(setSuppliers);
     }, []);
 
+    React.useEffect(() => {
+        getProducts().then(setProducts);
+    }, []);
+
     const costPerPound = newCost && parseFloat(newCost) >= 0 ? parseFloat(newCost) : COST_PER_LB;
     const supplierName = isNewSupplier
         ? newSupplierName
@@ -250,6 +258,18 @@ export default function ProductionDashboard() {
     const filteredBatches = React.useMemo(() => {
         let result = batches;
 
+        // Date range filter
+        if (dateRange?.from) {
+            result = result.filter((b) => {
+                const batchDate = new Date(b.created_at);
+                const startOfDay = new Date(dateRange.from);
+                startOfDay.setHours(0, 0, 0, 0);
+                const endOfDay = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
+                endOfDay.setHours(23, 59, 59, 999);
+                return batchDate >= startOfDay && batchDate <= endOfDay;
+            });
+        }
+
         if (searchTerm.trim()) {
             const q = searchTerm.toLowerCase();
             const batchId = (b) => (b.batch_number ?? b.id ?? '').toString().toLowerCase();
@@ -266,23 +286,24 @@ export default function ProductionDashboard() {
         }
 
         return result;
-    }, [batches, searchTerm, statusFilter]);
+    }, [batches, searchTerm, statusFilter, dateRange]);
 
     React.useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, statusFilter]);
+    }, [searchTerm, statusFilter, dateRange]);
 
     const totalPages = Math.max(1, Math.ceil(filteredBatches.length / PAGE_SIZE));
     const safePage = Math.min(currentPage, totalPages);
     const paginatedBatches = filteredBatches.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-    const mtdThroughput = batches.reduce((sum, b) => sum + b.raw_weight, 0);
+    // KPIs use date-filtered batches
+    const mtdThroughput = filteredBatches.reduce((sum, b) => sum + b.raw_weight, 0);
     const avgYield = React.useMemo(() => {
-        const finished = batches.filter((b) => b.yield_percent !== null);
+        const finished = filteredBatches.filter((b) => b.yield_percent !== null);
         if (finished.length === 0) return 0;
-        return (finished.reduce((sum, b) => sum + b.yield_percent, 0) / finished.length).toFixed(1);
-    }, [batches]);
-    const mtdCost = batches.reduce((sum, b) => sum + b.total_cost, 0);
+        return ((finished.reduce((sum, b) => sum + b.yield_percent, 0) / finished.length) * 100).toFixed(1);
+    }, [filteredBatches]);
+    const mtdCost = filteredBatches.reduce((sum, b) => sum + b.total_cost, 0);
 
     const maxYieldBags = selectedBatch ? Math.floor(selectedBatch.raw_weight * MAX_YIELD_RATE) : 0;
 
@@ -298,23 +319,33 @@ export default function ProductionDashboard() {
             'Batch ID',
             'Supplier',
             'Raw Weight (lbs)',
-            'Cost',
-            'Status',
             'Cost / lb',
             'Yield %',
-            'Created At',
+            'Bags',
+            'Status',
+            'Timeline',
+            'Total Cost',
         ];
 
         const rows = filteredBatches.map((batch) => {
+            const totalBags = batch.finished_bags?.reduce((sum, fb) => sum + (fb.stock_quantity || 0), 0) || 0;
+            const createdDate = batch.created_at
+                ? new Date(batch.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                : '';
+            const processedDate = batch.tracking_status === 'finished' && batch.last_updated
+                ? new Date(batch.last_updated).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                : '';
+            const timeline = processedDate ? `${createdDate} → ${processedDate}` : createdDate;
             return [
                 batch.batch_number ?? batch.id,
                 batch.suppliers?.name ?? '',
                 batch.raw_weight.toFixed(1),
-                formatCurrency(batch.total_cost),
-                formatCurrency(batch.cost_per_lb),
+                formatCurrency(batch.cost_per_pound),
+                batch.yield_percent !== null ? `${Math.round(batch.yield_percent * 100)}%` : '—',
+                totalBags,
                 batch.tracking_status ? getStatusConfig(batch.tracking_status).label : '—',
-                batch.yield_percent !== null ? `${batch.yield_percent}%` : '—',
-                batch.created_at,
+                timeline,
+                `$${(batch.initial_weight * batch.cost_per_pound).toFixed(2)}`,
             ]
                 .map(escapeCsv)
                 .join(',');
@@ -445,44 +476,15 @@ export default function ProductionDashboard() {
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
                     <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Overview</span>
-                    <Popover open={dateRangeOpen} onOpenChange={setDateRangeOpen}>
-                        <PopoverTrigger asChild>
-                            <button className="flex items-center gap-1.5 text-[11px] text-blue-400 hover:text-blue-300 transition-colors">
-                                <CalendarDays className="size-3" />
-                                <span>This Month</span>
-                            </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80 border-zinc-700 bg-zinc-900 p-4" align="end">
-                            <div className="space-y-4">
-                                <h4 className="text-sm font-medium text-zinc-200">Select Date Range</h4>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {['Today', 'Last 7 Days', 'Last 30 Days', 'This Month'].map((preset) => (
-                                        <Button
-                                            key={preset}
-                                            variant="outline"
-                                            size="sm"
-                                            className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                                            onClick={() => setDateRangeOpen(false)}
-                                        >
-                                            {preset}
-                                        </Button>
-                                    ))}
-                                </div>
-                                <div className="border-t border-zinc-700 pt-3">
-                                    <p className="text-xs text-zinc-500 text-center">Calendar picker placeholder</p>
-                                </div>
-                            </div>
-                        </PopoverContent>
-                    </Popover>
+                    <DateRangePicker date={dateRange} onDateChange={setDateRange} />
                 </div>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                     <div className="flex items-center gap-3 rounded-lg border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                         <Scale className="size-4 text-indigo-400 shrink-0" />
                         <div className="min-w-0">
-                            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">MTD Throughput</p>
+                            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Throughput</p>
                             <p className="text-sm font-semibold text-zinc-100 tabular-nums">
                                 {mtdThroughput.toLocaleString()} lbs
-                                <span className="text-emerald-400 text-[10px] font-normal ml-1.5">+12.5%</span>
                             </p>
                         </div>
                     </div>
@@ -493,7 +495,13 @@ export default function ProductionDashboard() {
                             <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Avg Yield</p>
                             <p className="text-sm font-semibold text-zinc-100 tabular-nums">
                                 {avgYield}%
-                                <span className="text-amber-400 text-[10px] font-normal ml-1.5">-2.1% vs target</span>
+                                <span className={cn(
+                                    'text-[10px] font-normal ml-1.5',
+                                    parseFloat(avgYield) >= 35 ? 'text-emerald-400' : 
+                                    parseFloat(avgYield) >= 30 ? 'text-amber-400' : 'text-red-400'
+                                )}>
+                                    {parseFloat(avgYield) >= 35 ? 'on target' : `${(35 - parseFloat(avgYield)).toFixed(1)}% below target`}
+                                </span>
                             </p>
                         </div>
                     </div>
@@ -501,11 +509,11 @@ export default function ProductionDashboard() {
                     <div className="flex items-center gap-3 rounded-lg border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                         <DollarSign className="size-4 text-violet-400 shrink-0" />
                         <div className="min-w-0">
-                            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">MTD Cost</p>
+                            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Total Cost</p>
                             <p className="text-sm font-semibold text-zinc-100 tabular-nums">
                                 {formatCurrency(mtdCost)}
                                 <span className="text-zinc-500 text-[10px] font-normal ml-1.5">
-                                    ${(mtdCost / mtdThroughput).toFixed(2)}/lb
+                                    {mtdThroughput > 0 ? `$${(mtdCost / mtdThroughput).toFixed(2)}/lb` : '—'}
                                 </span>
                             </p>
                         </div>
@@ -600,7 +608,11 @@ export default function ProductionDashboard() {
                                 Cost / lb
                             </TableHead>
                             <TableHead className="text-zinc-500 h-8 px-2 text-xs">Yield %</TableHead>
+                            <TableHead className="text-zinc-500 h-8 px-2 text-xs">Bags</TableHead>
                             <TableHead className="text-zinc-500 h-8 px-2 text-xs">Status</TableHead>
+                            <TableHead className="text-zinc-500 h-8 px-2 text-xs hidden lg:table-cell">
+                                Timeline
+                            </TableHead>
                             <TableHead className="text-zinc-500 h-8 px-2 text-xs hidden xl:table-cell">
                                 Total Cost
                             </TableHead>
@@ -610,7 +622,7 @@ export default function ProductionDashboard() {
                     <TableBody>
                         {paginatedBatches.length === 0 ? (
                             <TableRow className="border-zinc-700/80">
-                                <TableCell colSpan={8} className="text-zinc-400 py-8 text-center text-xs">
+                                <TableCell colSpan={10} className="text-zinc-400 py-8 text-center text-xs">
                                     No batches found matching your filters.
                                 </TableCell>
                             </TableRow>
@@ -651,8 +663,29 @@ export default function ProductionDashboard() {
                                                 {yieldConfig.label}
                                             </span>
                                         </TableCell>
+                                        <TableCell className="text-zinc-300 px-2 py-2.5 tabular-nums text-xs">
+                                            {batch.finished_bags?.reduce((sum, fb) => sum + (fb.stock_quantity || 0), 0) || '—'}
+                                        </TableCell>
                                         <TableCell className="px-2 py-2.5 text-xs">
                                             <span className={statusConfig.className}>{statusConfig.label}</span>
+                                        </TableCell>
+                                        <TableCell className="text-zinc-400 px-2 py-2.5 text-xs hidden lg:table-cell group-hover:text-zinc-300">
+                                            {batch.created_at ? (
+                                                <div className="flex items-center gap-1.5">
+                                                    <span>{new Date(batch.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                                    {batch.tracking_status === 'finished' && batch.last_updated ? (
+                                                        <>
+                                                            <span className="text-zinc-600">→</span>
+                                                            <span className="text-emerald-400">{new Date(batch.last_updated).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                                        </>
+                                                    ) : batch.tracking_status === 'processing' ? (
+                                                        <>
+                                                            <span className="text-zinc-600">→</span>
+                                                            <span className="text-amber-400 animate-pulse">...</span>
+                                                        </>
+                                                    ) : null}
+                                                </div>
+                                            ) : '—'}
                                         </TableCell>
                                         <TableCell className="text-zinc-400 px-2 py-2.5 tabular-nums text-xs hidden xl:table-cell group-hover:text-zinc-300">
                                             ${(batch.initial_weight * batch.cost_per_pound).toFixed(2)}
@@ -1168,255 +1201,196 @@ export default function ProductionDashboard() {
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="space-y-6 py-4">
-                        {/* Source Details */}
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2 pb-1 border-b border-zinc-800">
-                                <Scale className="size-4 text-zinc-500" />
-                                <h3 className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
-                                    Source Details
-                                </h3>
-                            </div>
-                            <div className="grid grid-cols-3 gap-3">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-medium text-zinc-500">Batch ID</label>
-                                    <div className="flex h-9 items-center rounded-md border border-zinc-700/50 bg-zinc-800/50 px-3">
-                                        <span className="font-mono text-sm text-zinc-300">
-                                            {selectedBatch?.id ?? '—'}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-medium text-zinc-500">Raw Weight</label>
-                                    <div className="flex h-9 items-center rounded-md border border-zinc-700/50 bg-zinc-800/50 px-3">
-                                        <span className="text-sm text-zinc-300 tabular-nums">
-                                            {selectedBatch?.raw_weight.toFixed(1) ?? '—'} lbs
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-medium text-zinc-500">Cost / lb</label>
-                                    <div className="flex h-9 items-center rounded-md border border-zinc-700/50 bg-zinc-800/50 px-3">
-                                        <span className="text-sm text-zinc-300 tabular-nums">
-                                            {selectedBatch ? formatCurrency(selectedBatch.cost_per_lb) : '—'}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Flavor Splits */}
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between pb-1 border-b border-zinc-800">
-                                <div className="flex items-center gap-2">
-                                    <Package className="size-4 text-zinc-500" />
+                    {selectedBatch && (
+                        <div className="space-y-6 py-4">
+                            {/* Source Details */}
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2 pb-1 border-b border-zinc-800">
+                                    <Scale className="size-4 text-zinc-500" />
                                     <h3 className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
-                                        Flavor Splits
+                                        Source Details
                                     </h3>
                                 </div>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                        setFlavorSplits([...flavorSplits, { id: Date.now(), product: '', bags: '' }])
-                                    }
-                                    className="h-7 px-2 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10"
-                                >
-                                    <Plus className="size-3 mr-1" />
-                                    Add Flavor
-                                </Button>
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-medium text-zinc-500">Batch ID</label>
+                                        <div className="flex h-9 items-center rounded-md border border-zinc-700/50 bg-zinc-800/50 px-3">
+                                            <span className="font-mono text-sm text-zinc-300">
+                                                {selectedBatch.batch_number ?? '—'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-medium text-zinc-500">Raw Weight</label>
+                                        <div className="flex h-9 items-center rounded-md border border-zinc-700/50 bg-zinc-800/50 px-3">
+                                            <span className="text-sm text-zinc-300 tabular-nums">
+                                                {selectedBatch.raw_weight?.toFixed(1) ?? '—'} lbs
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-medium text-zinc-500">Cost / lb</label>
+                                        <div className="flex h-9 items-center rounded-md border border-zinc-700/50 bg-zinc-800/50 px-3">
+                                            <span className="text-sm text-zinc-300 tabular-nums">
+                                                {formatCurrency(selectedBatch.cost_per_pound)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
-                                {flavorSplits.map((split, index) => (
-                                    <div
-                                        key={split.id}
-                                        className="flex items-center gap-2 rounded-md border border-zinc-700/50 bg-zinc-800/30 px-2 py-1.5"
+
+                            {/* Flavor Splits */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between pb-1 border-b border-zinc-800">
+                                    <div className="flex items-center gap-2">
+                                        <Package className="size-4 text-zinc-500" />
+                                        <h3 className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                                            Flavor Splits
+                                        </h3>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                            setFlavorSplits([
+                                                ...flavorSplits,
+                                                { id: Date.now(), product: '', bags: '' },
+                                            ])
+                                        }
+                                        className="h-7 px-2 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10"
                                     >
-                                        <span className="text-[10px] font-medium text-zinc-500 w-4">{index + 1}</span>
-                                        <Select
-                                            value={split.product}
-                                            onValueChange={(value) => {
-                                                const updated = flavorSplits.map((s) =>
-                                                    s.id === split.id ? { ...s, product: value } : s,
-                                                );
-                                                setFlavorSplits(updated);
-                                            }}
+                                        <Plus className="size-3 mr-1" />
+                                        Add Flavor
+                                    </Button>
+                                </div>
+                                <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
+                                    {flavorSplits.map((split, index) => (
+                                        <div
+                                            key={split.id}
+                                            className="flex items-center gap-2 rounded-md border border-zinc-700/50 bg-zinc-800/30 px-2 py-1.5"
                                         >
-                                            <SelectTrigger className="h-8 flex-1 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-xs">
-                                                <SelectValue placeholder="Select product" />
-                                            </SelectTrigger>
-                                            <SelectContent className="border-zinc-700 bg-zinc-900 text-zinc-100">
-                                                <SelectItem
-                                                    value="5oz-original"
-                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                                >
-                                                    5oz Original
-                                                </SelectItem>
-                                                <SelectItem
-                                                    value="5oz-spicy"
-                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                                >
-                                                    5oz Spicy
-                                                </SelectItem>
-                                                <SelectItem
-                                                    value="5oz-teriyaki"
-                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                                >
-                                                    5oz Teriyaki
-                                                </SelectItem>
-                                                <SelectItem
-                                                    value="5oz-peppered"
-                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                                >
-                                                    5oz Peppered
-                                                </SelectItem>
-                                                <SelectItem
-                                                    value="5oz-garlic"
-                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                                >
-                                                    5oz Garlic
-                                                </SelectItem>
-                                                <SelectItem
-                                                    value="5oz-smoky-bbq"
-                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                                >
-                                                    5oz Smoky BBQ
-                                                </SelectItem>
-                                                <SelectItem
-                                                    value="8oz-original"
-                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                                >
-                                                    8oz Original
-                                                </SelectItem>
-                                                <SelectItem
-                                                    value="8oz-spicy"
-                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                                >
-                                                    8oz Spicy
-                                                </SelectItem>
-                                                <SelectItem
-                                                    value="8oz-teriyaki"
-                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                                >
-                                                    8oz Teriyaki
-                                                </SelectItem>
-                                                <SelectItem
-                                                    value="8oz-peppered"
-                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                                >
-                                                    8oz Peppered
-                                                </SelectItem>
-                                                <SelectItem
-                                                    value="8oz-garlic"
-                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                                >
-                                                    8oz Garlic
-                                                </SelectItem>
-                                                <SelectItem
-                                                    value="8oz-smoky-bbq"
-                                                    className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                                >
-                                                    8oz Smoky BBQ
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            placeholder="bags"
-                                            value={split.bags}
-                                            onChange={(e) => {
-                                                const updated = flavorSplits.map((s) =>
-                                                    s.id === split.id ? { ...s, bags: e.target.value } : s,
-                                                );
-                                                setFlavorSplits(updated);
-                                            }}
-                                            className="h-8 w-20 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-xs placeholder:text-zinc-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
-                                        />
-                                        {flavorSplits.length > 1 && (
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() =>
-                                                    setFlavorSplits(flavorSplits.filter((s) => s.id !== split.id))
-                                                }
-                                                className="h-6 w-6 p-0 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 ml-auto"
+                                            <span className="text-[10px] font-medium text-zinc-500 w-4">
+                                                {index + 1}
+                                            </span>
+                                            <Select
+                                                value={split.product}
+                                                onValueChange={(value) => {
+                                                    const updated = flavorSplits.map((s) =>
+                                                        s.id === split.id ? { ...s, product: value } : s,
+                                                    );
+                                                    setFlavorSplits(updated);
+                                                }}
                                             >
-                                                <Trash2 className="size-3" />
-                                            </Button>
+                                                <SelectTrigger className="h-8 flex-1 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-xs">
+                                                    <SelectValue placeholder="Select product" />
+                                                </SelectTrigger>
+                                                <SelectContent className="border-zinc-700 bg-zinc-900 text-zinc-100">
+                                                    {products.map((product) => (
+                                                        <SelectItem
+                                                            key={product.id}
+                                                            value={String(product.id)}
+                                                            className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
+                                                        >
+                                                            {`${product.flavor} ${Math.round(product.size_grams / 28.3495)}oz`}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                placeholder="bags"
+                                                value={split.bags}
+                                                onChange={(e) => {
+                                                    const updated = flavorSplits.map((s) =>
+                                                        s.id === split.id ? { ...s, bags: e.target.value } : s,
+                                                    );
+                                                    setFlavorSplits(updated);
+                                                }}
+                                                className="h-8 w-20 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-xs placeholder:text-zinc-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                                            />
+                                            {flavorSplits.length > 1 && (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        setFlavorSplits(flavorSplits.filter((s) => s.id !== split.id))
+                                                    }
+                                                    className="h-6 w-6 p-0 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 ml-auto"
+                                                >
+                                                    <Trash2 className="size-3" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Summary */}
+                                {flavorSplits.some((s) => s.product || s.bags) && (
+                                    <div className="rounded-lg border border-zinc-700/50 bg-zinc-800/30 p-3 mt-3">
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-zinc-400">Dried Weight</span>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-zinc-300 font-medium">
+                                                    {flavorSplits
+                                                        .reduce((sum, s) => {
+                                                            const bags = parseInt(s.bags) || 0;
+                                                            const product = products.find(
+                                                                (p) => String(p.id) === String(s.product),
+                                                            );
+                                                            const grams = product?.size_grams || 0;
+                                                            return sum + (bags * grams) / 453.592;
+                                                        }, 0)
+                                                        .toFixed(2)}{' '}
+                                                    lbs
+                                                </span>
+                                                <span className="text-zinc-500">|</span>
+                                                <span className="text-zinc-300">
+                                                    {flavorSplits.reduce((sum, s) => sum + (parseInt(s.bags) || 0), 0)}{' '}
+                                                    bags
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {selectedBatch && (
+                                            <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-zinc-700/50">
+                                                <span className="text-zinc-400">Yield %</span>
+                                                <span
+                                                    className={cn(
+                                                        'font-medium',
+                                                        (() => {
+                                                            const driedLbs = flavorSplits.reduce((sum, s) => {
+                                                                const bags = parseInt(s.bags) || 0;
+                                                                const product = products.find(
+                                                                    (p) => String(p.id) === String(s.product),
+                                                                );
+                                                                const grams = product?.size_grams || 0;
+                                                                return sum + (bags * grams) / 453.592;
+                                                            }, 0);
+                                                            const yieldPct = (driedLbs / selectedBatch.raw_weight) * 100;
+                                                            return yieldPct > 50 ? 'text-amber-400' : yieldPct >= 30 ? 'text-emerald-400' : 'text-red-400';
+                                                        })(),
+                                                    )}
+                                                >
+                                                    {(() => {
+                                                        const driedLbs = flavorSplits.reduce((sum, s) => {
+                                                            const bags = parseInt(s.bags) || 0;
+                                                            const product = products.find(
+                                                                (p) => String(p.id) === String(s.product),
+                                                            );
+                                                            const grams = product?.size_grams || 0;
+                                                            return sum + (bags * grams) / 453.592;
+                                                        }, 0);
+                                                        return ((driedLbs / selectedBatch.raw_weight) * 100).toFixed(1);
+                                                    })()}%
+                                                </span>
+                                            </div>
                                         )}
                                     </div>
-                                ))}
+                                )}
                             </div>
-                            {/* Summary */}
-                            {flavorSplits.some((s) => s.product || s.bags) && (
-                                <div className="rounded-lg border border-zinc-700/50 bg-zinc-800/30 p-3 mt-3">
-                                    <div className="flex items-center justify-between text-xs">
-                                        <span className="text-zinc-400">Total Allocated</span>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-zinc-300">
-                                                {flavorSplits
-                                                    .reduce((sum, s) => {
-                                                        const bags = parseInt(s.bags) || 0;
-                                                        const ozPerBag = s.product?.startsWith('8oz')
-                                                            ? 8
-                                                            : s.product?.startsWith('5oz')
-                                                              ? 5
-                                                              : 0;
-                                                        return sum + (bags * ozPerBag) / 16;
-                                                    }, 0)
-                                                    .toFixed(2)}{' '}
-                                                lbs
-                                            </span>
-                                            <span className="text-zinc-500">|</span>
-                                            <span className="text-zinc-300">
-                                                {flavorSplits.reduce((sum, s) => sum + (parseInt(s.bags) || 0), 0)} bags
-                                            </span>
-                                        </div>
-                                    </div>
-                                    {selectedBatch && (
-                                        <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-zinc-700/50">
-                                            <span className="text-zinc-400">Remaining Raw</span>
-                                            <span
-                                                className={cn(
-                                                    'font-medium',
-                                                    selectedBatch.raw_weight -
-                                                        flavorSplits.reduce((sum, s) => {
-                                                            const bags = parseInt(s.bags) || 0;
-                                                            const ozPerBag = s.product?.startsWith('8oz')
-                                                                ? 8
-                                                                : s.product?.startsWith('5oz')
-                                                                  ? 5
-                                                                  : 0;
-                                                            return sum + (bags * ozPerBag) / 16;
-                                                        }, 0) <
-                                                        0
-                                                        ? 'text-red-400'
-                                                        : 'text-emerald-400',
-                                                )}
-                                            >
-                                                {(
-                                                    selectedBatch.raw_weight -
-                                                    flavorSplits.reduce((sum, s) => {
-                                                        const bags = parseInt(s.bags) || 0;
-                                                        const ozPerBag = s.product?.startsWith('8oz')
-                                                            ? 8
-                                                            : s.product?.startsWith('5oz')
-                                                              ? 5
-                                                              : 0;
-                                                        return sum + (bags * ozPerBag) / 16;
-                                                    }, 0)
-                                                ).toFixed(2)}{' '}
-                                                lbs
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
                         </div>
-                    </div>
+                    )}
 
                     <DialogFooter>
                         <Button
@@ -1427,11 +1401,32 @@ export default function ProductionDashboard() {
                             Cancel
                         </Button>
                         <Button
+                            onClick={async () => {
+                                if (!selectedBatch) return;
+                                // Transform flavorSplits into required format: { flavor, size_grams, bags }
+                                const splits = flavorSplits.map((split) => {
+                                    const product = products.find((p) => String(p.id) === String(split.product));
+                                    return {
+                                        flavor: product?.flavor || '',
+                                        size_grams: product?.size_grams || 0,
+                                        bags: parseInt(split.bags, 10) || 0,
+                                    };
+                                });
+
+                                const res = await convertToFinishedGoods(selectedBatch.production_id, splits);
+
+                                if (res?.success) {
+                                    setConvertDialogOpen(false);
+                                    setFlavorSplits([{ id: 1, product: '', bags: '' }]);
+                                    getBatches().then(setBatches);
+                                } else {
+                                    // Optionally handle/display error, e.g. setError(res?.message);
+                                }
+                            }}
                             disabled={
-                                !convertYield ||
-                                !convertProduct ||
-                                yieldExceedsCapacity ||
-                                parseInt(convertYield, 10) <= 0
+                                !selectedBatch ||
+                                flavorSplits.length === 0 ||
+                                flavorSplits.some((s) => !s.product || !s.bags || parseInt(s.bags, 10) <= 0)
                             }
                             className="bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50"
                         >

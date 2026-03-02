@@ -8,11 +8,14 @@ export async function getBatches() {
     const { data, error } = await supabase
         .from('production_batches')
         .select(`
-    *,
-    suppliers (
-      name
-    )
-  `)
+            *,
+            suppliers (
+                name
+            ),
+            finished_bags (
+                stock_quantity
+            )
+        `)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
