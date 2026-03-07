@@ -2,8 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { withSentryAction } from '@/lib/sentry/with-sentry-action';
 
-export async function deleteBatch(batchId) {
+async function deleteBatchHandler(batchId) {
     const supabase = await createClient();
 
     const { data, error } = await supabase.rpc('delete_production_batch', {
@@ -13,3 +14,5 @@ export async function deleteBatch(batchId) {
     revalidatePath('/admin/production');
     return { success: true, message: `Batch deleted batch!` };
 }
+
+export const deleteBatch = withSentryAction('deleteBatch', deleteBatchHandler);

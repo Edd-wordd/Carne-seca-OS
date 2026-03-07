@@ -64,7 +64,7 @@ export default function DeleteBatchDialog({ open, onOpenChange, batchToDelete, o
                                     <span className="text-zinc-200">
                                         {formatCurrency(
                                             batchToDelete.total_cost ??
-                                                (batchToDelete.initial_weight * batchToDelete.cost_per_pound),
+                                                batchToDelete.initial_weight * batchToDelete.cost_per_pound,
                                         )}
                                     </span>
                                 </div>

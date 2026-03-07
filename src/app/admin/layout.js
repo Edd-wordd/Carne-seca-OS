@@ -327,7 +327,7 @@ export default function AdminLayout({ children }) {
                                 </span>
                                 Stripe
                             </span>
-                                <span className="h-3 w-px bg-zinc-700" />
+                            <span className="h-3 w-px bg-zinc-700" />
                             <span className="flex items-center gap-1.5 text-[10px] text-zinc-500">
                                 <span className="relative flex size-1.5">
                                     <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-60" />
@@ -335,6 +335,17 @@ export default function AdminLayout({ children }) {
                                 </span>
                                 DB
                             </span>
+                            <span className="h-3 w-px bg-zinc-700" />
+                            <a
+                                href="https://eddwordd.sentry.io/issues/?project=4510999211147344"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 text-[10px] text-zinc-400 transition-colors hover:text-zinc-200"
+                            >
+                                <span className="relative flex size-1.5 rounded-full bg-red-500" />
+                                <span>0 errors in last 24h</span>
+                                <ExternalLink className="size-2.5 opacity-60" />
+                            </a>
                         </div>
                         <Sheet>
                             <SheetTrigger asChild>
