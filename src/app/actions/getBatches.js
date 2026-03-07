@@ -1,13 +1,15 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { withSentryAction } from '@/lib/sentry/with-sentry-action';
 
-export async function getBatches() {
+async function getBatchesHandler() {
     const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('production_batches')
-        .select(`
+        .select(
+            `
             *,
             suppliers (
                 name
@@ -15,7 +17,8 @@ export async function getBatches() {
             finished_bags (
                 stock_quantity
             )
-        `)
+        `,
+        )
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
@@ -25,3 +28,5 @@ export async function getBatches() {
 
     return data;
 }
+
+export const getBatches = withSentryAction('getBatches', getBatchesHandler);

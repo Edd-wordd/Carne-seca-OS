@@ -2,8 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { withSentryAction } from '@/lib/sentry/with-sentry-action';
 
-export async function updateBatch(production_id, raw_weight, cost_per_pound) {
+async function updateBatchHandler(production_id, raw_weight, cost_per_pound) {
     const supabase = await createClient();
 
     const { data, error } = await supabase.rpc('update_production_batch', {
@@ -20,3 +21,4 @@ export async function updateBatch(production_id, raw_weight, cost_per_pound) {
     revalidatePath('/admin/production');
     return { success: true, message: `${data}updated row!` };
 }
+export const updateBatch = withSentryAction('updateBatch', updateBatchHandler);

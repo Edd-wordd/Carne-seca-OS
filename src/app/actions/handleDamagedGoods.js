@@ -2,8 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { withSentryAction } from '@/lib/sentry/with-sentry-action';
 
-export async function handleDamagedGoods(production_id, amount_lost, reason) {
+async function handleDamagedGoodsHandler(production_id, amount_lost, reason) {
     const supabase = await createClient();
     try {
         const { data, error } = await supabase.rpc('handle_damaged_goods', {
@@ -21,3 +22,5 @@ export async function handleDamagedGoods(production_id, amount_lost, reason) {
         if (error) return { success: false, message: error.message };
     }
 }
+
+export const handleDamagedGoods = withSentryAction('handleDamagedGoods', handleDamagedGoodsHandler);

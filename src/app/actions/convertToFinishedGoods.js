@@ -2,8 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { withSentryAction } from '@/lib/sentry/with-sentry-action';
 
-export async function convertToFinishedGoods(productId, flavorSplits) {
+async function convertToFinishedGoodsHandler(productId, flavorSplits) {
     const supabase = await createClient();
     try {
         const { data, error } = await supabase.rpc('convert_finished_goods', {
@@ -20,3 +21,5 @@ export async function convertToFinishedGoods(productId, flavorSplits) {
         if (error) return { success: false, message: error.message };
     }
 }
+
+export const convertToFinishedGoods = withSentryAction('convertToFinishedGoods', convertToFinishedGoodsHandler);

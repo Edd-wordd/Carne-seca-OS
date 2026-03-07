@@ -2,10 +2,11 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { withSentryAction } from '@/lib/sentry/with-sentry-action';
 
 const NEW_SUPPLIER_VALUE = '__new__';
 
-export async function submitProductionBatch(prevState, formData) {
+async function createProductionBatchHandler(prevState, formData) {
     const supabase = await createClient();
 
     let supplierId = formData.get('supplierId');
@@ -47,3 +48,5 @@ export async function submitProductionBatch(prevState, formData) {
     revalidatePath('/admin/production');
     return { success: true, message: `Batch ${batchNumber} created successfully!` };
 }
+
+export const createProductionBatch = withSentryAction('createProductionBatch', createProductionBatchHandler);

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
-import { submitProductionBatch } from '@/app/actions/submitProductionBatch';
+import { createProductionBatch } from '@/app/actions/createProductionBatch';
 
 const COST_PER_LB = 8.5;
 
@@ -21,7 +21,7 @@ export default function CreateBatchDialog({ suppliers = [], onSuccess }) {
     const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
     const [confirmBatchOpen, setConfirmBatchOpen] = React.useState(false);
     const createBatchFormRef = React.useRef(null);
-    const [state, formAction] = React.useActionState(submitProductionBatch, null);
+    const [state, formAction] = React.useActionState(createProductionBatch, null);
     const [newSupplier, setNewSupplier] = React.useState('');
     const [newRawWeight, setNewRawWeight] = React.useState('');
     const [newCost, setNewCost] = React.useState('');
@@ -283,7 +283,7 @@ export default function CreateBatchDialog({ suppliers = [], onSuccess }) {
                                 type="button"
                                 onClick={() => setConfirmBatchOpen(true)}
                             >
-                                Submit Batch
+                                Create Batch
                             </Button>
                         </DialogFooter>
                     </form>
