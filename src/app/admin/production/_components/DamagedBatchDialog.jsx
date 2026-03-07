@@ -43,7 +43,7 @@ export default function DamagedBatchDialog({ open, onOpenChange, batchToDamage, 
             const result = await handleDamagedGoods(productionId, weight, damagedReason);
 
             if (result.success) {
-                onOpenChange(null);
+                onOpenChange(false);
                 onSuccess?.();
                 const toastMsg = isPartial
                     ? `Batch ${batchNumber} partially damaged (${weight} lbs)`
@@ -68,7 +68,7 @@ export default function DamagedBatchDialog({ open, onOpenChange, batchToDamage, 
                 </div>
             )}
 
-            <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onOpenChange(null)}>
+            <Dialog open={open} onOpenChange={onOpenChange}>
                 <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="text-zinc-100">Mark as Damaged</DialogTitle>
@@ -146,7 +146,7 @@ export default function DamagedBatchDialog({ open, onOpenChange, batchToDamage, 
                             <DialogFooter>
                                 <Button
                                     variant="outline"
-                                    onClick={() => onOpenChange(null)}
+                                    onClick={() => onOpenChange(false)}
                                     className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
                                 >
                                     Cancel

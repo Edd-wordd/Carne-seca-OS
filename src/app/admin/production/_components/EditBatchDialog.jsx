@@ -37,7 +37,7 @@ export default function EditBatchDialog({ open, onOpenChange, batchToEdit, onSuc
                 </div>
             )}
 
-            <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onOpenChange(null)}>
+            <Dialog open={open} onOpenChange={onOpenChange}>
                 <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="text-zinc-100">Edit Batch</DialogTitle>
@@ -82,7 +82,7 @@ export default function EditBatchDialog({ open, onOpenChange, batchToEdit, onSuc
                             <DialogFooter>
                                 <Button
                                     variant="outline"
-                                    onClick={() => onOpenChange(null)}
+                                    onClick={() => onOpenChange(false)}
                                     className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
                                 >
                                     Close
@@ -96,7 +96,7 @@ export default function EditBatchDialog({ open, onOpenChange, batchToEdit, onSuc
                                             parseFloat(editCostPerPound),
                                         );
                                         if (result.success) {
-                                            onOpenChange(null);
+                                            onOpenChange(false);
                                             onSuccess?.();
                                             setEditToastMessage(`Batch ${batchNumber} updated successfully`);
                                             setEditToastVisible(true);

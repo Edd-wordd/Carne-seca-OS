@@ -11,8 +11,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, MoreHorizontal, Download, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, MoreHorizontal, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn, formatCurrency, isProcessingStatus, getStatusConfig, getYieldBadgeConfig } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 import { exportBatchesToCsv } from '@/lib/utils/exportBatches';
 import { getSuppliers } from '@/app/actions/getSuppliers';
 import { getBatches } from '@/app/actions/getBatches';
@@ -41,11 +42,22 @@ export default function ProductionDashboard() {
     const [batchToEdit, setBatchToEdit] = React.useState(null);
     const [damagedDialogOpen, setDamagedDialogOpen] = React.useState(false);
     const [batchToDamage, setBatchToDamage] = React.useState(null);
-
     const [suppliers, setSuppliers] = React.useState([]);
+    const [isLoading, setIsLoading] = React.useState(true);
 
     React.useEffect(() => {
-        getBatches().then(setBatches);
+        const fetchBatches = async () => {
+            setIsLoading(true);
+            try {
+                const data = await getBatches();
+                setBatches(data ?? []);
+            } catch (error) {
+                console.error('Failed to fetch batches:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchBatches();
     }, []);
 
     React.useEffect(() => {
@@ -117,6 +129,18 @@ export default function ProductionDashboard() {
         setDeleteDialogOpen(true);
     };
 
+    const refreshBatches = React.useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const data = await getBatches();
+            setBatches(data ?? []);
+        } catch (error) {
+            console.error('Failed to refresh batches:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -125,51 +149,56 @@ export default function ProductionDashboard() {
                     <h1 className="text-zinc-100 text-xl font-semibold tracking-tight">Production Command Center</h1>
                     <p className="text-zinc-400 mt-0.5 text-sm">Real-time operations visibility & batch management</p>
                 </div>
-                <CreateBatchDialog suppliers={suppliers} onSuccess={() => getBatches().then(setBatches)} />
+                <CreateBatchDialog suppliers={suppliers} onSuccess={refreshBatches} />
             </div>
 
             <EditBatchDialog
                 open={editDialogOpen}
-                onOpenChange={(batch) => {
-                    setEditDialogOpen(!!batch);
-                    setBatchToEdit(batch);
+                onOpenChange={(open) => {
+                    setEditDialogOpen(open);
+                    if (!open) setBatchToEdit(null);
                 }}
                 batchToEdit={batchToEdit}
-                onSuccess={() => getBatches().then(setBatches)}
+                onSuccess={refreshBatches}
             />
 
             <DamagedBatchDialog
                 open={damagedDialogOpen}
-                onOpenChange={(batch) => {
-                    setDamagedDialogOpen(!!batch);
-                    setBatchToDamage(batch);
+                onOpenChange={(open) => {
+                    setDamagedDialogOpen(open);
+                    if (!open) setBatchToDamage(null);
                 }}
                 batchToDamage={batchToDamage}
-                onSuccess={() => getBatches().then(setBatches)}
+                onSuccess={refreshBatches}
             />
 
             <ConvertBatchDialog
                 open={convertDialogOpen}
-                onOpenChange={(batch) => {
-                    setConvertDialogOpen(!!batch);
-                    setSelectedBatch(batch);
+                onOpenChange={(open) => {
+                    setConvertDialogOpen(open);
+                    if (!open) setSelectedBatch(null);
                 }}
                 selectedBatch={selectedBatch}
                 products={products}
-                onSuccess={() => getBatches().then(setBatches)}
+                onSuccess={refreshBatches}
             />
 
             <DeleteBatchDialog
                 open={deleteDialogOpen}
-                onOpenChange={(batch) => {
-                    setDeleteDialogOpen(!!batch);
-                    setBatchToDelete(batch);
+                onOpenChange={(open) => {
+                    setDeleteDialogOpen(open);
+                    if (!open) setBatchToDelete(null);
                 }}
                 batchToDelete={batchToDelete}
-                onSuccess={() => getBatches().then(setBatches)}
+                onSuccess={refreshBatches}
             />
 
-            <ProductionKPIs batches={filteredBatches} date={dateRange} onDateChange={setDateRange} />
+            <ProductionKPIs
+                batches={filteredBatches}
+                date={dateRange}
+                onDateChange={setDateRange}
+                isLoading={isLoading}
+            />
 
             {/* Filters & Controls */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -245,10 +274,7 @@ export default function ProductionDashboard() {
                     <TableHeader>
                         <TableRow className="border-zinc-700/80 hover:!bg-transparent">
                             <TableHead className="text-zinc-500 h-8 px-2 text-xs">
-                                <button className="flex items-center gap-1 hover:text-zinc-300 transition-colors">
-                                    Batch ID
-                                    <ArrowUpDown className="size-2.5" />
-                                </button>
+                                Batch ID
                             </TableHead>
                             <TableHead className="text-zinc-500 h-8 px-2 text-xs hidden md:table-cell">
                                 Supplier
@@ -270,7 +296,43 @@ export default function ProductionDashboard() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedBatches.length === 0 ? (
+                        {isLoading ? (
+                            Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                                <TableRow key={i} className="border-zinc-700/80">
+                                    <TableCell className="px-2 py-2.5">
+                                        <Skeleton className="h-4 w-20" />
+                                        <Skeleton className="mt-1 h-3 w-24" />
+                                    </TableCell>
+                                    <TableCell className="px-2 py-2.5 hidden md:table-cell">
+                                        <Skeleton className="h-4 w-28" />
+                                    </TableCell>
+                                    <TableCell className="px-2 py-2.5">
+                                        <Skeleton className="h-4 w-14" />
+                                    </TableCell>
+                                    <TableCell className="px-2 py-2.5 hidden sm:table-cell">
+                                        <Skeleton className="h-4 w-12" />
+                                    </TableCell>
+                                    <TableCell className="px-2 py-2.5">
+                                        <Skeleton className="h-5 w-12 rounded-full" />
+                                    </TableCell>
+                                    <TableCell className="px-2 py-2.5">
+                                        <Skeleton className="h-4 w-8" />
+                                    </TableCell>
+                                    <TableCell className="px-2 py-2.5">
+                                        <Skeleton className="h-4 w-16" />
+                                    </TableCell>
+                                    <TableCell className="px-2 py-2.5 hidden lg:table-cell">
+                                        <Skeleton className="h-4 w-24" />
+                                    </TableCell>
+                                    <TableCell className="px-2 py-2.5 hidden xl:table-cell">
+                                        <Skeleton className="h-4 w-16" />
+                                    </TableCell>
+                                    <TableCell className="px-2 py-2.5 w-12">
+                                        <Skeleton className="h-7 w-7 rounded" />
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : paginatedBatches.length === 0 ? (
                             <TableRow className="border-zinc-700/80">
                                 <TableCell colSpan={10} className="text-zinc-400 py-8 text-center text-xs">
                                     No batches found matching your filters.

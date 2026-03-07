@@ -29,7 +29,7 @@ export default function DeleteBatchDialog({ open, onOpenChange, batchToDelete, o
                 </div>
             )}
 
-            <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onOpenChange(null)}>
+            <Dialog open={open} onOpenChange={onOpenChange}>
                 <DialogContent className="bg-zinc-900 border-zinc-700 sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="text-zinc-100 flex items-center gap-2">
@@ -75,7 +75,7 @@ export default function DeleteBatchDialog({ open, onOpenChange, batchToDelete, o
                     <DialogFooter className="gap-3">
                         <Button
                             variant="outline"
-                            onClick={() => onOpenChange(null)}
+                            onClick={() => onOpenChange(false)}
                             className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
                         >
                             Cancel
@@ -87,7 +87,7 @@ export default function DeleteBatchDialog({ open, onOpenChange, batchToDelete, o
                                 if (!batchToDelete) return;
                                 const batchNumber = batchToDelete.batch_number;
                                 const id = batchToDelete.production_id ?? batchToDelete.id;
-                                onOpenChange(null);
+                                onOpenChange(false);
                                 await deleteBatch(id);
                                 onSuccess?.();
                                 setDeleteToastMessage(`Batch ${batchNumber} deleted successfully`);

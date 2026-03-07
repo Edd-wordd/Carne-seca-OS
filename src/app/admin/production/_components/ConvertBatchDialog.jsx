@@ -26,7 +26,7 @@ export default function ConvertBatchDialog({ open, onOpenChange, selectedBatch, 
     }, [selectedBatch]);
 
     return (
-        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onOpenChange(null)}>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle className="text-zinc-100">Convert to Finished Goods</DialogTitle>
@@ -235,7 +235,7 @@ export default function ConvertBatchDialog({ open, onOpenChange, selectedBatch, 
                 <DialogFooter>
                     <Button
                         variant="outline"
-                        onClick={() => onOpenChange(null)}
+                        onClick={() => onOpenChange(false)}
                         className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
                     >
                         Cancel
@@ -255,7 +255,7 @@ export default function ConvertBatchDialog({ open, onOpenChange, selectedBatch, 
                             const res = await convertToFinishedGoods(selectedBatch.production_id, splits);
 
                             if (res?.success) {
-                                onOpenChange(null);
+                                onOpenChange(false);
                                 setFlavorSplits([{ id: 1, product: '', bags: '' }]);
                                 onSuccess?.();
                             }
