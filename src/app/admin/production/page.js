@@ -273,9 +273,7 @@ export default function ProductionDashboard() {
                 <Table>
                     <TableHeader>
                         <TableRow className="border-zinc-700/80 hover:!bg-transparent">
-                            <TableHead className="text-zinc-500 h-8 px-2 text-xs">
-                                Batch ID
-                            </TableHead>
+                            <TableHead className="text-zinc-500 h-8 px-2 text-xs">Batch ID</TableHead>
                             <TableHead className="text-zinc-500 h-8 px-2 text-xs hidden md:table-cell">
                                 Supplier
                             </TableHead>
@@ -360,7 +358,7 @@ export default function ProductionDashboard() {
                                             {batch.suppliers?.name || 'Unknown Supplier'}
                                         </TableCell>
                                         <TableCell className="text-zinc-100 px-2 py-2.5 tabular-nums text-xs font-medium group-hover:text-white">
-                                            {batch.raw_weight.toFixed(1)} lbs
+                                            {batch.raw_weight != null ? `${batch.raw_weight.toFixed(1)} lbs` : '—'}
                                         </TableCell>
                                         <TableCell className="text-zinc-400 px-2 py-2.5 tabular-nums text-xs hidden sm:table-cell group-hover:text-zinc-300">
                                             {formatCurrency(batch.cost_per_pound)}

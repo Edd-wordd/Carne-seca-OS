@@ -12,12 +12,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updateBatch } from '@/app/actions/updateBatch';
+import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
 
 export default function EditBatchDialog({ open, onOpenChange, batchToEdit, onSuccess }) {
     const [editRawWeight, setEditRawWeight] = React.useState('');
     const [editCostPerPound, setEditCostPerPound] = React.useState('');
     const [editToastVisible, setEditToastVisible] = React.useState(false);
     const [editToastMessage, setEditToastMessage] = React.useState('');
+    const { captureError, captureMessage } = useSentryCapture('EditBatchDialog');
 
     React.useEffect(() => {
         if (batchToEdit) {
@@ -90,17 +92,23 @@ export default function EditBatchDialog({ open, onOpenChange, batchToEdit, onSuc
                                 <Button
                                     onClick={async () => {
                                         const batchNumber = batchToEdit.batch_number;
-                                        const result = await updateBatch(
-                                            batchToEdit.production_id,
-                                            parseFloat(editRawWeight),
-                                            parseFloat(editCostPerPound),
-                                        );
-                                        if (result.success) {
-                                            onOpenChange(false);
-                                            onSuccess?.();
-                                            setEditToastMessage(`Batch ${batchNumber} updated successfully`);
-                                            setEditToastVisible(true);
-                                            setTimeout(() => setEditToastVisible(false), 4000);
+                                        try {
+                                            const result = await updateBatch(
+                                                batchToEdit.production_id,
+                                                parseFloat(editRawWeight),
+                                                parseFloat(editCostPerPound),
+                                            );
+                                            if (result.success) {
+                                                onOpenChange(false);
+                                                onSuccess?.();
+                                                setEditToastMessage(`Batch ${batchNumber} updated successfully`);
+                                                setEditToastVisible(true);
+                                                setTimeout(() => setEditToastVisible(false), 4000);
+                                            } else {
+                                                captureMessage(result.message);
+                                            }
+                                        } catch (err) {
+                                            captureError(err);
                                         }
                                     }}
                                     className="bg-indigo-600 text-white hover:bg-indigo-500"

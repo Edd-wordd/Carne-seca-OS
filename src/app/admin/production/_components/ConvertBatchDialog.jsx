@@ -15,9 +15,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Package, Scale, Trash2 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { convertToFinishedGoods } from '@/app/actions/convertToFinishedGoods';
+import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
 
 export default function ConvertBatchDialog({ open, onOpenChange, selectedBatch, products = [], onSuccess }) {
     const [flavorSplits, setFlavorSplits] = React.useState([{ id: 1, product: '', bags: '' }]);
+    const { captureError, captureMessage } = useSentryCapture('ConvertBatchDialog');
 
     React.useEffect(() => {
         if (selectedBatch) {
@@ -87,10 +89,7 @@ export default function ConvertBatchDialog({ open, onOpenChange, selectedBatch, 
                                     variant="ghost"
                                     size="sm"
                                     onClick={() =>
-                                        setFlavorSplits([
-                                            ...flavorSplits,
-                                            { id: Date.now(), product: '', bags: '' },
-                                        ])
+                                        setFlavorSplits([...flavorSplits, { id: Date.now(), product: '', bags: '' }])
                                     }
                                     className="h-7 px-2 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10"
                                 >
@@ -104,9 +103,7 @@ export default function ConvertBatchDialog({ open, onOpenChange, selectedBatch, 
                                         key={split.id}
                                         className="flex items-center gap-2 rounded-md border border-zinc-700/50 bg-zinc-800/30 px-2 py-1.5"
                                     >
-                                        <span className="text-[10px] font-medium text-zinc-500 w-4">
-                                            {index + 1}
-                                        </span>
+                                        <span className="text-[10px] font-medium text-zinc-500 w-4">{index + 1}</span>
                                         <Select
                                             value={split.product}
                                             onValueChange={(value) => {
@@ -181,8 +178,7 @@ export default function ConvertBatchDialog({ open, onOpenChange, selectedBatch, 
                                             </span>
                                             <span className="text-zinc-500">|</span>
                                             <span className="text-zinc-300">
-                                                {flavorSplits.reduce((sum, s) => sum + (parseInt(s.bags) || 0), 0)}{' '}
-                                                bags
+                                                {flavorSplits.reduce((sum, s) => sum + (parseInt(s.bags) || 0), 0)} bags
                                             </span>
                                         </div>
                                     </div>
@@ -200,8 +196,7 @@ export default function ConvertBatchDialog({ open, onOpenChange, selectedBatch, 
                                                         const grams = product?.size_grams || 0;
                                                         return sum + (bags * grams) / 453.592;
                                                     }, 0);
-                                                    const yieldPct =
-                                                        (driedLbs / selectedBatch.raw_weight) * 100;
+                                                    const yieldPct = (driedLbs / selectedBatch.raw_weight) * 100;
                                                     return yieldPct > 50
                                                         ? 'text-amber-400'
                                                         : yieldPct >= 30
@@ -219,9 +214,7 @@ export default function ConvertBatchDialog({ open, onOpenChange, selectedBatch, 
                                                     const grams = product?.size_grams || 0;
                                                     return sum + (bags * grams) / 453.592;
                                                 }, 0);
-                                                return (
-                                                    ((driedLbs / selectedBatch.raw_weight) * 100).toFixed(1)
-                                                );
+                                                return ((driedLbs / selectedBatch.raw_weight) * 100).toFixed(1);
                                             })()}
                                             %
                                         </span>
@@ -251,13 +244,18 @@ export default function ConvertBatchDialog({ open, onOpenChange, selectedBatch, 
                                     bags: parseInt(split.bags, 10) || 0,
                                 };
                             });
+                            try {
+                                const res = await convertToFinishedGoods(selectedBatch.production_id, splits);
 
-                            const res = await convertToFinishedGoods(selectedBatch.production_id, splits);
-
-                            if (res?.success) {
-                                onOpenChange(false);
-                                setFlavorSplits([{ id: 1, product: '', bags: '' }]);
-                                onSuccess?.();
+                                if (res?.success) {
+                                    onOpenChange(false);
+                                    setFlavorSplits([{ id: 1, product: '', bags: '' }]);
+                                    onSuccess?.();
+                                } else {
+                                    captureMessage(res.error);
+                                }
+                            } catch (err) {
+                                captureError(err);
                             }
                         }}
                         disabled={

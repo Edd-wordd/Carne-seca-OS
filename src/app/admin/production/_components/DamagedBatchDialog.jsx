@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { AlertTriangle } from 'lucide-react';
 import { useTransition } from 'react';
 import { handleDamagedGoods } from '@/app/actions/handleDamagedGoods';
+import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
 
 export default function DamagedBatchDialog({ open, onOpenChange, batchToDamage, onSuccess }) {
     const [damagedType, setDamagedType] = React.useState('full');
@@ -22,6 +23,7 @@ export default function DamagedBatchDialog({ open, onOpenChange, batchToDamage, 
     const [damagedToastVisible, setDamagedToastVisible] = React.useState(false);
     const [damagedToastMessage, setDamagedToastMessage] = React.useState('');
     const [isPending, startTransition] = useTransition();
+    const { captureError, captureMessage } = useSentryCapture('DamagedBatchDialog');
 
     React.useEffect(() => {
         if (batchToDamage) {
@@ -40,19 +42,23 @@ export default function DamagedBatchDialog({ open, onOpenChange, batchToDamage, 
         const productionId = batchToDamage.production_id;
 
         startTransition(async () => {
-            const result = await handleDamagedGoods(productionId, weight, damagedReason);
+            try {
+                const result = await handleDamagedGoods(productionId, weight, damagedReason);
 
-            if (result.success) {
-                onOpenChange(false);
-                onSuccess?.();
-                const toastMsg = isPartial
-                    ? `Batch ${batchNumber} partially damaged (${weight} lbs)`
-                    : `Batch ${batchNumber} marked as damaged`;
-                setDamagedToastMessage(toastMsg);
-                setDamagedToastVisible(true);
-                setTimeout(() => setDamagedToastVisible(false), 4000);
-            } else {
-                console.error(result.message);
+                if (result.success) {
+                    onOpenChange(false);
+                    onSuccess?.();
+                    const toastMsg = isPartial
+                        ? `Batch ${batchNumber} partially damaged (${weight} lbs)`
+                        : `Batch ${batchNumber} marked as damaged`;
+                    setDamagedToastMessage(toastMsg);
+                    setDamagedToastVisible(true);
+                    setTimeout(() => setDamagedToastVisible(false), 4000);
+                } else {
+                    captureMessage(result.message);
+                }
+            } catch (err) {
+                captureError(err);
             }
         });
     };

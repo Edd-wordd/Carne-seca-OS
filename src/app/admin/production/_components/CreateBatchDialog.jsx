@@ -14,8 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { createProductionBatch } from '@/app/actions/createProductionBatch';
-
-const COST_PER_LB = 8.5;
+import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
 
 export default function CreateBatchDialog({ suppliers = [], onSuccess }) {
     const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
@@ -33,6 +32,7 @@ export default function CreateBatchDialog({ suppliers = [], onSuccess }) {
     const [supplierPhoneError, setSupplierPhoneError] = React.useState('');
     const [supplierEmailError, setSupplierEmailError] = React.useState('');
     const [toastVisible, setToastVisible] = React.useState(false);
+    const { captureMessage } = useSentryCapture('CreateBatchDialog');
 
     const isNewSupplier = newSupplier === '__new__';
 
@@ -72,7 +72,7 @@ export default function CreateBatchDialog({ suppliers = [], onSuccess }) {
             (!newSupplierEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newSupplierEmail)) &&
             (!newSupplierPhone || !/[a-zA-Z]/.test(newSupplierPhone)));
 
-    const costPerPound = newCost && parseFloat(newCost) >= 0 ? parseFloat(newCost) : COST_PER_LB;
+    const costPerPound = newCost && parseFloat(newCost) >= 0 ? parseFloat(newCost) : 0;
     const supplierName = isNewSupplier
         ? newSupplierName
         : (suppliers.find((s) => s.supplier_id === newSupplier)?.name ?? newSupplier);
@@ -97,6 +97,7 @@ export default function CreateBatchDialog({ suppliers = [], onSuccess }) {
             const t = setTimeout(() => setToastVisible(false), 4000);
             return () => clearTimeout(t);
         } else {
+            if (state?.message) captureMessage(state.message);
             setToastVisible(false);
         }
     }, [state, onSuccess]);

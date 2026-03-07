@@ -13,10 +13,12 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 import { deleteBatch } from '@/app/actions/deleteBatch';
 import { formatCurrency } from '@/lib/utils';
+import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
 
 export default function DeleteBatchDialog({ open, onOpenChange, batchToDelete, onSuccess }) {
     const [deleteToastVisible, setDeleteToastVisible] = React.useState(false);
     const [deleteToastMessage, setDeleteToastMessage] = React.useState('');
+    const { captureError } = useSentryCapture('DeleteBatchDialog');
 
     return (
         <>
@@ -88,11 +90,15 @@ export default function DeleteBatchDialog({ open, onOpenChange, batchToDelete, o
                                 const batchNumber = batchToDelete.batch_number;
                                 const id = batchToDelete.production_id ?? batchToDelete.id;
                                 onOpenChange(false);
-                                await deleteBatch(id);
-                                onSuccess?.();
-                                setDeleteToastMessage(`Batch ${batchNumber} deleted successfully`);
-                                setDeleteToastVisible(true);
-                                setTimeout(() => setDeleteToastVisible(false), 4000);
+                                try {
+                                    await deleteBatch(id);
+                                    onSuccess?.();
+                                    setDeleteToastMessage(`Batch ${batchNumber} deleted successfully`);
+                                    setDeleteToastVisible(true);
+                                    setTimeout(() => setDeleteToastVisible(false), 4000);
+                                } catch (err) {
+                                    captureError(err);
+                                }
                             }}
                             className="bg-red-600 text-white hover:bg-red-500 disabled:opacity-50"
                         >
