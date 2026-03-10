@@ -3,6 +3,7 @@ import { Toaster } from 'sonner';
 import ConditionalHeader from '../components/layout/ConditionalHeader';
 import StoreHeader from '../components/layout/StoreHeader';
 import './globals.css';
+import PosthogProvider from './providers/PosthogProvider.jsx';
 
 const geistSans = Geist({
     variable: '--font-geist-sans',
@@ -21,13 +22,13 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="en">
-            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                <ConditionalHeader storeHeader={<StoreHeader />}>
-                {children}
-                </ConditionalHeader>
-                <Toaster position="top-center" richColors />
-            </body>
-        </html>
+        <PosthogProvider>
+            <html lang="en">
+                <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+                    <ConditionalHeader storeHeader={<StoreHeader />}>{children}</ConditionalHeader>
+                    <Toaster position="top-center" richColors />
+                </body>
+            </html>
+        </PosthogProvider>
     );
 }

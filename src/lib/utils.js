@@ -34,6 +34,12 @@ export function isProcessingStatus(status) {
     return s === 'pending' || s === 'processing' || s === 'partial_damaged' || s === 'partial';
 }
 
+export function isDamagedStatus(status) {
+    if (!status) return false;
+    const s = String(status).toLowerCase();
+    return s === 'damaged' || s === 'full_damaged';
+}
+
 export function getStatusConfig(status) {
     if (status == null || status === '') {
         return { label: '—', className: 'text-zinc-500' };

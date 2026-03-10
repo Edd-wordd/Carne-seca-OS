@@ -15,6 +15,7 @@ import { Plus } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { createProductionBatch } from '@/app/actions/createProductionBatch';
 import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
+import { usePosthogCapture } from '@/lib/posthog/use-posthog-capture';
 
 export default function CreateBatchDialog({ suppliers = [], onSuccess }) {
     const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
@@ -33,6 +34,7 @@ export default function CreateBatchDialog({ suppliers = [], onSuccess }) {
     const [supplierEmailError, setSupplierEmailError] = React.useState('');
     const [toastVisible, setToastVisible] = React.useState(false);
     const { captureMessage } = useSentryCapture('CreateBatchDialog');
+    const capture = usePosthogCapture('CreateBatchDialog');
 
     const isNewSupplier = newSupplier === '__new__';
 
@@ -83,6 +85,12 @@ export default function CreateBatchDialog({ suppliers = [], onSuccess }) {
 
     React.useEffect(() => {
         if (state?.success) {
+            capture('batchCreated', {
+                raw_weight: newRawWeight,
+                cost_per_pound: newCost,
+                is_new_supplier: isNewSupplier,
+                supplier: supplierName,
+            });
             setCreateDialogOpen(false);
             setConfirmBatchOpen(false);
             setNewSupplier('');

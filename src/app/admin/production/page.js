@@ -12,7 +12,14 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Search, MoreHorizontal, Download, ChevronLeft, ChevronRight } from 'lucide-react';
-import { cn, formatCurrency, isProcessingStatus, getStatusConfig, getYieldBadgeConfig } from '@/lib/utils';
+import {
+    cn,
+    formatCurrency,
+    isProcessingStatus,
+    getStatusConfig,
+    getYieldBadgeConfig,
+    isDamagedStatus,
+} from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { exportBatchesToCsv } from '@/lib/utils/exportBatches';
 import { getSuppliers } from '@/app/actions/getSuppliers';
@@ -93,6 +100,8 @@ export default function ProductionDashboard() {
         if (statusFilter !== 'all') {
             if (statusFilter === 'pending') {
                 result = result.filter((b) => isProcessingStatus(b.tracking_status));
+            } else if (statusFilter === 'damaged') {
+                result = result.filter((b) => isDamagedStatus(b.tracking_status));
             } else {
                 result = result.filter((b) => b.tracking_status?.toLowerCase() === statusFilter.toLowerCase());
             }

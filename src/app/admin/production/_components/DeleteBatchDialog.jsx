@@ -14,11 +14,13 @@ import { AlertTriangle, Trash2 } from 'lucide-react';
 import { deleteBatch } from '@/app/actions/deleteBatch';
 import { formatCurrency } from '@/lib/utils';
 import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
+import { usePosthogCapture } from '@/lib/posthog/use-posthog-capture';
 
 export default function DeleteBatchDialog({ open, onOpenChange, batchToDelete, onSuccess }) {
     const [deleteToastVisible, setDeleteToastVisible] = React.useState(false);
     const [deleteToastMessage, setDeleteToastMessage] = React.useState('');
     const { captureError } = useSentryCapture('DeleteBatchDialog');
+    const capture = usePosthogCapture('DeleteBatchDialog');
 
     return (
         <>
@@ -92,6 +94,14 @@ export default function DeleteBatchDialog({ open, onOpenChange, batchToDelete, o
                                 onOpenChange(false);
                                 try {
                                     await deleteBatch(id);
+                                    capture('batchDeleted', {
+                                        batchNumber: batchNumber,
+                                        supplier: batchToDelete.suppliers?.name ?? batchToDelete.supplier_name ?? '—',
+                                        raw_weight: batchToDelete.raw_weight?.toFixed(1),
+                                        total_cost:
+                                            batchToDelete.total_cost ??
+                                            batchToDelete.initial_weight * batchToDelete.cost_per_pound,
+                                    });
                                     onSuccess?.();
                                     setDeleteToastMessage(`Batch ${batchNumber} deleted successfully`);
                                     setDeleteToastVisible(true);

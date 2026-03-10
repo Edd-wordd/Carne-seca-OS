@@ -15,6 +15,7 @@ import { AlertTriangle } from 'lucide-react';
 import { useTransition } from 'react';
 import { handleDamagedGoods } from '@/app/actions/handleDamagedGoods';
 import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
+import { usePosthogCapture } from '@/lib/posthog/use-posthog-capture';
 
 export default function DamagedBatchDialog({ open, onOpenChange, batchToDamage, onSuccess }) {
     const [damagedType, setDamagedType] = React.useState('full');
@@ -24,6 +25,7 @@ export default function DamagedBatchDialog({ open, onOpenChange, batchToDamage, 
     const [damagedToastMessage, setDamagedToastMessage] = React.useState('');
     const [isPending, startTransition] = useTransition();
     const { captureError, captureMessage } = useSentryCapture('DamagedBatchDialog');
+    const capture = usePosthogCapture('DamagedBatchDialog');
 
     React.useEffect(() => {
         if (batchToDamage) {
@@ -48,6 +50,14 @@ export default function DamagedBatchDialog({ open, onOpenChange, batchToDamage, 
                 if (result.success) {
                     onOpenChange(false);
                     onSuccess?.();
+                    capture('batchDamaged', {
+                        batchNumber: batchNumber,
+                        weight: weight,
+                        isPartial: isPartial,
+                        productionId: productionId,
+                        damagedReason: damagedReason,
+                        supplier: batchToDamage.suppliers?.name ?? '—',
+                    });
                     const toastMsg = isPartial
                         ? `Batch ${batchNumber} partially damaged (${weight} lbs)`
                         : `Batch ${batchNumber} marked as damaged`;

@@ -21,6 +21,5 @@ export function useSentryCapture(componentName) {
             },
         });
     }
-
     return { captureError, captureMessage };
 }

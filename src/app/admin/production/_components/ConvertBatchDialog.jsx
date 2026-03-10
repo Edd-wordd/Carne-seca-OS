@@ -16,10 +16,12 @@ import { Plus, Package, Scale, Trash2 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { convertToFinishedGoods } from '@/app/actions/convertToFinishedGoods';
 import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
+import { usePosthogCapture } from '@/lib/posthog/use-posthog-capture';
 
 export default function ConvertBatchDialog({ open, onOpenChange, selectedBatch, products = [], onSuccess }) {
     const [flavorSplits, setFlavorSplits] = React.useState([{ id: 1, product: '', bags: '' }]);
     const { captureError, captureMessage } = useSentryCapture('ConvertBatchDialog');
+    const capture = usePosthogCapture('ConvertBatchDialog');
 
     React.useEffect(() => {
         if (selectedBatch) {
@@ -248,6 +250,21 @@ export default function ConvertBatchDialog({ open, onOpenChange, selectedBatch, 
                                 const res = await convertToFinishedGoods(selectedBatch.production_id, splits);
 
                                 if (res?.success) {
+                                    // We can capture details relevant to the conversion event. Example:
+                                    capture('batchConverted', {
+                                        production_id: selectedBatch.production_id,
+                                        batch_number: selectedBatch.batch_number,
+                                        raw_weight: selectedBatch.raw_weight,
+                                        splits: splits,
+                                        total_bags: splits.reduce((sum, s) => sum + s.bags, 0),
+                                        yield_percent: (() => {
+                                            const driedLbs = splits.reduce((sum, s) => {
+                                                return sum + (s.bags * s.size_grams) / 453.592;
+                                            }, 0);
+                                            return ((driedLbs / selectedBatch.raw_weight) * 100).toFixed(1);
+                                        })(),
+                                        supplier: selectedBatch.suppliers?.name ?? '',
+                                    });
                                     onOpenChange(false);
                                     setFlavorSplits([{ id: 1, product: '', bags: '' }]);
                                     onSuccess?.();
