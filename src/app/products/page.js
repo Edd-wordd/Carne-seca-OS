@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/lib/utils/helpers';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import AddToCartButton from '@/components/cart/AddItemButton';
 

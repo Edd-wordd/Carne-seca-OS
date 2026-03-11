@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { CheckCircle2, Package, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/lib/utils/helpers';
 
 // Hardcoded order details - connect API later
 const MOCK_ORDER = {

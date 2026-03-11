@@ -1,4 +1,4 @@
-import { createClient } from './server';
+import { createClient } from '../server';
 export const dynamic = 'force-dynamic'; // Add this at the top of the file
 import { cookies } from 'next/headers';
 

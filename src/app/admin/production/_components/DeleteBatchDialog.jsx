@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Trash2 } from 'lucide-react';
-import { deleteBatch } from '@/app/actions/deleteBatch';
-import { formatCurrency } from '@/lib/utils';
+import { deleteBatch } from '@/app/actions/production/deleteBatch';
+import { formatCurrency } from '@/lib/utils/helpers';
 import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
 import { usePosthogCapture } from '@/lib/posthog/use-posthog-capture';
 

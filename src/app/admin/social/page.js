@@ -1,13 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,13 +15,7 @@ import {
     DialogDescription,
     DialogFooter,
 } from '@/components/ui/dialog';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
     Share2,
@@ -48,7 +36,7 @@ import {
     RefreshCw,
     Zap,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/helpers';
 
 const PLATFORMS = [
     { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'text-pink-400', bg: 'bg-pink-500/10' },
@@ -61,14 +49,58 @@ const MOCK_ACCOUNTS = [
 ];
 
 const MOCK_POSTS = [
-    { id: 'p1', text: 'New batch of Premium Brisket 12oz just landed! 🥩 Limited run — grab yours before it\'s gone.', platforms: ['instagram', 'facebook'], status: 'published', scheduledAt: null, publishedAt: '2025-02-18T14:00', likes: 42, comments: 8, shares: 3 },
-    { id: 'p2', text: 'Behind the scenes: smokehouse prep at 5am 💨', platforms: ['instagram'], status: 'scheduled', scheduledAt: '2025-02-20T09:00', publishedAt: null, likes: 0, comments: 0, shares: 0 },
-    { id: 'p3', text: 'Wholesale partners: we\'re now taking orders for March. DM us for pricing.', platforms: ['instagram', 'facebook'], status: 'draft', scheduledAt: null, publishedAt: null, likes: 0, comments: 0, shares: 0 },
+    {
+        id: 'p1',
+        text: "New batch of Premium Brisket 12oz just landed! 🥩 Limited run — grab yours before it's gone.",
+        platforms: ['instagram', 'facebook'],
+        status: 'published',
+        scheduledAt: null,
+        publishedAt: '2025-02-18T14:00',
+        likes: 42,
+        comments: 8,
+        shares: 3,
+    },
+    {
+        id: 'p2',
+        text: 'Behind the scenes: smokehouse prep at 5am 💨',
+        platforms: ['instagram'],
+        status: 'scheduled',
+        scheduledAt: '2025-02-20T09:00',
+        publishedAt: null,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+    },
+    {
+        id: 'p3',
+        text: "Wholesale partners: we're now taking orders for March. DM us for pricing.",
+        platforms: ['instagram', 'facebook'],
+        status: 'draft',
+        scheduledAt: null,
+        publishedAt: null,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+    },
 ];
 
 const MOCK_DMS = [
-    { id: 'dm1', platform: 'instagram', from: 'maria_chen', preview: 'Interested in wholesale — what\'s your minimum?', time: '2h ago', unread: true },
-    { id: 'dm2', platform: 'instagram', from: 'bbq_lover_99', preview: 'Love the garlic & herb flavor!', time: '1d ago', unread: false },
+    {
+        id: 'dm1',
+        platform: 'instagram',
+        from: 'maria_chen',
+        preview: "Interested in wholesale — what's your minimum?",
+        time: '2h ago',
+        unread: true,
+    },
+    {
+        id: 'dm2',
+        platform: 'instagram',
+        from: 'bbq_lover_99',
+        preview: 'Love the garlic & herb flavor!',
+        time: '1d ago',
+        unread: false,
+    },
 ];
 
 const ENGAGEMENT_DATA = [
@@ -80,10 +112,30 @@ const ENGAGEMENT_DATA = [
 ];
 
 const MOCK_N8N_SUGGESTIONS = [
-    { id: 's1', text: '🔥 Limited run: Premium Brisket 12oz is back! We smoke it for 18 hours. Link in bio.', source: 'Inventory + best performer', score: 92 },
-    { id: 's2', text: 'Behind the scenes: 5am in the smokehouse. This is where the magic happens. 💨', source: 'BTS content · high engagement', score: 85 },
-    { id: 's3', text: 'Wholesale partners: Taking March orders now. DM for pricing & min. order info.', source: 'Lead gen · seasonal', score: 78 },
-    { id: 's4', text: 'New flavor dropping soon. Drop a 🔥 if you want early access.', source: 'Teaser · trending', score: 88 },
+    {
+        id: 's1',
+        text: '🔥 Limited run: Premium Brisket 12oz is back! We smoke it for 18 hours. Link in bio.',
+        source: 'Inventory + best performer',
+        score: 92,
+    },
+    {
+        id: 's2',
+        text: 'Behind the scenes: 5am in the smokehouse. This is where the magic happens. 💨',
+        source: 'BTS content · high engagement',
+        score: 85,
+    },
+    {
+        id: 's3',
+        text: 'Wholesale partners: Taking March orders now. DM for pricing & min. order info.',
+        source: 'Lead gen · seasonal',
+        score: 78,
+    },
+    {
+        id: 's4',
+        text: 'New flavor dropping soon. Drop a 🔥 if you want early access.',
+        source: 'Teaser · trending',
+        score: 88,
+    },
 ];
 
 const N8N_WEBHOOK_URL = 'https://yoursite.com/api/webhooks/n8n/content-suggestions';
@@ -213,7 +265,9 @@ export default function SocialPage() {
                                     key={acc.id}
                                     className={cn(
                                         'flex items-center gap-3 rounded-lg border px-4 py-3',
-                                        acc.connected ? 'border-zinc-700/80 bg-zinc-950/50' : 'border-zinc-800 bg-zinc-900/50 opacity-60',
+                                        acc.connected
+                                            ? 'border-zinc-700/80 bg-zinc-950/50'
+                                            : 'border-zinc-800 bg-zinc-900/50 opacity-60',
                                     )}
                                 >
                                     <div className={cn('rounded-lg p-2', platform?.bg, platform?.color)}>
@@ -225,11 +279,7 @@ export default function SocialPage() {
                                             {acc.followers.toLocaleString()} followers · {platform?.name}
                                         </p>
                                     </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-7 border-zinc-700 text-[10px]"
-                                    >
+                                    <Button variant="outline" size="sm" className="h-7 border-zinc-700 text-[10px]">
                                         {acc.connected ? 'Disconnect' : 'Connect'}
                                     </Button>
                                 </div>
@@ -284,7 +334,9 @@ export default function SocialPage() {
                         {suggestions.length === 0 ? (
                             <div className="col-span-2 rounded-lg border border-dashed border-zinc-700 py-8 text-center">
                                 <Sparkles className="mx-auto size-8 text-zinc-600" />
-                                <p className="mt-2 text-xs text-zinc-500">No suggestions. Configure n8n and run &quot;Fetch suggestions&quot;.</p>
+                                <p className="mt-2 text-xs text-zinc-500">
+                                    No suggestions. Configure n8n and run &quot;Fetch suggestions&quot;.
+                                </p>
                             </div>
                         ) : (
                             suggestions.map((s) => (
@@ -329,7 +381,9 @@ export default function SocialPage() {
                         <CardHeader className="pb-2">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
-                                    <CardTitle className="text-sm font-semibold text-zinc-100">Content Calendar</CardTitle>
+                                    <CardTitle className="text-sm font-semibold text-zinc-100">
+                                        Content Calendar
+                                    </CardTitle>
                                     <CardDescription className="text-[10px] text-zinc-500">
                                         Draft, scheduled & published posts
                                     </CardDescription>
@@ -349,10 +403,18 @@ export default function SocialPage() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="all" className="text-xs">All</SelectItem>
-                                            <SelectItem value="draft" className="text-xs">Draft</SelectItem>
-                                            <SelectItem value="scheduled" className="text-xs">Scheduled</SelectItem>
-                                            <SelectItem value="published" className="text-xs">Published</SelectItem>
+                                            <SelectItem value="all" className="text-xs">
+                                                All
+                                            </SelectItem>
+                                            <SelectItem value="draft" className="text-xs">
+                                                Draft
+                                            </SelectItem>
+                                            <SelectItem value="scheduled" className="text-xs">
+                                                Scheduled
+                                            </SelectItem>
+                                            <SelectItem value="published" className="text-xs">
+                                                Published
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -389,7 +451,10 @@ export default function SocialPage() {
                                                             const p = PLATFORMS.find((x) => x.id === pid);
                                                             const Icon = p?.icon ?? Share2;
                                                             return (
-                                                                <span key={pid} className={cn('rounded p-1', p?.bg, p?.color)}>
+                                                                <span
+                                                                    key={pid}
+                                                                    className={cn('rounded p-1', p?.bg, p?.color)}
+                                                                >
                                                                     <Icon className="size-3" />
                                                                 </span>
                                                             );
@@ -401,21 +466,29 @@ export default function SocialPage() {
                                                         variant="outline"
                                                         className={cn(
                                                             'text-[10px]',
-                                                            post.status === 'published' && 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400',
-                                                            post.status === 'scheduled' && 'border-amber-500/50 bg-amber-500/10 text-amber-400',
-                                                            post.status === 'draft' && 'border-zinc-600 bg-zinc-800/50 text-zinc-400',
+                                                            post.status === 'published' &&
+                                                                'border-emerald-500/50 bg-emerald-500/10 text-emerald-400',
+                                                            post.status === 'scheduled' &&
+                                                                'border-amber-500/50 bg-amber-500/10 text-amber-400',
+                                                            post.status === 'draft' &&
+                                                                'border-zinc-600 bg-zinc-800/50 text-zinc-400',
                                                         )}
                                                     >
                                                         {post.status}
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell className="px-3 py-2 text-[10px] text-zinc-400">
-                                                    {post.publishedAt ? formatDate(post.publishedAt) : post.scheduledAt ? formatDate(post.scheduledAt) : '—'}
+                                                    {post.publishedAt
+                                                        ? formatDate(post.publishedAt)
+                                                        : post.scheduledAt
+                                                          ? formatDate(post.scheduledAt)
+                                                          : '—'}
                                                 </TableCell>
                                                 <TableCell className="px-3 py-2 text-[10px] text-zinc-400">
                                                     {post.status === 'published' ? (
                                                         <span>
-                                                            <Heart className="inline size-3" /> {post.likes} · <MessageSquare className="inline size-3" /> {post.comments}
+                                                            <Heart className="inline size-3" /> {post.likes} ·{' '}
+                                                            <MessageSquare className="inline size-3" /> {post.comments}
                                                         </span>
                                                     ) : (
                                                         '—'
@@ -470,19 +543,27 @@ export default function SocialPage() {
                     <Card className="border-[0.5px] border-zinc-800 overflow-hidden bg-zinc-900">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-semibold text-zinc-100">Engagement</CardTitle>
-                            <CardDescription className="text-[10px] text-zinc-500">
-                                Last 5 days
-                            </CardDescription>
+                            <CardDescription className="text-[10px] text-zinc-500">Last 5 days</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
                                 {ENGAGEMENT_DATA.map((row) => (
-                                    <div key={row.day} className="flex items-center justify-between rounded border border-zinc-700/60 px-3 py-2">
+                                    <div
+                                        key={row.day}
+                                        className="flex items-center justify-between rounded border border-zinc-700/60 px-3 py-2"
+                                    >
                                         <span className="text-[10px] font-medium text-zinc-400">{row.day}</span>
                                         <div className="flex gap-4 text-[10px] text-zinc-300">
-                                            <span><Heart className="inline size-3 text-pink-400/80" /> {row.likes}</span>
-                                            <span><MessageSquare className="inline size-3 text-blue-400/80" /> {row.comments}</span>
-                                            <span><BarChart2 className="inline size-3 text-emerald-400/80" /> {row.reach}</span>
+                                            <span>
+                                                <Heart className="inline size-3 text-pink-400/80" /> {row.likes}
+                                            </span>
+                                            <span>
+                                                <MessageSquare className="inline size-3 text-blue-400/80" />{' '}
+                                                {row.comments}
+                                            </span>
+                                            <span>
+                                                <BarChart2 className="inline size-3 text-emerald-400/80" /> {row.reach}
+                                            </span>
                                         </div>
                                     </div>
                                 ))}
@@ -507,7 +588,9 @@ export default function SocialPage() {
                                             key={dm.id}
                                             className={cn(
                                                 'flex items-start gap-3 rounded-lg border px-3 py-2 cursor-pointer transition-colors',
-                                                dm.unread ? 'border-indigo-500/30 bg-indigo-500/5' : 'border-zinc-700/60 hover:bg-zinc-800/50',
+                                                dm.unread
+                                                    ? 'border-indigo-500/30 bg-indigo-500/5'
+                                                    : 'border-zinc-700/60 hover:bg-zinc-800/50',
                                             )}
                                         >
                                             <div className={cn('mt-0.5 rounded p-1', platform?.bg, platform?.color)}>
@@ -516,7 +599,9 @@ export default function SocialPage() {
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-[11px] font-medium text-zinc-200">
                                                     {dm.from}
-                                                    {dm.unread && <span className="ml-1 size-1.5 rounded-full bg-indigo-400" />}
+                                                    {dm.unread && (
+                                                        <span className="ml-1 size-1.5 rounded-full bg-indigo-400" />
+                                                    )}
                                                 </p>
                                                 <p className="truncate text-[10px] text-zinc-500">{dm.preview}</p>
                                                 <p className="text-[9px] text-zinc-600">{dm.time}</p>
@@ -542,7 +627,8 @@ export default function SocialPage() {
                             Configure n8n Content Hub
                         </DialogTitle>
                         <DialogDescription>
-                            Wire n8n workflows to suggest content. Your workflow can use inventory, engagement, trends, then POST suggestions here.
+                            Wire n8n workflows to suggest content. Your workflow can use inventory, engagement, trends,
+                            then POST suggestions here.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
@@ -571,7 +657,7 @@ export default function SocialPage() {
                         <div className="space-y-1.5">
                             <Label className="text-[10px] text-zinc-400">Sample payload</Label>
                             <pre className="rounded border border-zinc-700 bg-zinc-900/80 p-3 font-mono text-[10px] text-zinc-400 overflow-x-auto">
-{`{
+                                {`{
   "suggestions": [
     {
       "text": "Your post copy here...",
@@ -594,7 +680,9 @@ export default function SocialPage() {
                         </div>
                         <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 px-3 py-2">
                             <p className="text-[10px] text-zinc-400">
-                                <strong className="text-violet-400">n8n workflow ideas:</strong> Fetch inventory (low stock, back in stock), top products, engagement stats, seasonal triggers, then use AI to generate post copy and POST to this webhook.
+                                <strong className="text-violet-400">n8n workflow ideas:</strong> Fetch inventory (low
+                                stock, back in stock), top products, engagement stats, seasonal triggers, then use AI to
+                                generate post copy and POST to this webhook.
                             </p>
                         </div>
                     </div>
@@ -645,7 +733,9 @@ export default function SocialPage() {
                                             onClick={() => togglePlatform(p.id)}
                                             className={cn(
                                                 'flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors',
-                                                checked ? 'border-indigo-500/50 bg-indigo-500/20 text-indigo-300' : 'border-zinc-700 bg-zinc-900/80 text-zinc-500 hover:bg-zinc-800',
+                                                checked
+                                                    ? 'border-indigo-500/50 bg-indigo-500/20 text-indigo-300'
+                                                    : 'border-zinc-700 bg-zinc-900/80 text-zinc-500 hover:bg-zinc-800',
                                             )}
                                         >
                                             <Icon className="size-4" />

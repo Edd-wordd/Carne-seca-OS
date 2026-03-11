@@ -2,18 +2,8 @@
 
 import * as React from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import {
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-} from '@/components/ui/chart';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -50,7 +40,7 @@ import {
     Plus,
     Calendar,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/helpers';
 
 const FULFILLMENT_OPTIONS = [
     { value: 'unfulfilled', label: 'Unfulfilled' },
@@ -206,7 +196,15 @@ const FULFILLMENT_TO_STATUS = {
     delivered: 'delivered',
 };
 
-function OrdersTable({ orders, hasActiveSearch, pagination, dateSortOrder, onDateSortToggle, searchQuery, setSearchQuery }) {
+function OrdersTable({
+    orders,
+    hasActiveSearch,
+    pagination,
+    dateSortOrder,
+    onDateSortToggle,
+    searchQuery,
+    setSearchQuery,
+}) {
     const [packingSlipOrder, setPackingSlipOrder] = React.useState(null);
     const [fulfillmentState, setFulfillmentState] = React.useState({});
     const [statusState, setStatusState] = React.useState({});
@@ -299,7 +297,8 @@ function OrdersTable({ orders, hasActiveSearch, pagination, dateSortOrder, onDat
                                         {formatDateTime(order.date)}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
-                                        {ORDER_SOURCES.find((s) => s.value === (order.source ?? 'website'))?.label ?? 'Website'}
+                                        {ORDER_SOURCES.find((s) => s.value === (order.source ?? 'website'))?.label ??
+                                            'Website'}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-center text-[11px] tabular-nums group-hover:text-zinc-300">
                                         {order.items ?? 0}
@@ -654,7 +653,9 @@ export default function OrdersPage() {
     };
 
     const handleCreateOrder = () => {
-        const raw = String(newOrderForm.total).trim().replace(/[^0-9.]/g, '');
+        const raw = String(newOrderForm.total)
+            .trim()
+            .replace(/[^0-9.]/g, '');
         const total = Math.round(parseFloat(raw || 0) * 100) || 0;
         const status = FULFILLMENT_TO_STATUS[newOrderForm.fulfillment] ?? 'pending';
         setOrders((prev) => [
@@ -931,7 +932,12 @@ export default function OrdersPage() {
                                     <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.05} />
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="2 2" stroke="var(--border)" opacity={0.5} vertical={false} />
+                            <CartesianGrid
+                                strokeDasharray="2 2"
+                                stroke="var(--border)"
+                                opacity={0.5}
+                                vertical={false}
+                            />
                             <XAxis
                                 dataKey="source"
                                 tickLine={false}
@@ -974,9 +980,7 @@ export default function OrdersPage() {
                 ))}
                 <button
                     type="button"
-                    onClick={() =>
-                        setFilterFulfillment(filterFulfillment === 'unfulfilled' ? 'all' : 'unfulfilled')
-                    }
+                    onClick={() => setFilterFulfillment(filterFulfillment === 'unfulfilled' ? 'all' : 'unfulfilled')}
                     className={cn(
                         'rounded border px-2.5 py-1.5 text-[10px] font-medium transition-colors shrink-0',
                         filterFulfillment === 'unfulfilled'
@@ -1136,10 +1140,7 @@ export default function OrdersPage() {
                             >
                                 Cancel
                             </Button>
-                            <Button
-                                type="submit"
-                                className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
-                            >
+                            <Button type="submit" className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30">
                                 Create Order
                             </Button>
                         </DialogFooter>

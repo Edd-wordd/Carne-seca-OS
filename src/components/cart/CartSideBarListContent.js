@@ -3,10 +3,10 @@
 import { useState, useRef, useCallback, useTransition, useEffect } from 'react';
 import { Loader2, Minus, Plus, Trash2, Tag } from 'lucide-react';
 import Image from 'next/image';
-import { formatPrice } from '../../lib/utils.js';
+import { formatPrice } from '../../lib/utils/helpers.js';
 import { Button } from '../../components/ui/button.jsx';
-import { checkout } from '../../app/actions/checkout.js';
-import { applyCoupon } from '../../app/actions/applyCoupon.js';
+import { checkout } from '../../app/actions/cart/checkout.js';
+import { applyCoupon } from '../../app/actions/cart/applyCoupon.js';
 
 const DEBOUNCE_MS = 400;
 

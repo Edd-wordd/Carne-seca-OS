@@ -140,7 +140,7 @@ function escapeCsv(val) {
     if (s.includes(',') || s.includes('"') || s.includes('\n')) return `"${s.replace(/"/g, '""')}"`;
     return s;
 }
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/helpers';
 
 // Payout schedule (from promoter_payouts)
 const MOCK_PAYOUTS = [
@@ -418,15 +418,10 @@ export default function PartnersPage() {
 
     const partnerStats = React.useMemo(() => {
         const active = partners.filter((p) => p.status !== 'ended');
-        const totalConsignment = active.reduce(
-            (sum, p) => sum + getConsignmentTotal(p.consignmentByFlavor),
-            0,
-        );
+        const totalConsignment = active.reduce((sum, p) => sum + getConsignmentTotal(p.consignmentByFlavor), 0);
         const totalSales = active.reduce((sum, p) => sum + (p.totalSales ?? 0), 0);
         const topPartner = active.length
-            ? active.reduce((a, b) =>
-                  (a.totalSales ?? 0) >= (b.totalSales ?? 0) ? a : b,
-              )
+            ? active.reduce((a, b) => ((a.totalSales ?? 0) >= (b.totalSales ?? 0) ? a : b))
             : null;
         return { totalConsignment, totalSales, topPartner };
     }, [partners]);
@@ -545,7 +540,7 @@ export default function PartnersPage() {
             totalReceived.toFixed(2),
             totalLoss.toFixed(2),
             p.notes ?? '',
-            ...CONSIGNMENT_FLAVORS.map((f) => (p.consignmentByFlavor?.[f] ?? 0)),
+            ...CONSIGNMENT_FLAVORS.map((f) => p.consignmentByFlavor?.[f] ?? 0),
         ];
         const csv = [headers.map(escapeCsv).join(','), row.map(escapeCsv).join(',')].join('\n');
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -673,9 +668,7 @@ export default function PartnersPage() {
         const nextDate = getNextCheckupDateFromFrequency(checkupPartner.consignmentCheck ?? 'monthly');
         const paymentAmount = parseFloat(newPaymentAmount);
         const hasPayment = !isNaN(paymentAmount) && paymentAmount > 0;
-        const payment = hasPayment
-            ? { id: String(Date.now()), date: newPaymentDate, amount: paymentAmount }
-            : null;
+        const payment = hasPayment ? { id: String(Date.now()), date: newPaymentDate, amount: paymentAmount } : null;
 
         setPartners((prev) =>
             prev.map((x) => {
@@ -707,10 +700,7 @@ export default function PartnersPage() {
                         const qty = adj.qty;
                         byFlavor = {
                             ...byFlavor,
-                            [adj.flavor]: Math.max(
-                                0,
-                                (byFlavor[adj.flavor] ?? 0) + delta * qty,
-                            ),
+                            [adj.flavor]: Math.max(0, (byFlavor[adj.flavor] ?? 0) + delta * qty),
                         };
                         if (adj.type === 'add') consignmentOriginal += qty;
                         newStockAdjustments.push({
@@ -909,9 +899,7 @@ export default function PartnersPage() {
                 </div>
                 <div
                     className="flex min-w-0 cursor-pointer items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5 transition-colors hover:bg-zinc-800/60"
-                    onClick={() =>
-                        partnerStats.topPartner && setSelectedPartner(partnerStats.topPartner)
-                    }
+                    onClick={() => partnerStats.topPartner && setSelectedPartner(partnerStats.topPartner)}
                 >
                     <Trophy className="size-4 shrink-0 text-amber-400/80" />
                     <div className="min-w-0">
@@ -925,9 +913,7 @@ export default function PartnersPage() {
                     <CalendarClock className="size-4 shrink-0 text-amber-400/80" />
                     <div className="min-w-0">
                         <p className="truncate text-zinc-400 text-[10px]">Checkups (next 7 days)</p>
-                        <p className="text-zinc-100 text-sm font-semibold tabular-nums">
-                            {checkupsNext7Days.length}
-                        </p>
+                        <p className="text-zinc-100 text-sm font-semibold tabular-nums">{checkupsNext7Days.length}</p>
                     </div>
                 </div>
             </div>
@@ -1538,177 +1524,171 @@ export default function PartnersPage() {
                 }}
             >
                 <DialogContent className="max-w-[min(95vw,720px)] overflow-visible border-zinc-800 bg-zinc-950 p-4 sm:p-4">
-                    {checkupPartner && (() => {
-                        const p = partners.find((x) => x.id === checkupPartner.id) ?? checkupPartner;
-                        return (
-                            <>
-                                <DialogHeader className="pb-2">
-                                    <DialogTitle className="text-base text-zinc-100">
-                                        Checkup — {p.name}
-                                    </DialogTitle>
-                                    <div className="flex items-center gap-2 rounded border border-amber-600/40 bg-amber-950/30 px-2.5 py-1.5 mt-1">
-                                        <AlertTriangle className="size-3.5 text-amber-500 shrink-0" />
-                                        <span className="text-[11px] text-amber-200/90">
-                                            Report this check-in for the business
-                                        </span>
-                                    </div>
-                                </DialogHeader>
+                    {checkupPartner &&
+                        (() => {
+                            const p = partners.find((x) => x.id === checkupPartner.id) ?? checkupPartner;
+                            return (
+                                <>
+                                    <DialogHeader className="pb-2">
+                                        <DialogTitle className="text-base text-zinc-100">
+                                            Checkup — {p.name}
+                                        </DialogTitle>
+                                        <div className="flex items-center gap-2 rounded border border-amber-600/40 bg-amber-950/30 px-2.5 py-1.5 mt-1">
+                                            <AlertTriangle className="size-3.5 text-amber-500 shrink-0" />
+                                            <span className="text-[11px] text-amber-200/90">
+                                                Report this check-in for the business
+                                            </span>
+                                        </div>
+                                    </DialogHeader>
 
-                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                    {/* Row 1: Who + Payment */}
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px] font-medium text-zinc-400">
-                                            Who did the checkup <span className="text-red-400">*</span>
-                                        </Label>
-                                        <Input
-                                            placeholder="e.g. John Smith"
-                                            value={checkupPerformedBy}
-                                            onChange={(e) => setCheckupPerformedBy(e.target.value)}
-                                            className="h-8 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-sm"
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px] font-medium text-zinc-400">
-                                            Payment <span className="text-red-400">*</span> (0 if none)
-                                        </Label>
-                                        <div className="flex gap-2">
+                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                        {/* Row 1: Who + Payment */}
+                                        <div className="space-y-1">
+                                            <Label className="text-[11px] font-medium text-zinc-400">
+                                                Who did the checkup <span className="text-red-400">*</span>
+                                            </Label>
                                             <Input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                placeholder="Amount"
-                                                value={newPaymentAmount}
-                                                onChange={(e) => setNewPaymentAmount(e.target.value)}
-                                                className="h-8 w-20 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-sm"
-                                            />
-                                            <Input
-                                                type="date"
-                                                value={newPaymentDate}
-                                                onChange={(e) => setNewPaymentDate(e.target.value)}
-                                                className="h-8 flex-1 min-w-0 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-sm"
+                                                placeholder="e.g. John Smith"
+                                                value={checkupPerformedBy}
+                                                onChange={(e) => setCheckupPerformedBy(e.target.value)}
+                                                className="h-8 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-sm"
                                             />
                                         </div>
-                                    </div>
-                                </div>
-
-                                {/* Row 2: Notes + Stock */}
-                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px] font-medium text-zinc-400">
-                                            Notes from Visit <span className="text-red-400">*</span>
-                                        </Label>
-                                        <textarea
-                                            value={checkupVisitNotes}
-                                            onChange={(e) => setCheckupVisitNotes(e.target.value)}
-                                            placeholder="e.g. Shelf stocked, discussed new flavors..."
-                                            rows={2}
-                                            className="w-full resize-none rounded-md border border-zinc-700 bg-zinc-900/80 px-2.5 py-1.5 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600"
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px] font-medium text-zinc-400">
-                                            Stock (optional)
-                                        </Label>
-                                        <div className="flex flex-wrap items-center gap-1.5">
-                                            <Select
-                                                value={stockAdjustFlavor}
-                                                onValueChange={setStockAdjustFlavor}
-                                            >
-                                                <SelectTrigger className="h-8 w-[120px] border-zinc-700 bg-zinc-900/80 text-zinc-100 text-xs">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {CONSIGNMENT_FLAVORS.map((f) => (
-                                                        <SelectItem key={f} value={f} className="text-xs">
-                                                            {f}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <Input
-                                                type="number"
-                                                min={1}
-                                                placeholder="Qty"
-                                                value={stockAdjustQty}
-                                                onChange={(e) => setStockAdjustQty(e.target.value)}
-                                                className="h-8 w-12 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-sm text-center"
-                                            />
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="outline"
-                                                className="h-8 gap-1 border-emerald-800/60 bg-zinc-800/90 text-emerald-500 hover:bg-emerald-500/10 px-2"
-                                                onClick={() => {
-                                                    const qty = parseInt(stockAdjustQty, 10);
-                                                    if (qty > 0) {
-                                                        setCheckupPendingStockAdjustments((prev) => [
-                                                            ...prev,
-                                                            { flavor: stockAdjustFlavor, qty, type: 'add' },
-                                                        ]);
-                                                        setStockAdjustQty('');
-                                                    }
-                                                }}
-                                                disabled={
-                                                    !stockAdjustQty || parseInt(stockAdjustQty, 10) <= 0
-                                                }
-                                            >
-                                                <PlusCircle className="size-3" /> Add
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="outline"
-                                                className="h-8 gap-1 border-amber-800/60 bg-zinc-800/90 text-amber-500 hover:bg-amber-500/10 px-2"
-                                                onClick={() => handleSubClick(p.id)}
-                                                disabled={
-                                                    !stockAdjustQty || parseInt(stockAdjustQty, 10) <= 0
-                                                }
-                                            >
-                                                <MinusCircle className="size-3" /> Sub
-                                            </Button>
-                                        </div>
-                                        {checkupPendingStockAdjustments.length > 0 && (
-                                            <div className="mt-1 flex flex-wrap gap-1.5 text-[10px]">
-                                                {checkupPendingStockAdjustments.map((adj, i) => (
-                                                    <span
-                                                        key={i}
-                                                        className="rounded bg-zinc-800/80 px-1.5 py-0.5 text-zinc-300"
-                                                    >
-                                                        {adj.flavor}:{' '}
-                                                        {adj.type === 'add' ? (
-                                                            <span className="text-emerald-500">+{adj.qty}</span>
-                                                        ) : (
-                                                            <span className="text-amber-500">
-                                                                −{adj.qty} ({adj.reason})
-                                                            </span>
-                                                        )}
-                                                    </span>
-                                                ))}
+                                        <div className="space-y-1">
+                                            <Label className="text-[11px] font-medium text-zinc-400">
+                                                Payment <span className="text-red-400">*</span> (0 if none)
+                                            </Label>
+                                            <div className="flex gap-2">
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    placeholder="Amount"
+                                                    value={newPaymentAmount}
+                                                    onChange={(e) => setNewPaymentAmount(e.target.value)}
+                                                    className="h-8 w-20 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-sm"
+                                                />
+                                                <Input
+                                                    type="date"
+                                                    value={newPaymentDate}
+                                                    onChange={(e) => setNewPaymentDate(e.target.value)}
+                                                    className="h-8 flex-1 min-w-0 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-sm"
+                                                />
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <DialogFooter className="pt-2 pb-0">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="border-zinc-700 bg-zinc-800/90 text-zinc-400 hover:bg-zinc-700 disabled:opacity-50"
-                                        onClick={handleCompleteCheckup}
-                                        disabled={
-                                            !checkupPerformedBy.trim() ||
-                                            newPaymentAmount === '' ||
-                                            isNaN(parseFloat(newPaymentAmount)) ||
-                                            !newPaymentDate ||
-                                            !checkupVisitNotes.trim()
-                                        }
-                                    >
-                                        Done
-                                    </Button>
-                                </DialogFooter>
-                            </>
-                        );
-                    })()}
+                                    {/* Row 2: Notes + Stock */}
+                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                        <div className="space-y-1">
+                                            <Label className="text-[11px] font-medium text-zinc-400">
+                                                Notes from Visit <span className="text-red-400">*</span>
+                                            </Label>
+                                            <textarea
+                                                value={checkupVisitNotes}
+                                                onChange={(e) => setCheckupVisitNotes(e.target.value)}
+                                                placeholder="e.g. Shelf stocked, discussed new flavors..."
+                                                rows={2}
+                                                className="w-full resize-none rounded-md border border-zinc-700 bg-zinc-900/80 px-2.5 py-1.5 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-[11px] font-medium text-zinc-400">
+                                                Stock (optional)
+                                            </Label>
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                                <Select value={stockAdjustFlavor} onValueChange={setStockAdjustFlavor}>
+                                                    <SelectTrigger className="h-8 w-[120px] border-zinc-700 bg-zinc-900/80 text-zinc-100 text-xs">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {CONSIGNMENT_FLAVORS.map((f) => (
+                                                            <SelectItem key={f} value={f} className="text-xs">
+                                                                {f}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <Input
+                                                    type="number"
+                                                    min={1}
+                                                    placeholder="Qty"
+                                                    value={stockAdjustQty}
+                                                    onChange={(e) => setStockAdjustQty(e.target.value)}
+                                                    className="h-8 w-12 border-zinc-700 bg-zinc-900/80 text-zinc-100 text-sm text-center"
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-8 gap-1 border-emerald-800/60 bg-zinc-800/90 text-emerald-500 hover:bg-emerald-500/10 px-2"
+                                                    onClick={() => {
+                                                        const qty = parseInt(stockAdjustQty, 10);
+                                                        if (qty > 0) {
+                                                            setCheckupPendingStockAdjustments((prev) => [
+                                                                ...prev,
+                                                                { flavor: stockAdjustFlavor, qty, type: 'add' },
+                                                            ]);
+                                                            setStockAdjustQty('');
+                                                        }
+                                                    }}
+                                                    disabled={!stockAdjustQty || parseInt(stockAdjustQty, 10) <= 0}
+                                                >
+                                                    <PlusCircle className="size-3" /> Add
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-8 gap-1 border-amber-800/60 bg-zinc-800/90 text-amber-500 hover:bg-amber-500/10 px-2"
+                                                    onClick={() => handleSubClick(p.id)}
+                                                    disabled={!stockAdjustQty || parseInt(stockAdjustQty, 10) <= 0}
+                                                >
+                                                    <MinusCircle className="size-3" /> Sub
+                                                </Button>
+                                            </div>
+                                            {checkupPendingStockAdjustments.length > 0 && (
+                                                <div className="mt-1 flex flex-wrap gap-1.5 text-[10px]">
+                                                    {checkupPendingStockAdjustments.map((adj, i) => (
+                                                        <span
+                                                            key={i}
+                                                            className="rounded bg-zinc-800/80 px-1.5 py-0.5 text-zinc-300"
+                                                        >
+                                                            {adj.flavor}:{' '}
+                                                            {adj.type === 'add' ? (
+                                                                <span className="text-emerald-500">+{adj.qty}</span>
+                                                            ) : (
+                                                                <span className="text-amber-500">
+                                                                    −{adj.qty} ({adj.reason})
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <DialogFooter className="pt-2 pb-0">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="border-zinc-700 bg-zinc-800/90 text-zinc-400 hover:bg-zinc-700 disabled:opacity-50"
+                                            onClick={handleCompleteCheckup}
+                                            disabled={
+                                                !checkupPerformedBy.trim() ||
+                                                newPaymentAmount === '' ||
+                                                isNaN(parseFloat(newPaymentAmount)) ||
+                                                !newPaymentDate ||
+                                                !checkupVisitNotes.trim()
+                                            }
+                                        >
+                                            Done
+                                        </Button>
+                                    </DialogFooter>
+                                </>
+                            );
+                        })()}
                 </DialogContent>
             </Dialog>
 
@@ -2176,8 +2156,8 @@ export default function PartnersPage() {
                                                                         {formatCheckupDate(p.nextCheckup) || '—'}
                                                                     </p>
                                                                     {p.nextCheckup ? (
-                                                                        (p.lastCheckupDate &&
-                                                                            new Date(p.nextCheckup) > new Date()) ? (
+                                                                        p.lastCheckupDate &&
+                                                                        new Date(p.nextCheckup) > new Date() ? (
                                                                             <span
                                                                                 className="inline-flex items-center gap-0.5 text-emerald-500"
                                                                                 title="Checkup completed"

@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { updateBatch } from '@/app/actions/updateBatch';
+import { updateBatch } from '@/app/actions/production/updateBatch';
 import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
 
 export default function EditBatchDialog({ open, onOpenChange, batchToEdit, onSuccess }) {

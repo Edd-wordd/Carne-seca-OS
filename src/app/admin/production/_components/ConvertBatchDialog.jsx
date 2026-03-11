@@ -13,8 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Package, Scale, Trash2 } from 'lucide-react';
-import { cn, formatCurrency } from '@/lib/utils';
-import { convertToFinishedGoods } from '@/app/actions/convertToFinishedGoods';
+import { cn, formatCurrency } from '@/lib/utils/helpers';
+import { convertToFinishedGoods } from '@/app/actions/production/convertToFinishedGoods';
 import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
 import { usePosthogCapture } from '@/lib/posthog/use-posthog-capture';
 

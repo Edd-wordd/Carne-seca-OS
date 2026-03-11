@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/helpers';
 
 const PATH_LABELS = {
     admin: 'Admin',
@@ -28,9 +28,7 @@ function getBreadcrumbItems(pathname) {
     for (let i = 0; i < segments.length; i++) {
         href += '/' + segments[i];
         const segment = segments[i];
-        const label =
-            PATH_LABELS[segment] ??
-            segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+        const label = PATH_LABELS[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
         items.push({ href, label, isLast: i === segments.length - 1 });
     }
     if (items.length === 1 && items[0].href === '/admin') {
@@ -46,27 +44,14 @@ export function Breadcrumb({ pathname, className }) {
     if (items.length === 0) return null;
 
     return (
-        <nav
-            aria-label="Breadcrumb"
-            className={cn('flex items-center gap-1.5 text-sm', className)}
-        >
+        <nav aria-label="Breadcrumb" className={cn('flex items-center gap-1.5 text-sm', className)}>
             {items.map((item, i) => (
                 <React.Fragment key={item.href}>
-                    {i > 0 && (
-                        <ChevronRight
-                            className="size-3.5 shrink-0 text-zinc-600"
-                            aria-hidden
-                        />
-                    )}
+                    {i > 0 && <ChevronRight className="size-3.5 shrink-0 text-zinc-600" aria-hidden />}
                     {item.isLast ? (
-                        <span className="font-medium text-zinc-200">
-                            {item.label}
-                        </span>
+                        <span className="font-medium text-zinc-200">{item.label}</span>
                     ) : (
-                        <Link
-                            href={item.href}
-                            className="text-zinc-500 transition-colors hover:text-zinc-300"
-                        >
+                        <Link href={item.href} className="text-zinc-500 transition-colors hover:text-zinc-300">
                             {item.label}
                         </Link>
                     )}

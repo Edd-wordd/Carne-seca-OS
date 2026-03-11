@@ -12,8 +12,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
-import { cn, formatCurrency } from '@/lib/utils';
-import { createProductionBatch } from '@/app/actions/createProductionBatch';
+import { cn, formatCurrency } from '@/lib/utils/helpers';
+import { createProductionBatch } from '@/app/actions/production/createProductionBatch';
 import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
 import { usePosthogCapture } from '@/lib/posthog/use-posthog-capture';
 

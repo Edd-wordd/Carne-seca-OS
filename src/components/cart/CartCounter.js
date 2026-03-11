@@ -1,4 +1,4 @@
-import { getCartCount } from '@/lib/supabase/queries';
+import { getCartCount } from '@/lib/supabase/queries/cart-queries';
 import CartDisplay from './CartDisplay';
 import CartSideBarList from './CartSideBar';
 

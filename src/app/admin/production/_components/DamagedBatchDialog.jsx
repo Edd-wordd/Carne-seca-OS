@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AlertTriangle } from 'lucide-react';
 import { useTransition } from 'react';
-import { handleDamagedGoods } from '@/app/actions/handleDamagedGoods';
+import { handleDamagedGoods } from '@/app/actions/production/handleDamagedGoods';
 import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
 import { usePosthogCapture } from '@/lib/posthog/use-posthog-capture';
 

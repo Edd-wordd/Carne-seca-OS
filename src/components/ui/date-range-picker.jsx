@@ -4,7 +4,7 @@ import * as React from 'react';
 import { format, subDays, startOfMonth, endOfMonth, subMonths, startOfYear } from 'date-fns';
 import { CalendarDays } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/helpers';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -14,7 +14,10 @@ const presets = [
     { label: '7 Days', getValue: () => ({ from: subDays(new Date(), 7), to: new Date() }) },
     { label: '30 Days', getValue: () => ({ from: subDays(new Date(), 30), to: new Date() }) },
     { label: 'This Month', getValue: () => ({ from: startOfMonth(new Date()), to: new Date() }) },
-    { label: 'Last Month', getValue: () => ({ from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) }) },
+    {
+        label: 'Last Month',
+        getValue: () => ({ from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) }),
+    },
     { label: 'This Year', getValue: () => ({ from: startOfYear(new Date()), to: new Date() }) },
     { label: 'All Time', getValue: () => ({ from: undefined, to: undefined }) },
 ];
@@ -53,7 +56,13 @@ export function DateRangePicker({ date, onDateChange, className }) {
     };
 
     return (
-        <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setShowCalendar(false); }}>
+        <Popover
+            open={open}
+            onOpenChange={(o) => {
+                setOpen(o);
+                if (!o) setShowCalendar(false);
+            }}
+        >
             <PopoverTrigger asChild>
                 <button
                     className={cn(

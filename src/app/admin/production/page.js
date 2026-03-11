@@ -19,12 +19,12 @@ import {
     getStatusConfig,
     getYieldBadgeConfig,
     isDamagedStatus,
-} from '@/lib/utils';
+} from '@/lib/utils/helpers.js';
 import { Skeleton } from '@/components/ui/skeleton';
 import { exportBatchesToCsv } from '@/lib/utils/exportBatches';
-import { getSuppliers } from '@/app/actions/getSuppliers';
-import { getBatches } from '@/app/actions/getBatches';
-import { getProducts } from '@/app/actions/getProducts';
+import { getSuppliers } from '@/lib/supabase/queries/getSuppliers.js';
+import { getBatches } from '@/lib/supabase/queries/getBatches.js';
+import { getProducts } from '@/lib/supabase/queries/getProducts.js';
 import CreateBatchDialog from './_components/CreateBatchDialog.jsx';
 import EditBatchDialog from './_components/EditBatchDialog.jsx';
 import DamagedBatchDialog from './_components/DamagedBatchDialog.jsx';

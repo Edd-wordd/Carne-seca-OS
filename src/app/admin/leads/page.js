@@ -44,7 +44,7 @@ import {
     RefreshCw,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/helpers';
 
 const LEAD_STATUSES = [
     { value: 'combed_through', label: 'Combed Through', icon: Bot },

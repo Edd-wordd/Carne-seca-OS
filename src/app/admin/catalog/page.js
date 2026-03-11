@@ -1,17 +1,10 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import * as React from 'react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Dialog,
     DialogContent,
@@ -19,103 +12,160 @@ import {
     DialogTitle,
     DialogDescription,
     DialogFooter,
-} from "@/components/ui/dialog";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Package, Plus, Search, MoreHorizontal, Eye, EyeOff, Image as ImageIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Package, Plus, Search, MoreHorizontal, Eye, EyeOff, Image as ImageIcon } from 'lucide-react';
+import { cn } from '@/lib/utils/helpers';
 
 const SELL_PLATFORMS = [
-    { value: "website", label: "Website" },
-    { value: "amazon", label: "Amazon" },
-    { value: "pos", label: "POS" },
+    { value: 'website', label: 'Website' },
+    { value: 'amazon', label: 'Amazon' },
+    { value: 'pos', label: 'POS' },
 ];
 
 const SIZE_OPTIONS = [
-    { value: "4oz", label: "4oz" },
-    { value: "6oz", label: "6oz" },
-    { value: "8oz", label: "8oz" },
-    { value: "12oz", label: "12oz" },
+    { value: '4oz', label: '4oz' },
+    { value: '6oz', label: '6oz' },
+    { value: '8oz', label: '8oz' },
+    { value: '12oz', label: '12oz' },
 ];
 
 const INITIAL_PRODUCTS = [
-    { id: "1", name: "Premium Brisket 12oz", price_cents: 1500, status: "active", stock: 84, description: "Premium dried brisket, 12oz. Slow-smoked for 18 hours.", image: null, platforms: ["website", "amazon"], launchDate: "2024-01-15", sizes: ["8oz", "12oz"] },
-    { id: "2", name: "Seasoned Classic 8oz", price_cents: 1100, status: "active", stock: 8, description: "Classic seasoned blend, 8oz.", image: null, platforms: ["website"], launchDate: "2024-03-22", sizes: ["6oz", "8oz"] },
-    { id: "3", name: "Original 6oz", price_cents: 899, status: "inactive", stock: 0, description: "Original recipe, 6oz.", image: null, platforms: ["website", "pos"], launchDate: "2023-11-01", sizes: ["6oz"] },
-    { id: "4", name: "Limited Smoked", price_cents: 1500, status: "active", stock: 45, description: "Limited edition smoked.", image: null, platforms: ["website", "amazon", "pos"], launchDate: "2025-02-01", sizes: ["6oz", "8oz", "12oz"] },
-    { id: "5", name: "Garlic & Herb 6oz", price_cents: 899, status: "active", stock: 32, description: "Garlic and herb seasoned.", image: null, platforms: ["website", "pos"], launchDate: "2024-08-10", sizes: ["4oz", "6oz"] },
+    {
+        id: '1',
+        name: 'Premium Brisket 12oz',
+        price_cents: 1500,
+        status: 'active',
+        stock: 84,
+        description: 'Premium dried brisket, 12oz. Slow-smoked for 18 hours.',
+        image: null,
+        platforms: ['website', 'amazon'],
+        launchDate: '2024-01-15',
+        sizes: ['8oz', '12oz'],
+    },
+    {
+        id: '2',
+        name: 'Seasoned Classic 8oz',
+        price_cents: 1100,
+        status: 'active',
+        stock: 8,
+        description: 'Classic seasoned blend, 8oz.',
+        image: null,
+        platforms: ['website'],
+        launchDate: '2024-03-22',
+        sizes: ['6oz', '8oz'],
+    },
+    {
+        id: '3',
+        name: 'Original 6oz',
+        price_cents: 899,
+        status: 'inactive',
+        stock: 0,
+        description: 'Original recipe, 6oz.',
+        image: null,
+        platforms: ['website', 'pos'],
+        launchDate: '2023-11-01',
+        sizes: ['6oz'],
+    },
+    {
+        id: '4',
+        name: 'Limited Smoked',
+        price_cents: 1500,
+        status: 'active',
+        stock: 45,
+        description: 'Limited edition smoked.',
+        image: null,
+        platforms: ['website', 'amazon', 'pos'],
+        launchDate: '2025-02-01',
+        sizes: ['6oz', '8oz', '12oz'],
+    },
+    {
+        id: '5',
+        name: 'Garlic & Herb 6oz',
+        price_cents: 899,
+        status: 'active',
+        stock: 32,
+        description: 'Garlic and herb seasoned.',
+        image: null,
+        platforms: ['website', 'pos'],
+        launchDate: '2024-08-10',
+        sizes: ['4oz', '6oz'],
+    },
 ];
 
 function formatPrice(cents) {
-    return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
         minimumFractionDigits: 2,
     }).format(cents / 100);
 }
 
 function formatDate(d) {
-    if (!d) return "—";
+    if (!d) return '—';
     const dt = new Date(d);
-    return isNaN(dt.getTime()) ? d : dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return isNaN(dt.getTime())
+        ? d
+        : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export default function CatalogPage() {
     const [items, setItems] = React.useState(INITIAL_PRODUCTS);
-    const [search, setSearch] = React.useState("");
-    const [statusFilter, setStatusFilter] = React.useState("all");
+    const [search, setSearch] = React.useState('');
+    const [statusFilter, setStatusFilter] = React.useState('all');
     const [addModalOpen, setAddModalOpen] = React.useState(false);
     const [editingId, setEditingId] = React.useState(null);
     const [form, setForm] = React.useState({
-        name: "",
-        description: "",
-        price: "",
-        stock: "",
-        status: "active",
-        imageUrl: "",
-        platforms: ["website"],
-        launchDate: "",
+        name: '',
+        description: '',
+        price: '',
+        stock: '',
+        status: 'active',
+        imageUrl: '',
+        platforms: ['website'],
+        launchDate: '',
         sizes: [],
     });
 
     const resetForm = () => {
-        setForm({ name: "", description: "", price: "", stock: "", status: "active", imageUrl: "", platforms: ["website"], launchDate: "", sizes: [] });
+        setForm({
+            name: '',
+            description: '',
+            price: '',
+            stock: '',
+            status: 'active',
+            imageUrl: '',
+            platforms: ['website'],
+            launchDate: '',
+            sizes: [],
+        });
         setEditingId(null);
     };
 
     const toggleSize = (value) => {
         setForm((f) => ({
             ...f,
-            sizes: f.sizes.includes(value)
-                ? f.sizes.filter((x) => x !== value)
-                : [...f.sizes, value],
+            sizes: f.sizes.includes(value) ? f.sizes.filter((x) => x !== value) : [...f.sizes, value],
         }));
     };
 
     const togglePlatform = (value) => {
         setForm((f) => ({
             ...f,
-            platforms: f.platforms.includes(value)
-                ? f.platforms.filter((x) => x !== value)
-                : [...f.platforms, value],
+            platforms: f.platforms.includes(value) ? f.platforms.filter((x) => x !== value) : [...f.platforms, value],
         }));
     };
 
     const openEdit = (p) => {
         setForm({
             name: p.name,
-            description: p.description || "",
-            price: p.price_cents ? (p.price_cents / 100).toFixed(2) : "",
+            description: p.description || '',
+            price: p.price_cents ? (p.price_cents / 100).toFixed(2) : '',
             stock: String(p.stock ?? 0),
             status: p.status,
-            imageUrl: p.image || "",
-            platforms: Array.isArray(p.platforms) && p.platforms.length ? p.platforms : ["website"],
-            launchDate: p.launchDate || "",
+            imageUrl: p.image || '',
+            platforms: Array.isArray(p.platforms) && p.platforms.length ? p.platforms : ['website'],
+            launchDate: p.launchDate || '',
             sizes: Array.isArray(p.sizes) ? p.sizes : [],
         });
         setEditingId(p.id);
@@ -128,20 +178,18 @@ export default function CatalogPage() {
         const priceCents = Math.round(priceDollars * 100);
         const stock = parseInt(form.stock, 10) || 0;
         const payload = {
-            name: form.name.trim() || "Untitled",
+            name: form.name.trim() || 'Untitled',
             price_cents: priceCents,
             status: form.status,
             stock,
             description: form.description.trim() || null,
             image: form.imageUrl.trim() || null,
-            platforms: form.platforms.length ? form.platforms : ["website"],
+            platforms: form.platforms.length ? form.platforms : ['website'],
             launchDate: form.launchDate.trim() || null,
             sizes: form.sizes,
         };
         if (editingId) {
-            setItems((prev) =>
-                prev.map((p) => (p.id === editingId ? { ...p, ...payload } : p))
-            );
+            setItems((prev) => prev.map((p) => (p.id === editingId ? { ...p, ...payload } : p)));
         } else {
             const newId = String(Math.max(...items.map((p) => parseInt(p.id, 10) || 0), 0) + 1);
             setItems((prev) => [{ id: newId, ...payload }, ...prev]);
@@ -156,11 +204,11 @@ export default function CatalogPage() {
             const q = search.trim().toLowerCase();
             list = list.filter((p) => p.name.toLowerCase().includes(q));
         }
-        if (statusFilter !== "all") list = list.filter((p) => p.status === statusFilter);
+        if (statusFilter !== 'all') list = list.filter((p) => p.status === statusFilter);
         return list;
     }, [items, search, statusFilter]);
 
-    const activeCount = items.filter((p) => p.status === "active").length;
+    const activeCount = items.filter((p) => p.status === 'active').length;
 
     return (
         <div className="space-y-4">
@@ -224,9 +272,15 @@ export default function CatalogPage() {
                                     <SelectValue placeholder="Status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all" className="text-xs">All</SelectItem>
-                                    <SelectItem value="active" className="text-xs">Active</SelectItem>
-                                    <SelectItem value="inactive" className="text-xs">Hidden</SelectItem>
+                                    <SelectItem value="all" className="text-xs">
+                                        All
+                                    </SelectItem>
+                                    <SelectItem value="active" className="text-xs">
+                                        Active
+                                    </SelectItem>
+                                    <SelectItem value="inactive" className="text-xs">
+                                        Hidden
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -291,10 +345,12 @@ export default function CatalogPage() {
                                         {p.stock}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
-                                        {((p.sizes?.length ? p.sizes : []).join(", ")) || "—"}
+                                        {(p.sizes?.length ? p.sizes : []).join(', ') || '—'}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
-                                        {((p.platforms?.length ? p.platforms : ["website"]).map((pf) => SELL_PLATFORMS.find((s) => s.value === pf)?.label ?? pf).join(", ")) || "—"}
+                                        {(p.platforms?.length ? p.platforms : ['website'])
+                                            .map((pf) => SELL_PLATFORMS.find((s) => s.value === pf)?.label ?? pf)
+                                            .join(', ') || '—'}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
                                         {formatDate(p.launchDate)}
@@ -302,13 +358,13 @@ export default function CatalogPage() {
                                     <TableCell className="px-3 py-1.5">
                                         <span
                                             className={cn(
-                                                "inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium",
-                                                p.status === "active"
-                                                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                                                    : "border-zinc-600/50 bg-zinc-800/50 text-zinc-500"
+                                                'inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium',
+                                                p.status === 'active'
+                                                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                                                    : 'border-zinc-600/50 bg-zinc-800/50 text-zinc-500',
                                             )}
                                         >
-                                            {p.status === "active" ? (
+                                            {p.status === 'active' ? (
                                                 <>
                                                     <Eye className="size-3" />
                                                     Active
@@ -348,9 +404,10 @@ export default function CatalogPage() {
             >
                 <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>{editingId ? "Edit Product" : "Add Product to Live Website"}</DialogTitle>
+                        <DialogTitle>{editingId ? 'Edit Product' : 'Add Product to Live Website'}</DialogTitle>
                         <DialogDescription>
-                            Add a new product with images, description, and pricing. Active products appear on your store.
+                            Add a new product with images, description, and pricing. Active products appear on your
+                            store.
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmitProduct} className="space-y-5 py-2">
@@ -364,7 +421,7 @@ export default function CatalogPage() {
                                             src={form.imageUrl}
                                             alt="Preview"
                                             className="h-full w-full object-cover"
-                                            onError={(e) => (e.target.style.display = "none")}
+                                            onError={(e) => (e.target.style.display = 'none')}
                                         />
                                     ) : (
                                         <ImageIcon className="size-8 text-zinc-600" />
@@ -529,7 +586,7 @@ export default function CatalogPage() {
                                 Cancel
                             </Button>
                             <Button type="submit" className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30">
-                                {editingId ? "Save Changes" : "Add Product"}
+                                {editingId ? 'Save Changes' : 'Add Product'}
                             </Button>
                         </DialogFooter>
                     </form>

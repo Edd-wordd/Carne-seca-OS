@@ -2,20 +2,24 @@
 
 import * as React from 'react';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
-import { Scale, TrendingUp, DollarSign } from 'lucide-react';
-import { cn, formatCurrency } from '@/lib/utils';
+import { Scale, TrendingUp, DollarSign, AlertTriangle } from 'lucide-react';
+import { cn, formatCurrency, isDamagedStatus } from '@/lib/utils/helpers';
 
 export default function ProductionKPIs({ batches = [], date, onDateChange, isLoading = false }) {
     const mtdThroughput = batches.reduce((sum, b) => sum + (b.raw_weight ?? 0), 0);
-    const avgYield = React.useMemo(() => {
+    const { avgYield, totalOutputLbs } = React.useMemo(() => {
         const finished = batches.filter((b) => b.yield_percent != null);
-        if (finished.length === 0) return '0';
-        return (
-            (finished.reduce((sum, b) => sum + (b.yield_percent ?? 0), 0) / finished.length) *
-            100
-        ).toFixed(1);
+        if (finished.length === 0) return { avgYield: '0', totalOutputLbs: 0 };
+        const avg = (finished.reduce((sum, b) => sum + (b.yield_percent ?? 0), 0) / finished.length) * 100;
+        const outputLbs = finished.reduce((sum, b) => sum + (b.raw_weight ?? 0) * (b.yield_percent ?? 0), 0);
+        return { avgYield: avg.toFixed(1), totalOutputLbs: outputLbs };
     }, [batches]);
     const mtdCost = batches.reduce((sum, b) => sum + (b.total_cost ?? 0), 0);
+    const { damagedCount, damagedWeight } = React.useMemo(() => {
+        const damaged = batches.filter((b) => isDamagedStatus(b.tracking_status));
+        const weight = damaged.reduce((sum, b) => sum + (b.initial_weight ?? b.raw_weight ?? 0), 0);
+        return { damagedCount: damaged.length, damagedWeight: weight };
+    }, [batches]);
 
     return (
         <div className="space-y-2">
@@ -23,7 +27,7 @@ export default function ProductionKPIs({ batches = [], date, onDateChange, isLoa
                 <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Overview</span>
                 <DateRangePicker date={date} onDateChange={onDateChange} />
             </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="flex items-center gap-3 rounded-lg border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                     <Scale className="size-4 text-indigo-400 shrink-0" />
                     <div className="min-w-0 flex-1">
@@ -46,10 +50,10 @@ export default function ProductionKPIs({ batches = [], date, onDateChange, isLoa
                             <div className="mt-1 h-4 w-20 animate-pulse rounded bg-zinc-700/60" />
                         ) : (
                             <p className="text-sm font-semibold text-zinc-100 tabular-nums">
-                                {avgYield}%
+                                {avgYield}% · {totalOutputLbs.toLocaleString()} lbs
                                 <span
                                     className={cn(
-                                        'text-[10px] font-normal ml-1.5',
+                                        'text-[10px] font-normal ml-1.5 block',
                                         parseFloat(avgYield) >= 35
                                             ? 'text-emerald-400'
                                             : parseFloat(avgYield) >= 30
@@ -60,6 +64,23 @@ export default function ProductionKPIs({ batches = [], date, onDateChange, isLoa
                                     {parseFloat(avgYield) >= 35
                                         ? 'on target'
                                         : `${(35 - parseFloat(avgYield)).toFixed(1)}% below target`}
+                                </span>
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-lg border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
+                    <AlertTriangle className="size-4 text-red-400 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                        <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Damaged</p>
+                        {isLoading ? (
+                            <div className="mt-1 h-4 w-20 animate-pulse rounded bg-zinc-700/60" />
+                        ) : (
+                            <p className="text-sm font-semibold text-zinc-100 tabular-nums">
+                                {damagedCount} batch{damagedCount !== 1 ? 'es' : ''}
+                                <span className="text-zinc-500 text-[10px] font-normal ml-1.5">
+                                    {damagedWeight.toLocaleString()} lbs
                                 </span>
                             </p>
                         )}

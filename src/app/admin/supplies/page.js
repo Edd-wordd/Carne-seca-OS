@@ -42,7 +42,7 @@ import {
     Download,
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/helpers';
 
 const SUPPLY_CATEGORIES = [
     { value: 'meat', label: 'Meat', icon: Beef },
@@ -445,7 +445,9 @@ export default function SuppliesPage() {
     const totalValue = Object.values(byCategory).reduce((a, b) => a + b, 0);
 
     const metricsMonthLabel =
-        metricsMonth === 'ytd' ? `YTD ${currentYear}` : uniqueMonthsForMetrics.find((m) => m.value === metricsMonth)?.label ?? metricsMonth;
+        metricsMonth === 'ytd'
+            ? `YTD ${currentYear}`
+            : (uniqueMonthsForMetrics.find((m) => m.value === metricsMonth)?.label ?? metricsMonth);
 
     const [historyFilterMonth, setHistoryFilterMonth] = React.useState('all');
     const [historyFilterSupply, setHistoryFilterSupply] = React.useState('all');
@@ -478,7 +480,7 @@ export default function SuppliesPage() {
     const safeSupplyPage = Math.min(supplyPage, supplyTotalPages);
     const paginatedSupplies = filteredSupplies.slice(
         (safeSupplyPage - 1) * SUPPLY_PAGE_SIZE,
-        safeSupplyPage * SUPPLY_PAGE_SIZE
+        safeSupplyPage * SUPPLY_PAGE_SIZE,
     );
 
     const uniqueSupplies = React.useMemo(() => {
@@ -510,14 +512,14 @@ export default function SuppliesPage() {
 
     React.useEffect(
         () => setHistoryPage(1),
-        [historyFilterMonth, historyFilterSupply, historyFilterPurchasedBy, historyFilterPayment]
+        [historyFilterMonth, historyFilterSupply, historyFilterPurchasedBy, historyFilterPayment],
     );
 
     const historyTotalPages = Math.max(1, Math.ceil(sortedFilteredHistory.length / HISTORY_PAGE_SIZE));
     const safeHistoryPage = Math.min(historyPage, historyTotalPages);
     const paginatedHistory = sortedFilteredHistory.slice(
         (safeHistoryPage - 1) * HISTORY_PAGE_SIZE,
-        safeHistoryPage * HISTORY_PAGE_SIZE
+        safeHistoryPage * HISTORY_PAGE_SIZE,
     );
 
     const monthlySpendChartData = React.useMemo(() => {
@@ -588,10 +590,7 @@ export default function SuppliesPage() {
         ];
         const rows = filteredSupplies.map((s) => {
             const cat = SUPPLY_CATEGORIES.find((c) => c.value === s.category)?.label ?? s.category ?? '';
-            const qtyWeight =
-                s.weight != null
-                    ? `${s.quantity} ${s.unit} (${s.weight} lb)`
-                    : `${s.quantity} ${s.unit}`;
+            const qtyWeight = s.weight != null ? `${s.quantity} ${s.unit} (${s.weight} lb)` : `${s.quantity} ${s.unit}`;
             const paymentLabel =
                 PAYMENT_METHODS.find((p) => p.value === s.paymentMethod)?.label ?? s.paymentMethod ?? '';
             return [
@@ -843,86 +842,84 @@ export default function SuppliesPage() {
                     <TableBody>
                         {paginatedSupplies.length === 0 ? (
                             <TableRow className="border-zinc-700/80">
-                                <TableCell
-                                    colSpan={9}
-                                    className="text-zinc-400 py-8 text-center text-[11px]"
-                                >
-                                    {supplySearch.trim()
-                                        ? 'No supplies match your search'
-                                        : 'No supply items'}
+                                <TableCell colSpan={9} className="text-zinc-400 py-8 text-center text-[11px]">
+                                    {supplySearch.trim() ? 'No supplies match your search' : 'No supply items'}
                                 </TableCell>
                             </TableRow>
                         ) : (
                             paginatedSupplies.map((s) => {
                                 const cat = SUPPLY_CATEGORIES.find((c) => c.value === s.category)?.label ?? s.category;
-                            const qtyWeight =
-                                s.weight != null
-                                    ? `${s.quantity} ${s.unit} (${s.weight} lb)`
-                                    : `${s.quantity} ${s.unit}`;
-                            return (
-                                <TableRow
-                                    key={s.id}
-                                    className="border-zinc-700/80 group transition-colors hover:!bg-zinc-700/50"
-                                >
-                                    <TableCell className="text-zinc-200 px-3 py-1.5 text-[11px] font-medium group-hover:text-zinc-100">
-                                        {s.name}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
-                                        {cat}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-400 px-3 py-1.5 tabular-nums text-[11px] group-hover:text-zinc-300">
-                                        {qtyWeight}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-500 px-3 py-1.5 text-[11px] group-hover:text-zinc-400">
-                                        {s.purchasedFrom}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-500 px-3 py-1.5 text-[11px] group-hover:text-zinc-400">
-                                        {PAYMENT_METHODS.find((p) => p.value === s.paymentMethod)?.label ??
-                                            s.paymentMethod ??
-                                            '—'}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-500 px-3 py-1.5 text-[11px] group-hover:text-zinc-400">
-                                        {s.purchasedBy ?? '—'}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
-                                        {formatDate(s.lastPurchasedAt)}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-100 px-3 py-1.5 text-right tabular-nums text-[11px] font-medium group-hover:text-white">
-                                        ${s.value.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                    </TableCell>
-                                    <TableCell className="px-2 py-1.5">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-600/50"
+                                const qtyWeight =
+                                    s.weight != null
+                                        ? `${s.quantity} ${s.unit} (${s.weight} lb)`
+                                        : `${s.quantity} ${s.unit}`;
+                                return (
+                                    <TableRow
+                                        key={s.id}
+                                        className="border-zinc-700/80 group transition-colors hover:!bg-zinc-700/50"
+                                    >
+                                        <TableCell className="text-zinc-200 px-3 py-1.5 text-[11px] font-medium group-hover:text-zinc-100">
+                                            {s.name}
+                                        </TableCell>
+                                        <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
+                                            {cat}
+                                        </TableCell>
+                                        <TableCell className="text-zinc-400 px-3 py-1.5 tabular-nums text-[11px] group-hover:text-zinc-300">
+                                            {qtyWeight}
+                                        </TableCell>
+                                        <TableCell className="text-zinc-500 px-3 py-1.5 text-[11px] group-hover:text-zinc-400">
+                                            {s.purchasedFrom}
+                                        </TableCell>
+                                        <TableCell className="text-zinc-500 px-3 py-1.5 text-[11px] group-hover:text-zinc-400">
+                                            {PAYMENT_METHODS.find((p) => p.value === s.paymentMethod)?.label ??
+                                                s.paymentMethod ??
+                                                '—'}
+                                        </TableCell>
+                                        <TableCell className="text-zinc-500 px-3 py-1.5 text-[11px] group-hover:text-zinc-400">
+                                            {s.purchasedBy ?? '—'}
+                                        </TableCell>
+                                        <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
+                                            {formatDate(s.lastPurchasedAt)}
+                                        </TableCell>
+                                        <TableCell className="text-zinc-100 px-3 py-1.5 text-right tabular-nums text-[11px] font-medium group-hover:text-white">
+                                            ${s.value.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        </TableCell>
+                                        <TableCell className="px-2 py-1.5">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-600/50"
+                                                    >
+                                                        <MoreHorizontal className="size-3.5" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    className="border-zinc-800 bg-zinc-900"
                                                 >
-                                                    <MoreHorizontal className="size-3.5" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="border-zinc-800 bg-zinc-900">
-                                                <DropdownMenuItem
-                                                    onClick={() => openEditModal(s)}
-                                                    className="text-zinc-200 cursor-pointer"
-                                                >
-                                                    <Pencil className="size-3.5 mr-2" />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    variant="destructive"
-                                                    onClick={() => openDeleteModal(s)}
-                                                    className="text-red-400 cursor-pointer"
-                                                >
-                                                    <Trash2 className="size-3.5 mr-2" />
-                                                    Delete
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })
+                                                    <DropdownMenuItem
+                                                        onClick={() => openEditModal(s)}
+                                                        className="text-zinc-200 cursor-pointer"
+                                                    >
+                                                        <Pencil className="size-3.5 mr-2" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        variant="destructive"
+                                                        onClick={() => openDeleteModal(s)}
+                                                        className="text-red-400 cursor-pointer"
+                                                    >
+                                                        <Trash2 className="size-3.5 mr-2" />
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
                         )}
                     </TableBody>
                 </Table>

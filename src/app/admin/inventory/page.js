@@ -1,23 +1,10 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import * as React from 'react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
     Dialog,
     DialogContent,
@@ -25,76 +12,150 @@ import {
     DialogTitle,
     DialogDescription,
     DialogFooter,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Box, Plus, Package, Search, AlertTriangle, CheckCircle, Download, Store, RotateCcw, Trash2, Layers, DollarSign, Pencil, MoreHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/dropdown-menu';
+import {
+    Box,
+    Plus,
+    Package,
+    Search,
+    AlertTriangle,
+    CheckCircle,
+    Download,
+    Store,
+    RotateCcw,
+    Trash2,
+    Layers,
+    DollarSign,
+    Pencil,
+    MoreHorizontal,
+    ChevronLeft,
+    ChevronRight,
+} from 'lucide-react';
+import { cn } from '@/lib/utils/helpers';
 
 // Mock loss records: { productId, type, quantity, value, date }
 const MOCK_LOSSES = [
-    { id: "L1", productId: "1", type: "spoilage", quantity: 3, value: 45, date: "2025-02-15" },
-    { id: "L2", productId: "2", type: "spoilage", quantity: 2, value: 22, date: "2025-02-14" },
-    { id: "L3", productId: "4", type: "return", quantity: 1, value: 20, date: "2025-02-16" },
-    { id: "L4", productId: "1", type: "damage", quantity: 2, value: 30, date: "2025-02-10" },
-    { id: "L5", productId: "5", type: "spoilage", quantity: 1, value: 13, date: "2025-02-12" },
-    { id: "L6", productId: "2", type: "return", quantity: 1, value: 11, date: "2025-02-13" },
+    { id: 'L1', productId: '1', type: 'spoilage', quantity: 3, value: 45, date: '2025-02-15' },
+    { id: 'L2', productId: '2', type: 'spoilage', quantity: 2, value: 22, date: '2025-02-14' },
+    { id: 'L3', productId: '4', type: 'return', quantity: 1, value: 20, date: '2025-02-16' },
+    { id: 'L4', productId: '1', type: 'damage', quantity: 2, value: 30, date: '2025-02-10' },
+    { id: 'L5', productId: '5', type: 'spoilage', quantity: 1, value: 13, date: '2025-02-12' },
+    { id: 'L6', productId: '2', type: 'return', quantity: 1, value: 11, date: '2025-02-13' },
 ];
 
 const MOCK_INVENTORY = [
-    { id: "1", sku: "CS-PB-12", name: "Premium Brisket 12oz", stock: 84, reserved: 12, consignment: 24, lowThreshold: 20, value: 1260, costPerBag: 5.5, sellPrice: 14.99 },
-    { id: "2", sku: "CS-SC-8", name: "Seasoned Classic 8oz", stock: 8, reserved: 2, consignment: 12, lowThreshold: 15, value: 88, costPerBag: 4.25, sellPrice: 10.99 },
-    { id: "3", sku: "CS-O6", name: "Original 6oz", stock: 0, reserved: 0, consignment: 0, lowThreshold: 10, value: 0, costPerBag: 3.8, sellPrice: 8.99 },
-    { id: "4", sku: "CS-LS", name: "Limited Smoked", stock: 45, reserved: 5, consignment: 18, lowThreshold: 20, value: 900, costPerBag: 6.2, sellPrice: 19.99 },
-    { id: "5", sku: "CS-GH-6", name: "Garlic & Herb 6oz", stock: 32, reserved: 4, consignment: 8, lowThreshold: 15, value: 416, costPerBag: 4.0, sellPrice: 8.99 },
+    {
+        id: '1',
+        sku: 'CS-PB-12',
+        name: 'Premium Brisket 12oz',
+        stock: 84,
+        reserved: 12,
+        consignment: 24,
+        lowThreshold: 20,
+        value: 1260,
+        costPerBag: 5.5,
+        sellPrice: 14.99,
+    },
+    {
+        id: '2',
+        sku: 'CS-SC-8',
+        name: 'Seasoned Classic 8oz',
+        stock: 8,
+        reserved: 2,
+        consignment: 12,
+        lowThreshold: 15,
+        value: 88,
+        costPerBag: 4.25,
+        sellPrice: 10.99,
+    },
+    {
+        id: '3',
+        sku: 'CS-O6',
+        name: 'Original 6oz',
+        stock: 0,
+        reserved: 0,
+        consignment: 0,
+        lowThreshold: 10,
+        value: 0,
+        costPerBag: 3.8,
+        sellPrice: 8.99,
+    },
+    {
+        id: '4',
+        sku: 'CS-LS',
+        name: 'Limited Smoked',
+        stock: 45,
+        reserved: 5,
+        consignment: 18,
+        lowThreshold: 20,
+        value: 900,
+        costPerBag: 6.2,
+        sellPrice: 19.99,
+    },
+    {
+        id: '5',
+        sku: 'CS-GH-6',
+        name: 'Garlic & Herb 6oz',
+        stock: 32,
+        reserved: 4,
+        consignment: 8,
+        lowThreshold: 15,
+        value: 416,
+        costPerBag: 4.0,
+        sellPrice: 8.99,
+    },
 ];
 
 function formatCurrency(n) {
-    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n ?? 0);
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(
+        n ?? 0,
+    );
 }
 
 const INVENTORY_PAGE_SIZE = 5;
 
 function escapeCsv(val) {
-    const s = String(val ?? "");
-    if (s.includes(",") || s.includes('"') || s.includes("\n")) return `"${s.replace(/"/g, '""')}"`;
+    const s = String(val ?? '');
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) return `"${s.replace(/"/g, '""')}"`;
     return s;
 }
 
 export default function InventoryPage() {
-    const [search, setSearch] = React.useState("");
-    const [statusFilter, setStatusFilter] = React.useState("all");
+    const [search, setSearch] = React.useState('');
+    const [statusFilter, setStatusFilter] = React.useState('all');
     const [adjustModalOpen, setAdjustModalOpen] = React.useState(false);
     const [addModalOpen, setAddModalOpen] = React.useState(false);
     const [inventory, setInventory] = React.useState(MOCK_INVENTORY);
-    const [adjustProductId, setAdjustProductId] = React.useState("");
-    const [adjustType, setAdjustType] = React.useState("add");
-    const [adjustQuantity, setAdjustQuantity] = React.useState("");
-    const [adjustNotes, setAdjustNotes] = React.useState("");
-    const [newSku, setNewSku] = React.useState("");
-    const [newName, setNewName] = React.useState("");
-    const [newStock, setNewStock] = React.useState("");
-    const [newLowThreshold, setNewLowThreshold] = React.useState("");
-    const [newUnitValue, setNewUnitValue] = React.useState("");
-    const [newCostPerBag, setNewCostPerBag] = React.useState("");
-    const [newSellPrice, setNewSellPrice] = React.useState("");
-    const [newConsignment, setNewConsignment] = React.useState("0");
-    const [adjustReason, setAdjustReason] = React.useState("");
+    const [adjustProductId, setAdjustProductId] = React.useState('');
+    const [adjustType, setAdjustType] = React.useState('add');
+    const [adjustQuantity, setAdjustQuantity] = React.useState('');
+    const [adjustNotes, setAdjustNotes] = React.useState('');
+    const [newSku, setNewSku] = React.useState('');
+    const [newName, setNewName] = React.useState('');
+    const [newStock, setNewStock] = React.useState('');
+    const [newLowThreshold, setNewLowThreshold] = React.useState('');
+    const [newUnitValue, setNewUnitValue] = React.useState('');
+    const [newCostPerBag, setNewCostPerBag] = React.useState('');
+    const [newSellPrice, setNewSellPrice] = React.useState('');
+    const [newConsignment, setNewConsignment] = React.useState('0');
+    const [adjustReason, setAdjustReason] = React.useState('');
     const [losses, setLosses] = React.useState(MOCK_LOSSES);
     const [editModalOpen, setEditModalOpen] = React.useState(false);
     const [editingProduct, setEditingProduct] = React.useState(null);
     const [editForm, setEditForm] = React.useState({
-        sku: "",
-        name: "",
-        stock: "",
-        consignment: "",
-        lowThreshold: "",
-        costPerBag: "",
-        sellPrice: "",
+        sku: '',
+        name: '',
+        stock: '',
+        consignment: '',
+        lowThreshold: '',
+        costPerBag: '',
+        sellPrice: '',
     });
     const [inventoryPage, setInventoryPage] = React.useState(1);
 
@@ -102,22 +163,19 @@ export default function InventoryPage() {
         const qty = parseInt(adjustQuantity, 10) || 0;
         if (!adjustProductId || qty <= 0) return;
         const product = inventory.find((p) => p.id === adjustProductId);
-        const unitValue =
-            product && product.stock > 0
-                ? product.value / product.stock
-                : (product?.costPerBag ?? 0);
+        const unitValue = product && product.stock > 0 ? product.value / product.stock : (product?.costPerBag ?? 0);
 
         setInventory((prev) =>
             prev.map((p) => {
                 if (p.id !== adjustProductId) return p;
-                const delta = adjustType === "add" ? qty : -qty;
+                const delta = adjustType === 'add' ? qty : -qty;
                 const newStock = Math.max(0, p.stock + delta);
                 const newValue = Math.round(unitValue * newStock);
                 return { ...p, stock: newStock, value: newValue };
-            })
+            }),
         );
 
-        if (adjustType === "remove" && adjustReason && product) {
+        if (adjustType === 'remove' && adjustReason && product) {
             const lossValue = Math.round(Math.min(qty, product.stock) * unitValue);
             setLosses((prev) => [
                 ...prev,
@@ -133,36 +191,46 @@ export default function InventoryPage() {
         }
 
         setAdjustModalOpen(false);
-        setAdjustProductId("");
-        setAdjustQuantity("");
-        setAdjustNotes("");
-        setAdjustReason("");
+        setAdjustProductId('');
+        setAdjustQuantity('');
+        setAdjustNotes('');
+        setAdjustReason('');
     };
 
     const handleExportCsv = () => {
-        const headers = ["SKU", "Product", "Available", "Consignment", "Cost/Bag", "Sell Price", "Low Threshold", "Status", "Value"];
+        const headers = [
+            'SKU',
+            'Product',
+            'Available',
+            'Consignment',
+            'Cost/Bag',
+            'Sell Price',
+            'Low Threshold',
+            'Status',
+            'Value',
+        ];
         const rows = filtered.map((p) => {
             const isOut = p.stock === 0;
             const isLow = !isOut && p.stock <= p.lowThreshold;
-            const status = isOut ? "Out of stock" : isLow ? "Low stock" : "OK";
+            const status = isOut ? 'Out of stock' : isLow ? 'Low stock' : 'OK';
             return [
                 p.sku,
                 p.name,
                 p.stock,
                 p.consignment ?? 0,
-                p.costPerBag != null ? `$${p.costPerBag.toFixed(2)}` : "",
-                p.sellPrice != null ? `$${p.sellPrice.toFixed(2)}` : "",
+                p.costPerBag != null ? `$${p.costPerBag.toFixed(2)}` : '',
+                p.sellPrice != null ? `$${p.sellPrice.toFixed(2)}` : '',
                 p.lowThreshold,
                 status,
                 `$${p.value.toLocaleString()}`,
             ]
                 .map(escapeCsv)
-                .join(",");
+                .join(',');
         });
-        const csv = [headers.map(escapeCsv).join(","), ...rows].join("\n");
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const csv = [headers.map(escapeCsv).join(','), ...rows].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
+        const a = document.createElement('a');
         a.href = url;
         a.download = `inventory-${new Date().toISOString().slice(0, 10)}.csv`;
         a.click();
@@ -172,13 +240,13 @@ export default function InventoryPage() {
     const openEditModal = (product) => {
         setEditingProduct(product);
         setEditForm({
-            sku: product.sku ?? "",
-            name: product.name ?? "",
-            stock: String(product.stock ?? ""),
+            sku: product.sku ?? '',
+            name: product.name ?? '',
+            stock: String(product.stock ?? ''),
             consignment: String(product.consignment ?? 0),
-            lowThreshold: String(product.lowThreshold ?? ""),
-            costPerBag: product.costPerBag != null ? String(product.costPerBag) : "",
-            sellPrice: product.sellPrice != null ? String(product.sellPrice) : "",
+            lowThreshold: String(product.lowThreshold ?? ''),
+            costPerBag: product.costPerBag != null ? String(product.costPerBag) : '',
+            sellPrice: product.sellPrice != null ? String(product.sellPrice) : '',
         });
         setEditModalOpen(true);
     };
@@ -189,8 +257,8 @@ export default function InventoryPage() {
         const stock = parseInt(editForm.stock, 10) || 0;
         const lowThresholdVal = parseInt(editForm.lowThreshold, 10);
         const lowThreshold = Number.isNaN(lowThresholdVal) ? (editingProduct.lowThreshold ?? 10) : lowThresholdVal;
-        const costPerBag = parseFloat(String(editForm.costPerBag).replace(/[^0-9.]/g, "")) || 0;
-        const sellPrice = parseFloat(String(editForm.sellPrice).replace(/[^0-9.]/g, "")) || 0;
+        const costPerBag = parseFloat(String(editForm.costPerBag).replace(/[^0-9.]/g, '')) || 0;
+        const sellPrice = parseFloat(String(editForm.sellPrice).replace(/[^0-9.]/g, '')) || 0;
         const consignment = parseInt(editForm.consignment, 10) || 0;
         const unitCost = costPerBag || (editingProduct.stock > 0 ? editingProduct.value / editingProduct.stock : 0);
         const value = Math.round(stock * unitCost);
@@ -219,9 +287,9 @@ export default function InventoryPage() {
     const handleAddInventory = () => {
         const stock = parseInt(newStock, 10) || 0;
         const lowThreshold = parseInt(newLowThreshold, 10) || 10;
-        const costPerBag = parseFloat(String(newCostPerBag).replace(/[^0-9.]/g, "")) || 0;
-        const sellPrice = parseFloat(String(newSellPrice).replace(/[^0-9.]/g, "")) || 0;
-        const unitPrice = parseFloat(String(newUnitValue).replace(/[^0-9.]/g, "")) || costPerBag || 0;
+        const costPerBag = parseFloat(String(newCostPerBag).replace(/[^0-9.]/g, '')) || 0;
+        const sellPrice = parseFloat(String(newSellPrice).replace(/[^0-9.]/g, '')) || 0;
+        const unitPrice = parseFloat(String(newUnitValue).replace(/[^0-9.]/g, '')) || costPerBag || 0;
         const value = Math.round(stock * (unitPrice || costPerBag));
         const nextId = String(Math.max(...inventory.map((p) => parseInt(p.id, 10)), 0) + 1);
         if (!newSku.trim() || !newName.trim()) return;
@@ -241,28 +309,24 @@ export default function InventoryPage() {
             },
         ]);
         setAddModalOpen(false);
-        setNewSku("");
-        setNewName("");
-        setNewStock("");
-        setNewLowThreshold("");
-        setNewUnitValue("");
-        setNewCostPerBag("");
-        setNewSellPrice("");
-        setNewConsignment("0");
+        setNewSku('');
+        setNewName('');
+        setNewStock('');
+        setNewLowThreshold('');
+        setNewUnitValue('');
+        setNewCostPerBag('');
+        setNewSellPrice('');
+        setNewConsignment('0');
     };
 
     const filtered = React.useMemo(() => {
         let items = inventory;
         if (search.trim()) {
             const q = search.trim().toLowerCase();
-            items = items.filter(
-                (p) =>
-                    p.name.toLowerCase().includes(q) ||
-                    p.sku.toLowerCase().includes(q)
-            );
+            items = items.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
         }
-        if (statusFilter === "low") items = items.filter((p) => p.stock > 0 && p.stock <= p.lowThreshold);
-        if (statusFilter === "out") items = items.filter((p) => p.stock === 0);
+        if (statusFilter === 'low') items = items.filter((p) => p.stock > 0 && p.stock <= p.lowThreshold);
+        if (statusFilter === 'out') items = items.filter((p) => p.stock === 0);
         return items;
     }, [search, statusFilter, inventory]);
 
@@ -289,10 +353,12 @@ export default function InventoryPage() {
     const lowStockCount = inventory.filter((p) => p.stock > 0 && p.stock <= p.lowThreshold).length;
     const outOfStockCount = inventory.filter((p) => p.stock === 0).length;
 
-    const spoilageTotal = losses.filter((l) => l.type === "spoilage").reduce((s, l) => s + l.value, 0);
-    const returnsTotal = losses.filter((l) => l.type === "return").reduce((s, l) => s + l.value, 0);
-    const damageTotal = losses.filter((l) => l.type === "damage").reduce((s, l) => s + l.value, 0);
-    const otherLossTotal = losses.filter((l) => !["spoilage", "return", "damage"].includes(l.type)).reduce((s, l) => s + l.value, 0);
+    const spoilageTotal = losses.filter((l) => l.type === 'spoilage').reduce((s, l) => s + l.value, 0);
+    const returnsTotal = losses.filter((l) => l.type === 'return').reduce((s, l) => s + l.value, 0);
+    const damageTotal = losses.filter((l) => l.type === 'damage').reduce((s, l) => s + l.value, 0);
+    const otherLossTotal = losses
+        .filter((l) => !['spoilage', 'return', 'damage'].includes(l.type))
+        .reduce((s, l) => s + l.value, 0);
     const totalLosses = spoilageTotal + returnsTotal + damageTotal + otherLossTotal;
 
     return (
@@ -344,14 +410,18 @@ export default function InventoryPage() {
                     <DollarSign className="size-4 shrink-0 text-amber-400/80" />
                     <div className="min-w-0">
                         <p className="text-zinc-400 text-[10px]">Total Cost to Make</p>
-                        <p className="text-amber-400 text-sm font-semibold tabular-nums">${totalCostToMake.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                        <p className="text-amber-400 text-sm font-semibold tabular-nums">
+                            ${totalCostToMake.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </p>
                     </div>
                 </div>
                 <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                     <Box className="size-4 shrink-0 text-indigo-400/80" />
                     <div className="min-w-0">
                         <p className="text-zinc-400 text-[10px]">Total Value</p>
-                        <p className="text-zinc-100 text-sm font-semibold tabular-nums">${totalValue.toLocaleString()}</p>
+                        <p className="text-zinc-100 text-sm font-semibold tabular-nums">
+                            ${totalValue.toLocaleString()}
+                        </p>
                     </div>
                 </div>
                 <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
@@ -380,14 +450,18 @@ export default function InventoryPage() {
                     <Trash2 className="size-4 shrink-0 text-red-400/80" />
                     <div className="min-w-0">
                         <p className="text-zinc-400 text-[10px]">Spoilage</p>
-                        <p className="text-red-400 text-sm font-semibold tabular-nums">${spoilageTotal.toLocaleString()}</p>
+                        <p className="text-red-400 text-sm font-semibold tabular-nums">
+                            ${spoilageTotal.toLocaleString()}
+                        </p>
                     </div>
                 </div>
                 <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                     <RotateCcw className="size-4 shrink-0 text-orange-400/80" />
                     <div className="min-w-0">
                         <p className="text-zinc-400 text-[10px]">Returns & Damage</p>
-                        <p className="text-orange-400 text-sm font-semibold tabular-nums">${(returnsTotal + damageTotal + otherLossTotal).toLocaleString()}</p>
+                        <p className="text-orange-400 text-sm font-semibold tabular-nums">
+                            ${(returnsTotal + damageTotal + otherLossTotal).toLocaleString()}
+                        </p>
                         <p className="text-zinc-500 text-[9px]">Total lost: ${totalLosses.toLocaleString()}</p>
                     </div>
                 </div>
@@ -395,19 +469,19 @@ export default function InventoryPage() {
 
             <div className="flex flex-wrap items-center gap-2">
                 {[
-                    { value: "all", label: "All" },
-                    { value: "low", label: "Low stock" },
-                    { value: "out", label: "Out of stock" },
+                    { value: 'all', label: 'All' },
+                    { value: 'low', label: 'Low stock' },
+                    { value: 'out', label: 'Out of stock' },
                 ].map((opt) => (
                     <button
                         key={opt.value}
                         type="button"
                         onClick={() => setStatusFilter(opt.value)}
                         className={cn(
-                            "rounded border px-2.5 py-1.5 text-[10px] font-medium transition-colors shrink-0",
+                            'rounded border px-2.5 py-1.5 text-[10px] font-medium transition-colors shrink-0',
                             statusFilter === opt.value
-                                ? "border-zinc-500 bg-zinc-700/80 text-zinc-100"
-                                : "border-zinc-600/50 bg-zinc-800/50 text-zinc-300 hover:border-zinc-500/50 hover:bg-zinc-700/50 hover:text-zinc-200",
+                                ? 'border-zinc-500 bg-zinc-700/80 text-zinc-100'
+                                : 'border-zinc-600/50 bg-zinc-800/50 text-zinc-300 hover:border-zinc-500/50 hover:bg-zinc-700/50 hover:text-zinc-200',
                         )}
                     >
                         {opt.label}
@@ -474,10 +548,10 @@ export default function InventoryPage() {
                                             {p.consignment ?? 0}
                                         </TableCell>
                                         <TableCell className="text-zinc-400 px-3 py-1.5 text-right tabular-nums text-[11px] group-hover:text-zinc-300">
-                                            {p.costPerBag != null ? formatCurrency(p.costPerBag) : "—"}
+                                            {p.costPerBag != null ? formatCurrency(p.costPerBag) : '—'}
                                         </TableCell>
                                         <TableCell className="text-emerald-400 px-3 py-1.5 text-right tabular-nums text-[11px] group-hover:text-emerald-300">
-                                            {p.sellPrice != null ? formatCurrency(p.sellPrice) : "—"}
+                                            {p.sellPrice != null ? formatCurrency(p.sellPrice) : '—'}
                                         </TableCell>
                                         <TableCell className="px-3 py-1.5">
                                             {isOut ? (
@@ -511,7 +585,10 @@ export default function InventoryPage() {
                                                         <span className="sr-only">Actions</span>
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="border-zinc-800 bg-zinc-900">
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    className="border-zinc-800 bg-zinc-900"
+                                                >
                                                     <DropdownMenuItem
                                                         onClick={() => openEditModal(p)}
                                                         className="text-zinc-200 cursor-pointer"
@@ -567,9 +644,7 @@ export default function InventoryPage() {
                 <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Adjust Stock</DialogTitle>
-                        <DialogDescription>
-                            Add or remove stock for a product.
-                        </DialogDescription>
+                        <DialogDescription>Add or remove stock for a product.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-2">
                         <div className="space-y-2">
@@ -612,7 +687,7 @@ export default function InventoryPage() {
                                 />
                             </div>
                         </div>
-                        {adjustType === "remove" && (
+                        {adjustType === 'remove' && (
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-zinc-300">Reason (records loss)</label>
                                 <Select value={adjustReason} onValueChange={setAdjustReason}>
@@ -661,9 +736,7 @@ export default function InventoryPage() {
                 <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Add Inventory</DialogTitle>
-                        <DialogDescription>
-                            Add a new product to inventory.
-                        </DialogDescription>
+                        <DialogDescription>Add a new product to inventory.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-2">
                         <div className="grid grid-cols-2 gap-4">
@@ -782,9 +855,7 @@ export default function InventoryPage() {
                 <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Edit Inventory</DialogTitle>
-                        <DialogDescription>
-                            Update {editingProduct?.name ?? "product"} details.
-                        </DialogDescription>
+                        <DialogDescription>Update {editingProduct?.name ?? 'product'} details.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleUpdateInventory} className="grid gap-4 py-2">
                         <div className="grid grid-cols-2 gap-4">
