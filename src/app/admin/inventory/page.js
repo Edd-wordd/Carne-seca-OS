@@ -38,6 +38,7 @@ import {
     ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Mock loss records: { productId, type, quantity, value, date }
 const MOCK_LOSSES = [
@@ -127,7 +128,13 @@ function escapeCsv(val) {
 }
 
 export default function InventoryPage() {
+    const [isLoading, setIsLoading] = React.useState(true);
     const [search, setSearch] = React.useState('');
+
+    React.useEffect(() => {
+        const t = setTimeout(() => setIsLoading(false), 500);
+        return () => clearTimeout(t);
+    }, []);
     const [statusFilter, setStatusFilter] = React.useState('all');
     const [adjustModalOpen, setAdjustModalOpen] = React.useState(false);
     const [addModalOpen, setAddModalOpen] = React.useState(false);
@@ -396,97 +403,143 @@ export default function InventoryPage() {
                 </div>
             </div>
 
-            {/* Summary */}
+            {/* Summary KPI cards */}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
                 <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                     <Layers className="size-4 shrink-0 text-indigo-400/80" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <p className="text-zinc-400 text-[10px]">Total Bags</p>
-                        <p className="text-zinc-100 text-sm font-semibold tabular-nums">{totalBags.toLocaleString()}</p>
-                        <p className="text-zinc-500 text-[9px]">available</p>
+                        {isLoading ? (
+                            <Skeleton className="mt-1 h-4 w-14" />
+                        ) : (
+                            <>
+                                <p className="text-zinc-100 text-sm font-semibold tabular-nums">{totalBags.toLocaleString()}</p>
+                                <p className="text-zinc-500 text-[9px]">available</p>
+                            </>
+                        )}
                     </div>
                 </div>
                 <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                     <DollarSign className="size-4 shrink-0 text-amber-400/80" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <p className="text-zinc-400 text-[10px]">Total Cost to Make</p>
-                        <p className="text-amber-400 text-sm font-semibold tabular-nums">
-                            ${totalCostToMake.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </p>
+                        {isLoading ? (
+                            <Skeleton className="mt-1 h-4 w-20" />
+                        ) : (
+                            <p className="text-amber-400 text-sm font-semibold tabular-nums">
+                                ${totalCostToMake.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            </p>
+                        )}
                     </div>
                 </div>
                 <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                     <Box className="size-4 shrink-0 text-indigo-400/80" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <p className="text-zinc-400 text-[10px]">Total Value</p>
-                        <p className="text-zinc-100 text-sm font-semibold tabular-nums">
-                            ${totalValue.toLocaleString()}
-                        </p>
+                        {isLoading ? (
+                            <Skeleton className="mt-1 h-4 w-16" />
+                        ) : (
+                            <p className="text-zinc-100 text-sm font-semibold tabular-nums">
+                                ${totalValue.toLocaleString()}
+                            </p>
+                        )}
                     </div>
                 </div>
                 <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                     <Store className="size-4 shrink-0 text-violet-400/80" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <p className="text-zinc-400 text-[10px]">On Consignment</p>
-                        <p className="text-zinc-100 text-sm font-semibold tabular-nums">{totalConsignment} units</p>
-                        <p className="text-zinc-500 text-[9px]">${consignmentValue.toLocaleString()} value</p>
+                        {isLoading ? (
+                            <>
+                                <Skeleton className="mt-1 h-4 w-12" />
+                                <Skeleton className="mt-1 h-3 w-16" />
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-zinc-100 text-sm font-semibold tabular-nums">{totalConsignment} units</p>
+                                <p className="text-zinc-500 text-[9px]">${consignmentValue.toLocaleString()} value</p>
+                            </>
+                        )}
                     </div>
                 </div>
                 <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                     <AlertTriangle className="size-4 shrink-0 text-amber-400/80" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <p className="text-zinc-400 text-[10px]">Low Stock</p>
-                        <p className="text-zinc-100 text-sm font-semibold tabular-nums">{lowStockCount}</p>
+                        {isLoading ? (
+                            <Skeleton className="mt-1 h-4 w-8" />
+                        ) : (
+                            <p className="text-zinc-100 text-sm font-semibold tabular-nums">{lowStockCount}</p>
+                        )}
                     </div>
                 </div>
                 <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                     <Package className="size-4 shrink-0 text-zinc-500" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <p className="text-zinc-400 text-[10px]">Out of Stock</p>
-                        <p className="text-zinc-100 text-sm font-semibold tabular-nums">{outOfStockCount}</p>
+                        {isLoading ? (
+                            <Skeleton className="mt-1 h-4 w-8" />
+                        ) : (
+                            <p className="text-zinc-100 text-sm font-semibold tabular-nums">{outOfStockCount}</p>
+                        )}
                     </div>
                 </div>
                 <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                     <Trash2 className="size-4 shrink-0 text-red-400/80" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <p className="text-zinc-400 text-[10px]">Spoilage</p>
-                        <p className="text-red-400 text-sm font-semibold tabular-nums">
-                            ${spoilageTotal.toLocaleString()}
-                        </p>
+                        {isLoading ? (
+                            <Skeleton className="mt-1 h-4 w-14" />
+                        ) : (
+                            <p className="text-red-400 text-sm font-semibold tabular-nums">
+                                ${spoilageTotal.toLocaleString()}
+                            </p>
+                        )}
                     </div>
                 </div>
                 <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                     <RotateCcw className="size-4 shrink-0 text-orange-400/80" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <p className="text-zinc-400 text-[10px]">Returns & Damage</p>
-                        <p className="text-orange-400 text-sm font-semibold tabular-nums">
-                            ${(returnsTotal + damageTotal + otherLossTotal).toLocaleString()}
-                        </p>
-                        <p className="text-zinc-500 text-[9px]">Total lost: ${totalLosses.toLocaleString()}</p>
+                        {isLoading ? (
+                            <>
+                                <Skeleton className="mt-1 h-4 w-16" />
+                                <Skeleton className="mt-1 h-3 w-24" />
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-orange-400 text-sm font-semibold tabular-nums">
+                                    ${(returnsTotal + damageTotal + otherLossTotal).toLocaleString()}
+                                </p>
+                                <p className="text-zinc-500 text-[9px]">Total lost: ${totalLosses.toLocaleString()}</p>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-                {[
-                    { value: 'all', label: 'All' },
-                    { value: 'low', label: 'Low stock' },
-                    { value: 'out', label: 'Out of stock' },
-                ].map((opt) => (
-                    <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setStatusFilter(opt.value)}
-                        className={cn(
-                            'rounded border px-2.5 py-1.5 text-[10px] font-medium transition-colors shrink-0',
-                            statusFilter === opt.value
-                                ? 'border-zinc-500 bg-zinc-700/80 text-zinc-100'
-                                : 'border-zinc-600/50 bg-zinc-800/50 text-zinc-300 hover:border-zinc-500/50 hover:bg-zinc-700/50 hover:text-zinc-200',
-                        )}
-                    >
-                        {opt.label}
-                    </button>
-                ))}
+            <div className="flex flex-1 flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
+                    {[
+                        { value: 'all', label: 'All' },
+                        { value: 'low', label: 'Low stock' },
+                        { value: 'out', label: 'Out of stock' },
+                    ].map((opt) => (
+                        <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setStatusFilter(opt.value)}
+                            className={cn(
+                                'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                                statusFilter === opt.value
+                                    ? 'bg-zinc-700 text-zinc-100'
+                                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
+                            )}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Table */}
@@ -520,7 +573,39 @@ export default function InventoryPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedInventory.length === 0 ? (
+                        {isLoading ? (
+                            Array.from({ length: INVENTORY_PAGE_SIZE }).map((_, i) => (
+                                <TableRow key={i} className="border-zinc-700/80">
+                                    <TableCell className="px-3 py-1.5">
+                                        <Skeleton className="h-3.5 w-16" />
+                                    </TableCell>
+                                    <TableCell className="px-3 py-1.5">
+                                        <Skeleton className="h-3.5 w-28" />
+                                    </TableCell>
+                                    <TableCell className="px-3 py-1.5">
+                                        <Skeleton className="h-3.5 w-8" />
+                                    </TableCell>
+                                    <TableCell className="px-3 py-1.5">
+                                        <Skeleton className="h-3.5 w-8" />
+                                    </TableCell>
+                                    <TableCell className="px-3 py-1.5 text-right">
+                                        <Skeleton className="ml-auto h-3.5 w-12" />
+                                    </TableCell>
+                                    <TableCell className="px-3 py-1.5 text-right">
+                                        <Skeleton className="ml-auto h-3.5 w-12" />
+                                    </TableCell>
+                                    <TableCell className="px-3 py-1.5">
+                                        <Skeleton className="h-5 w-14 rounded-full" />
+                                    </TableCell>
+                                    <TableCell className="px-3 py-1.5 text-right">
+                                        <Skeleton className="ml-auto h-3.5 w-14" />
+                                    </TableCell>
+                                    <TableCell className="px-2 py-1.5">
+                                        <Skeleton className="h-7 w-7 rounded" />
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : paginatedInventory.length === 0 ? (
                             <TableRow className="border-zinc-700/80">
                                 <TableCell colSpan={9} className="text-zinc-400 py-8 text-center text-[11px]">
                                     No products match the filters
