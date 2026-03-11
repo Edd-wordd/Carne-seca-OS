@@ -363,8 +363,30 @@ export default function ProductionDashboard() {
                                                 </span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-zinc-400 px-2 py-2.5 text-xs hidden md:table-cell group-hover:text-zinc-300">
+                                        <TableCell
+                                            className={cn(
+                                                'px-2 py-2.5 text-xs hidden md:table-cell group-hover:text-zinc-300',
+                                                isDamagedStatus(batch.tracking_status)
+                                                    ? 'text-zinc-500 group-hover:text-zinc-500'
+                                                    : 'text-zinc-400',
+                                            )}
+                                        >
                                             {batch.suppliers?.name || 'Unknown Supplier'}
+                                        </TableCell>
+                                        <TableCell
+                                            className={cn(
+                                                'text-zinc-100 px-2 py-2.5 tabular-nums text-xs font-medium group-hover:text-white',
+                                                isDamagedStatus(batch.tracking_status) &&
+                                                    'text-zinc-500 group-hover:text-zinc-500',
+                                            )}
+                                        >
+                                            {isDamagedStatus(batch.tracking_status)
+                                                ? batch.initial_weight != null
+                                                    ? `${batch.initial_weight.toFixed(1)} lbs`
+                                                    : '—'
+                                                : batch.raw_weight != null
+                                                  ? `${batch.raw_weight.toFixed(1)} lbs`
+                                                  : '—'}
                                         </TableCell>
                                         <TableCell className="text-zinc-100 px-2 py-2.5 tabular-nums text-xs font-medium group-hover:text-white">
                                             {batch.raw_weight != null ? `${batch.raw_weight.toFixed(1)} lbs` : '—'}
