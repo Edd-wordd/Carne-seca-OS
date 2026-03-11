@@ -363,21 +363,15 @@ export default function ProductionDashboard() {
                                                 </span>
                                             </div>
                                         </TableCell>
-                                        <TableCell
-                                            className={cn(
-                                                'px-2 py-2.5 text-xs hidden md:table-cell group-hover:text-zinc-300',
-                                                isDamagedStatus(batch.tracking_status)
-                                                    ? 'text-zinc-500 group-hover:text-zinc-500'
-                                                    : 'text-zinc-400',
-                                            )}
-                                        >
+                                        <TableCell className="text-zinc-400 px-2 py-2.5 text-xs hidden md:table-cell group-hover:text-zinc-300">
                                             {batch.suppliers?.name || 'Unknown Supplier'}
                                         </TableCell>
                                         <TableCell
                                             className={cn(
-                                                'text-zinc-100 px-2 py-2.5 tabular-nums text-xs font-medium group-hover:text-white',
-                                                isDamagedStatus(batch.tracking_status) &&
-                                                    'text-zinc-500 group-hover:text-zinc-500',
+                                                isDamagedStatus(batch.tracking_status)
+                                                    ? 'text-zinc-400'
+                                                    : 'text-zinc-100',
+                                                'px-2 py-2.5 tabular-nums text-xs font-medium group-hover:text-white',
                                             )}
                                         >
                                             {isDamagedStatus(batch.tracking_status)
@@ -387,9 +381,6 @@ export default function ProductionDashboard() {
                                                 : batch.raw_weight != null
                                                   ? `${batch.raw_weight.toFixed(1)} lbs`
                                                   : '—'}
-                                        </TableCell>
-                                        <TableCell className="text-zinc-100 px-2 py-2.5 tabular-nums text-xs font-medium group-hover:text-white">
-                                            {batch.raw_weight != null ? `${batch.raw_weight.toFixed(1)} lbs` : '—'}
                                         </TableCell>
                                         <TableCell className="text-zinc-400 px-2 py-2.5 tabular-nums text-xs hidden sm:table-cell group-hover:text-zinc-300">
                                             {formatCurrency(batch.cost_per_pound)}
@@ -447,7 +438,7 @@ export default function ProductionDashboard() {
                                             ${(batch.initial_weight * batch.cost_per_pound).toFixed(2)}
                                         </TableCell>
                                         <TableCell className="px-2 py-2.5">
-                                            {batch.tracking_status?.toLowerCase() !== 'damaged' && (
+                                            {!isDamagedStatus(batch.tracking_status) && (
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
                                                         <Button
