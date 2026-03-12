@@ -158,11 +158,7 @@ export default function InventoryPage() {
     const [editForm, setEditForm] = React.useState({
         sku: '',
         name: '',
-        stock: '',
-        consignment: '',
         lowThreshold: '',
-        costPerBag: '',
-        sellPrice: '',
     });
     const [inventoryPage, setInventoryPage] = React.useState(1);
 
@@ -249,11 +245,7 @@ export default function InventoryPage() {
         setEditForm({
             sku: product.sku ?? '',
             name: product.name ?? '',
-            stock: String(product.stock ?? ''),
-            consignment: String(product.consignment ?? 0),
             lowThreshold: String(product.lowThreshold ?? ''),
-            costPerBag: product.costPerBag != null ? String(product.costPerBag) : '',
-            sellPrice: product.sellPrice != null ? String(product.sellPrice) : '',
         });
         setEditModalOpen(true);
     };
@@ -261,14 +253,8 @@ export default function InventoryPage() {
     const handleUpdateInventory = (e) => {
         e.preventDefault();
         if (!editingProduct) return;
-        const stock = parseInt(editForm.stock, 10) || 0;
         const lowThresholdVal = parseInt(editForm.lowThreshold, 10);
         const lowThreshold = Number.isNaN(lowThresholdVal) ? (editingProduct.lowThreshold ?? 10) : lowThresholdVal;
-        const costPerBag = parseFloat(String(editForm.costPerBag).replace(/[^0-9.]/g, '')) || 0;
-        const sellPrice = parseFloat(String(editForm.sellPrice).replace(/[^0-9.]/g, '')) || 0;
-        const consignment = parseInt(editForm.consignment, 10) || 0;
-        const unitCost = costPerBag || (editingProduct.stock > 0 ? editingProduct.value / editingProduct.stock : 0);
-        const value = Math.round(stock * unitCost);
 
         setInventory((prev) =>
             prev.map((p) =>
@@ -277,12 +263,7 @@ export default function InventoryPage() {
                           ...p,
                           sku: editForm.sku.trim() || p.sku,
                           name: editForm.name.trim() || p.name,
-                          stock,
-                          consignment,
                           lowThreshold,
-                          costPerBag: costPerBag || undefined,
-                          sellPrice: sellPrice || undefined,
-                          value,
                       }
                     : p,
             ),
@@ -392,13 +373,6 @@ export default function InventoryPage() {
                     >
                         <Plus className="size-3.5" />
                         Add Inventory
-                    </Button>
-                    <Button
-                        size="sm"
-                        className="gap-1.5 bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 text-xs"
-                        onClick={() => setAdjustModalOpen(true)}
-                    >
-                        Adjust Stock
                     </Button>
                 </div>
             </div>
@@ -543,10 +517,10 @@ export default function InventoryPage() {
             </div>
 
             {/* Table */}
-            <div className="overflow-hidden rounded border border-zinc-700/80">
-                <div className="border-b border-zinc-700/80 bg-zinc-900/80 px-3 py-1.5">
+            <div className="overflow-hidden rounded border border-zinc-800">
+                <div className="border-b border-zinc-800 bg-zinc-900/80 px-3 py-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                        <h2 className="text-zinc-100 text-xs font-medium">Product Inventory</h2>
+                        <h2 className="text-zinc-200 text-sm font-medium">Product Inventory</h2>
                         <div className="relative">
                             <Search className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-zinc-500" />
                             <Input
@@ -558,56 +532,50 @@ export default function InventoryPage() {
                         </div>
                     </div>
                 </div>
-                <Table>
+                <Table className="table-fixed">
                     <TableHeader>
                         <TableRow className="border-zinc-700/80 hover:!bg-transparent">
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">SKU</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Product</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Available</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Consignment</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px] text-right">Cost/Bag</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px] text-right">Sell Price</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Status</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px] text-right">Value</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-2 text-[10px] w-12" />
+                            <TableHead className="text-zinc-500 h-8 w-[16%] px-2 text-xs">SKU</TableHead>
+                            <TableHead className="text-zinc-500 h-8 w-[16%] px-2 text-xs">Product</TableHead>
+                            <TableHead className="text-zinc-500 h-8 w-[16%] px-2 text-xs">Available</TableHead>
+                            <TableHead className="text-zinc-500 h-8 w-[16%] px-2 text-xs">Consignment</TableHead>
+                            <TableHead className="text-zinc-500 h-8 w-[16%] px-2 text-xs">Status</TableHead>
+                            <TableHead className="text-zinc-500 h-8 w-[16%] px-2 text-xs">Value</TableHead>
+                            <TableHead className="text-zinc-500 h-8 w-16 pl-4 pr-2 text-right text-xs">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
                             Array.from({ length: INVENTORY_PAGE_SIZE }).map((_, i) => (
                                 <TableRow key={i} className="border-zinc-700/80">
-                                    <TableCell className="px-3 py-1.5">
-                                        <Skeleton className="h-3.5 w-16" />
+                                    <TableCell className="px-2 py-2.5">
+                                        <Skeleton className="h-4 w-16" />
                                     </TableCell>
-                                    <TableCell className="px-3 py-1.5">
-                                        <Skeleton className="h-3.5 w-28" />
+                                    <TableCell className="px-2 py-2.5">
+                                        <Skeleton className="h-4 w-28" />
                                     </TableCell>
-                                    <TableCell className="px-3 py-1.5">
-                                        <Skeleton className="h-3.5 w-8" />
+                                    <TableCell className="px-2 py-2.5">
+                                        <Skeleton className="h-4 w-8" />
                                     </TableCell>
-                                    <TableCell className="px-3 py-1.5">
-                                        <Skeleton className="h-3.5 w-8" />
+                                    <TableCell className="px-2 py-2.5">
+                                        <Skeleton className="h-4 w-8" />
                                     </TableCell>
-                                    <TableCell className="px-3 py-1.5 text-right">
-                                        <Skeleton className="ml-auto h-3.5 w-12" />
-                                    </TableCell>
-                                    <TableCell className="px-3 py-1.5 text-right">
-                                        <Skeleton className="ml-auto h-3.5 w-12" />
-                                    </TableCell>
-                                    <TableCell className="px-3 py-1.5">
+                                    <TableCell className="px-2 py-2.5">
                                         <Skeleton className="h-5 w-14 rounded-full" />
                                     </TableCell>
-                                    <TableCell className="px-3 py-1.5 text-right">
-                                        <Skeleton className="ml-auto h-3.5 w-14" />
+                                    <TableCell className="px-2 py-2.5">
+                                        <Skeleton className="h-4 w-14" />
                                     </TableCell>
-                                    <TableCell className="px-2 py-1.5">
-                                        <Skeleton className="h-7 w-7 rounded" />
+                                    <TableCell className="pl-4 pr-2 py-2.5">
+                                        <div className="flex justify-end">
+                                            <Skeleton className="h-7 w-7 rounded" />
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))
                         ) : paginatedInventory.length === 0 ? (
                             <TableRow className="border-zinc-700/80">
-                                <TableCell colSpan={9} className="text-zinc-400 py-8 text-center text-[11px]">
+                                <TableCell colSpan={7} className="text-zinc-400 py-8 text-center text-xs">
                                     No products match the filters
                                 </TableCell>
                             </TableRow>
@@ -620,45 +588,40 @@ export default function InventoryPage() {
                                         key={p.id}
                                         className="group border-zinc-700/80 transition-colors hover:!bg-zinc-700/50"
                                     >
-                                        <TableCell className="font-mono text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
+                                        <TableCell className="font-mono text-zinc-400 px-2 py-2.5 text-xs group-hover:text-zinc-300">
                                             {p.sku}
                                         </TableCell>
-                                        <TableCell className="text-zinc-200 px-3 py-1.5 text-[11px] font-medium group-hover:text-zinc-100">
+                                        <TableCell className="text-zinc-200 px-2 py-2.5 text-xs font-medium group-hover:text-zinc-100">
                                             {p.name}
                                         </TableCell>
-                                        <TableCell className="text-zinc-400 px-3 py-1.5 tabular-nums text-[11px] group-hover:text-zinc-300">
+                                        <TableCell className="text-zinc-400 px-2 py-2.5 tabular-nums text-xs group-hover:text-zinc-300">
                                             {p.stock}
                                         </TableCell>
-                                        <TableCell className="text-violet-400 px-3 py-1.5 tabular-nums text-[11px] group-hover:text-violet-300">
+                                        <TableCell className="text-violet-400 px-2 py-2.5 tabular-nums text-xs group-hover:text-violet-300">
                                             {p.consignment ?? 0}
                                         </TableCell>
-                                        <TableCell className="text-zinc-400 px-3 py-1.5 text-right tabular-nums text-[11px] group-hover:text-zinc-300">
-                                            {p.costPerBag != null ? formatCurrency(p.costPerBag) : '—'}
-                                        </TableCell>
-                                        <TableCell className="text-emerald-400 px-3 py-1.5 text-right tabular-nums text-[11px] group-hover:text-emerald-300">
-                                            {p.sellPrice != null ? formatCurrency(p.sellPrice) : '—'}
-                                        </TableCell>
-                                        <TableCell className="px-3 py-1.5">
+                                        <TableCell className="px-2 py-2.5 text-xs">
                                             {isOut ? (
-                                                <span className="inline-flex items-center gap-1 rounded border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] font-medium text-red-400">
+                                                <span className="inline-flex items-center gap-1 rounded border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[11px] font-medium text-red-400">
                                                     Out of stock
                                                 </span>
                                             ) : isLow ? (
-                                                <span className="inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+                                                <span className="inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-400">
                                                     <AlertTriangle className="size-3" />
                                                     Low
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1 rounded border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                                                <span className="inline-flex items-center gap-1 rounded border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
                                                     <CheckCircle className="size-3" />
                                                     OK
                                                 </span>
                                             )}
                                         </TableCell>
-                                        <TableCell className="text-zinc-100 px-3 py-1.5 text-right tabular-nums text-[11px] font-medium group-hover:text-white">
+                                        <TableCell className="text-zinc-100 px-2 py-2.5 tabular-nums text-xs font-medium group-hover:text-white">
                                             ${p.value.toLocaleString()}
                                         </TableCell>
-                                        <TableCell className="px-2 py-1.5">
+                                        <TableCell className="pl-4 pr-2 py-2.5 text-right">
+                                            <div className="flex justify-end">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button
@@ -681,8 +644,19 @@ export default function InventoryPage() {
                                                         <Pencil className="size-3.5 mr-2" />
                                                         Edit
                                                     </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onClick={() => {
+                                                            setAdjustProductId(p.id);
+                                                            setAdjustModalOpen(true);
+                                                        }}
+                                                        className="text-zinc-200 cursor-pointer"
+                                                    >
+                                                        <RotateCcw className="size-3.5 mr-2" />
+                                                        Adjust Stock
+                                                    </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 );
@@ -725,32 +699,49 @@ export default function InventoryPage() {
                 )}
             </div>
 
-            <Dialog open={adjustModalOpen} onOpenChange={setAdjustModalOpen}>
+            <Dialog
+                open={adjustModalOpen}
+                onOpenChange={(open) => {
+                    setAdjustModalOpen(open);
+                    if (!open) {
+                        setAdjustProductId('');
+                        setAdjustType('add');
+                        setAdjustQuantity('');
+                        setAdjustNotes('');
+                        setAdjustReason('');
+                    }
+                }}
+            >
                 <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Adjust Stock</DialogTitle>
-                        <DialogDescription>Add or remove stock for a product.</DialogDescription>
+                        <DialogDescription>
+                            {adjustProductId
+                                ? `Add or remove stock for ${inventory.find((p) => p.id === adjustProductId)?.name ?? 'this product'}.`
+                                : 'Add or remove stock for a product.'}
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-2">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-300">Product</label>
-                            <Select value={adjustProductId} onValueChange={setAdjustProductId}>
-                                <SelectTrigger className="border-zinc-700 bg-zinc-900/80 text-zinc-100">
-                                    <SelectValue placeholder="Select product" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {inventory.map((p) => (
-                                        <SelectItem key={p.id} value={p.id}>
-                                            {p.sku} — {p.name} (stock: {p.stock})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        {adjustProductId && (
+                            <div className="rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2">
+                                <p className="text-[10px] text-zinc-500">Product</p>
+                                <p className="text-sm font-medium text-zinc-200">
+                                    {inventory.find((p) => p.id === adjustProductId)?.sku} —{' '}
+                                    {inventory.find((p) => p.id === adjustProductId)?.name} (stock:{' '}
+                                    {inventory.find((p) => p.id === adjustProductId)?.stock})
+                                </p>
+                            </div>
+                        )}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-zinc-300">Type</label>
-                                <Select value={adjustType} onValueChange={setAdjustType}>
+                                <Select
+                                    value={adjustType}
+                                    onValueChange={(v) => {
+                                        setAdjustType(v);
+                                        if (v === 'add') setAdjustReason('');
+                                    }}
+                                >
                                     <SelectTrigger className="border-zinc-700 bg-zinc-900/80 text-zinc-100">
                                         <SelectValue />
                                     </SelectTrigger>
@@ -772,22 +763,26 @@ export default function InventoryPage() {
                                 />
                             </div>
                         </div>
-                        {adjustType === 'remove' && (
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Reason (records loss)</label>
-                                <Select value={adjustReason} onValueChange={setAdjustReason}>
-                                    <SelectTrigger className="border-zinc-700 bg-zinc-900/80 text-zinc-100">
-                                        <SelectValue placeholder="Select reason" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="spoilage">Spoilage</SelectItem>
-                                        <SelectItem value="return">Return</SelectItem>
-                                        <SelectItem value="damage">Damage</SelectItem>
-                                        <SelectItem value="other">Other</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-zinc-300">
+                                Reason {adjustType === 'remove' ? '(records loss)' : '(for removals)'}
+                            </label>
+                            <Select
+                                value={adjustReason}
+                                onValueChange={setAdjustReason}
+                                disabled={adjustType === 'add'}
+                            >
+                                <SelectTrigger className="border-zinc-700 bg-zinc-900/80 text-zinc-100">
+                                    <SelectValue placeholder="Select reason" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="spoilage">Spoilage</SelectItem>
+                                    <SelectItem value="return">Return</SelectItem>
+                                    <SelectItem value="damage">Damage</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-zinc-300">Notes (optional)</label>
                             <Input
@@ -808,7 +803,11 @@ export default function InventoryPage() {
                         </Button>
                         <Button
                             onClick={handleAdjustStock}
-                            disabled={!adjustProductId || !adjustQuantity || parseInt(adjustQuantity, 10) <= 0}
+                            disabled={
+                                !adjustQuantity ||
+                                parseInt(adjustQuantity, 10) <= 0 ||
+                                (adjustType === 'remove' && !adjustReason)
+                            }
                             className="bg-indigo-600 text-white hover:bg-indigo-500"
                         >
                             Apply
@@ -963,60 +962,16 @@ export default function InventoryPage() {
                                 />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Stock</label>
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    placeholder="0"
-                                    value={editForm.stock}
-                                    onChange={(e) => setEditForm((f) => ({ ...f, stock: e.target.value }))}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Low threshold</label>
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    placeholder="10"
-                                    value={editForm.lowThreshold}
-                                    onChange={(e) => setEditForm((f) => ({ ...f, lowThreshold: e.target.value }))}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Consignment</label>
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    placeholder="0"
-                                    value={editForm.consignment}
-                                    onChange={(e) => setEditForm((f) => ({ ...f, consignment: e.target.value }))}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100"
-                                />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Cost to make ($)</label>
-                                <Input
-                                    placeholder="e.g. 5.50"
-                                    value={editForm.costPerBag}
-                                    onChange={(e) => setEditForm((f) => ({ ...f, costPerBag: e.target.value }))}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Sell price ($)</label>
-                                <Input
-                                    placeholder="e.g. 14.99"
-                                    value={editForm.sellPrice}
-                                    onChange={(e) => setEditForm((f) => ({ ...f, sellPrice: e.target.value }))}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
-                                />
-                            </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-zinc-300">Low threshold</label>
+                            <Input
+                                type="number"
+                                min={0}
+                                placeholder="10"
+                                value={editForm.lowThreshold}
+                                onChange={(e) => setEditForm((f) => ({ ...f, lowThreshold: e.target.value }))}
+                                className="border-zinc-700 bg-zinc-900/80 text-zinc-100"
+                            />
                         </div>
                         <DialogFooter>
                             <Button

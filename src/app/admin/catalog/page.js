@@ -35,6 +35,7 @@ const INITIAL_PRODUCTS = [
         id: '1',
         name: 'Premium Brisket 12oz',
         price_cents: 1500,
+        cost_per_bag: 5.5,
         status: 'active',
         stock: 84,
         description: 'Premium dried brisket, 12oz. Slow-smoked for 18 hours.',
@@ -47,6 +48,7 @@ const INITIAL_PRODUCTS = [
         id: '2',
         name: 'Seasoned Classic 8oz',
         price_cents: 1100,
+        cost_per_bag: 4.25,
         status: 'active',
         stock: 8,
         description: 'Classic seasoned blend, 8oz.',
@@ -59,6 +61,7 @@ const INITIAL_PRODUCTS = [
         id: '3',
         name: 'Original 6oz',
         price_cents: 899,
+        cost_per_bag: 3.8,
         status: 'inactive',
         stock: 0,
         description: 'Original recipe, 6oz.',
@@ -70,7 +73,8 @@ const INITIAL_PRODUCTS = [
     {
         id: '4',
         name: 'Limited Smoked',
-        price_cents: 1500,
+        price_cents: 1999,
+        cost_per_bag: 6.2,
         status: 'active',
         stock: 45,
         description: 'Limited edition smoked.',
@@ -83,6 +87,7 @@ const INITIAL_PRODUCTS = [
         id: '5',
         name: 'Garlic & Herb 6oz',
         price_cents: 899,
+        cost_per_bag: 4.0,
         status: 'active',
         stock: 32,
         description: 'Garlic and herb seasoned.',
@@ -99,6 +104,14 @@ function formatPrice(cents) {
         currency: 'USD',
         minimumFractionDigits: 2,
     }).format(cents / 100);
+}
+
+function formatCurrency(n) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+    }).format(n ?? 0);
 }
 
 function formatDate(d) {
@@ -119,6 +132,7 @@ export default function CatalogPage() {
         name: '',
         description: '',
         price: '',
+        costPerBag: '',
         stock: '',
         status: 'active',
         imageUrl: '',
@@ -132,6 +146,7 @@ export default function CatalogPage() {
             name: '',
             description: '',
             price: '',
+            costPerBag: '',
             stock: '',
             status: 'active',
             imageUrl: '',
@@ -161,6 +176,7 @@ export default function CatalogPage() {
             name: p.name,
             description: p.description || '',
             price: p.price_cents ? (p.price_cents / 100).toFixed(2) : '',
+            costPerBag: p.cost_per_bag != null ? String(p.cost_per_bag) : '',
             stock: String(p.stock ?? 0),
             status: p.status,
             imageUrl: p.image || '',
@@ -176,10 +192,12 @@ export default function CatalogPage() {
         e.preventDefault();
         const priceDollars = parseFloat(form.price) || 0;
         const priceCents = Math.round(priceDollars * 100);
+        const costPerBag = parseFloat(form.costPerBag) || null;
         const stock = parseInt(form.stock, 10) || 0;
         const payload = {
             name: form.name.trim() || 'Untitled',
             price_cents: priceCents,
+            cost_per_bag: costPerBag,
             status: form.status,
             stock,
             description: form.description.trim() || null,
@@ -291,7 +309,8 @@ export default function CatalogPage() {
                         <TableRow className="border-zinc-700/80 hover:!bg-transparent">
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px] w-14" />
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Item</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Price</TableHead>
+                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px] text-right">Cost/Bag</TableHead>
+                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px] text-right">Sell Price</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Stock</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Sizes</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Platforms</TableHead>
@@ -303,7 +322,7 @@ export default function CatalogPage() {
                     <TableBody>
                         {filtered.length === 0 ? (
                             <TableRow className="border-zinc-700/80">
-                                <TableCell colSpan={9} className="text-zinc-400 py-8 text-center text-[11px]">
+                                <TableCell colSpan={10} className="text-zinc-400 py-8 text-center text-[11px]">
                                     No catalog items match the filters
                                 </TableCell>
                             </TableRow>
@@ -338,7 +357,10 @@ export default function CatalogPage() {
                                             )}
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-zinc-400 px-3 py-1.5 tabular-nums text-[11px] group-hover:text-zinc-300">
+                                    <TableCell className="text-zinc-400 px-3 py-1.5 text-right tabular-nums text-[11px] group-hover:text-zinc-300">
+                                        {p.cost_per_bag != null ? formatCurrency(p.cost_per_bag) : '—'}
+                                    </TableCell>
+                                    <TableCell className="text-emerald-400 px-3 py-1.5 text-right tabular-nums text-[11px] group-hover:text-emerald-300">
                                         {formatPrice(p.price_cents)}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 tabular-nums text-[11px] group-hover:text-zinc-300">
@@ -469,11 +491,26 @@ export default function CatalogPage() {
                             />
                         </div>
 
-                        {/* Price & Stock */}
-                        <div className="grid grid-cols-2 gap-4">
+                        {/* Price, Cost & Stock */}
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="prod-cost" className="text-xs text-zinc-400">
+                                    Cost/Bag ($)
+                                </Label>
+                                <Input
+                                    id="prod-cost"
+                                    type="number"
+                                    min={0}
+                                    step={0.01}
+                                    placeholder="5.50"
+                                    value={form.costPerBag}
+                                    onChange={(e) => setForm((f) => ({ ...f, costPerBag: e.target.value }))}
+                                    className="h-9 border-zinc-700 bg-zinc-950/80"
+                                />
+                            </div>
                             <div className="space-y-1.5">
                                 <Label htmlFor="prod-price" className="text-xs text-zinc-400">
-                                    Price ($)
+                                    Sell Price ($)
                                 </Label>
                                 <Input
                                     id="prod-price"
