@@ -21,7 +21,7 @@ import {
     isDamagedStatus,
 } from '@/lib/utils/helpers.js';
 import { Skeleton } from '@/components/ui/skeleton';
-import { exportBatchesToCsv } from '@/lib/utils/exportBatches';
+import { exportBatchesToCsv } from '@/lib/utils/exportProductionBatches.js';
 import { getSuppliers } from '@/lib/supabase/queries/getSuppliers.js';
 import { getBatches } from '@/lib/supabase/queries/getBatches.js';
 import { getProducts } from '@/lib/supabase/queries/getProducts.js';
