@@ -1,5 +1,14 @@
-// "use client";
+"use client";
 
+export default function OrdersMap() {
+    return (
+        <div className="relative aspect-[1.6] w-full flex items-center justify-center overflow-hidden rounded border border-zinc-800 bg-zinc-900/50">
+            <p className="text-sm text-zinc-500">Orders by region map — coming soon</p>
+        </div>
+    );
+}
+
+// Original implementation (requires react-simple-maps):
 // import * as React from "react";
 // import {
 //     ComposableMap,

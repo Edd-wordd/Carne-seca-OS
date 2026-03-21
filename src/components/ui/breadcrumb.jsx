@@ -46,7 +46,7 @@ export function Breadcrumb({ pathname, className }) {
     return (
         <nav aria-label="Breadcrumb" className={cn('flex items-center gap-1.5 text-sm', className)}>
             {items.map((item, i) => (
-                <React.Fragment key={item.href}>
+                <React.Fragment key={`${item.href}-${i}`}>
                     {i > 0 && <ChevronRight className="size-3.5 shrink-0 text-zinc-600" aria-hidden />}
                     {item.isLast ? (
                         <span className="font-medium text-zinc-200">{item.label}</span>
