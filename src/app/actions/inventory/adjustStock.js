@@ -1,8 +1,9 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { withSentryAction } from '@/lib/sentry/with-sentry-action';
 
-export async function adjustStock({ productId, adjustType, quantity, reason, notes }) {
+async function adjustStockHandler({ productId, adjustType, quantity, reason, notes }) {
     const supabase = await createClient();
 
     try {
@@ -73,3 +74,4 @@ export async function adjustStock({ productId, adjustType, quantity, reason, not
         return { success: false, error: err?.message ?? 'Unknown error' };
     }
 }
+export const adjustStock = withSentryAction('adjustStock', adjustStockHandler);
