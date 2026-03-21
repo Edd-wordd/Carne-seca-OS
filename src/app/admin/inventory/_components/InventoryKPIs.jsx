@@ -1,15 +1,8 @@
 'use client';
 
-import {
-    Box,
-    Package,
-    AlertTriangle,
-    Store,
-    RotateCcw,
-    Trash2,
-    Layers,
-    DollarSign,
-} from 'lucide-react';
+import { AlertTriangle, Store, RotateCcw, Trash2, Layers } from 'lucide-react';
+
+const CARD_BASE = 'flex min-w-0 flex-col gap-1.5 rounded border border-zinc-700/60 bg-zinc-900/40 px-2.5 py-2';
 
 export function InventoryKPIs({ inventory = [], losses = [] }) {
     const totalValue = inventory.reduce((s, p) => s + p.value, 0);
@@ -32,75 +25,65 @@ export function InventoryKPIs({ inventory = [], losses = [] }) {
     const otherLossTotal = losses
         .filter((l) => !['spoilage', 'return', 'damage'].includes(l.type))
         .reduce((s, l) => s + l.value, 0);
-    const totalLosses = spoilageTotal + returnsTotal + damageTotal + otherLossTotal;
+    const returnsAndDamage = returnsTotal + damageTotal + otherLossTotal;
+    const totalLosses = spoilageTotal + returnsAndDamage;
 
     return (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
-            <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
-                <Layers className="size-4 shrink-0 text-indigo-400/80" />
-                <div className="min-w-0 flex-1">
-                    <p className="text-zinc-400 text-[10px]">Total Bags</p>
-                    <p className="text-zinc-100 text-sm font-semibold tabular-nums">{totalBags.toLocaleString()}</p>
-                    <p className="text-zinc-500 text-[9px]">available</p>
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+            {/* Inventory: bags, value, cost */}
+            <div className={CARD_BASE}>
+                <div className="flex items-center gap-2">
+                    <Layers className="size-3.5 shrink-0 text-indigo-400/80" />
+                    <span className="text-zinc-500 text-[10px]">Inventory</span>
                 </div>
-            </div>
-            <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
-                <DollarSign className="size-4 shrink-0 text-amber-400/80" />
-                <div className="min-w-0 flex-1">
-                    <p className="text-zinc-400 text-[10px]">Total Cost to Make</p>
-                    <p className="text-amber-400 text-sm font-semibold tabular-nums">
-                        ${totalCostToMake.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                <div className="space-y-0.5">
+                    <p className="text-zinc-100 text-xs font-semibold tabular-nums">
+                        {totalBags.toLocaleString()} bags · ${totalValue.toLocaleString()} value
+                    </p>
+                    <p className="text-amber-400/90 text-[10px] tabular-nums">
+                        Cost: ${totalCostToMake.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </p>
                 </div>
             </div>
-            <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
-                <Box className="size-4 shrink-0 text-indigo-400/80" />
-                <div className="min-w-0 flex-1">
-                    <p className="text-zinc-400 text-[10px]">Total Value</p>
-                    <p className="text-zinc-100 text-sm font-semibold tabular-nums">
-                        ${totalValue.toLocaleString()}
+
+            {/* Consignment */}
+            <div className={CARD_BASE}>
+                <div className="flex items-center gap-2">
+                    <Store className="size-3.5 shrink-0 text-violet-400/80" />
+                    <span className="text-zinc-500 text-[10px]">Consignment</span>
+                </div>
+                <p className="text-zinc-100 text-xs font-semibold tabular-nums">
+                    {totalConsignment} units · ${consignmentValue.toLocaleString()} value
+                </p>
+            </div>
+
+            {/* Stock Alerts: low + out */}
+            <div className={CARD_BASE}>
+                <div className="flex items-center gap-2">
+                    <AlertTriangle className="size-3.5 shrink-0 text-amber-400/80" />
+                    <span className="text-zinc-500 text-[10px]">Stock Alerts</span>
+                </div>
+                <p className="text-zinc-100 text-xs font-semibold tabular-nums">
+                    {lowStockCount} low · {outOfStockCount} out
+                </p>
+            </div>
+
+            {/* Losses: spoilage + returns/damage */}
+            <div className={CARD_BASE}>
+                <div className="flex items-center gap-2">
+                    <Trash2 className="size-3.5 shrink-0 text-red-400/80" />
+                    <RotateCcw className="size-3.5 shrink-0 text-orange-400/80" />
+                    <span className="text-zinc-500 text-[10px]">Losses</span>
+                </div>
+                <div className="space-y-0.5">
+                    <p className="text-xs tabular-nums">
+                        <span className="text-red-400/90">Spoilage ${spoilageTotal.toLocaleString()}</span>
+                        {' · '}
+                        <span className="text-orange-400/90">Returns ${returnsAndDamage.toLocaleString()}</span>
                     </p>
-                </div>
-            </div>
-            <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
-                <Store className="size-4 shrink-0 text-violet-400/80" />
-                <div className="min-w-0 flex-1">
-                    <p className="text-zinc-400 text-[10px]">On Consignment</p>
-                    <p className="text-zinc-100 text-sm font-semibold tabular-nums">{totalConsignment} units</p>
-                    <p className="text-zinc-500 text-[9px]">${consignmentValue.toLocaleString()} value</p>
-                </div>
-            </div>
-            <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
-                <AlertTriangle className="size-4 shrink-0 text-amber-400/80" />
-                <div className="min-w-0 flex-1">
-                    <p className="text-zinc-400 text-[10px]">Low Stock</p>
-                    <p className="text-zinc-100 text-sm font-semibold tabular-nums">{lowStockCount}</p>
-                </div>
-            </div>
-            <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
-                <Package className="size-4 shrink-0 text-zinc-500" />
-                <div className="min-w-0 flex-1">
-                    <p className="text-zinc-400 text-[10px]">Out of Stock</p>
-                    <p className="text-zinc-100 text-sm font-semibold tabular-nums">{outOfStockCount}</p>
-                </div>
-            </div>
-            <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
-                <Trash2 className="size-4 shrink-0 text-red-400/80" />
-                <div className="min-w-0 flex-1">
-                    <p className="text-zinc-400 text-[10px]">Spoilage</p>
-                    <p className="text-red-400 text-sm font-semibold tabular-nums">
-                        ${spoilageTotal.toLocaleString()}
+                    <p className="text-zinc-500 text-[10px] tabular-nums">
+                        Total lost: ${totalLosses.toLocaleString()}
                     </p>
-                </div>
-            </div>
-            <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
-                <RotateCcw className="size-4 shrink-0 text-orange-400/80" />
-                <div className="min-w-0 flex-1">
-                    <p className="text-zinc-400 text-[10px]">Returns & Damage</p>
-                    <p className="text-orange-400 text-sm font-semibold tabular-nums">
-                        ${(returnsTotal + damageTotal + otherLossTotal).toLocaleString()}
-                    </p>
-                    <p className="text-zinc-500 text-[9px]">Total lost: ${totalLosses.toLocaleString()}</p>
                 </div>
             </div>
         </div>
