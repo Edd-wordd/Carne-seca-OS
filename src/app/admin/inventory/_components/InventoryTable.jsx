@@ -1,6 +1,8 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
+import { adjustStock } from '@/app/actions/inventory/adjustStock';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +42,7 @@ const INVENTORY_PAGE_SIZE = 5;
 const DEFAULT_LOSSES = [];
 
 export function InventoryTable({ initialInventory = [] }) {
+    const router = useRouter();
     const [inventory, setInventory] = React.useState(initialInventory);
     const [losses, setLosses] = React.useState(DEFAULT_LOSSES);
     const [search, setSearch] = React.useState('');
@@ -67,43 +70,33 @@ export function InventoryTable({ initialInventory = [] }) {
         lowThreshold: '',
     });
     const [inventoryPage, setInventoryPage] = React.useState(1);
+    React.useEffect(() => {
+        setInventory(initialInventory);
+    }, [initialInventory]);
 
-    const handleAdjustStock = () => {
+    const handleAdjustStock = async () => {
         const qty = parseInt(adjustQuantity, 10) || 0;
         if (!adjustProductId || qty <= 0) return;
-        const product = inventory.find((p) => p.id === adjustProductId);
-        const unitValue = product && product.stock > 0 ? product.value / product.stock : (product?.costPerBag ?? 0);
+        if (adjustType === 'remove' && !adjustReason) return;
 
-        setInventory((prev) =>
-            prev.map((p) => {
-                if (p.id !== adjustProductId) return p;
-                const delta = adjustType === 'add' ? qty : -qty;
-                const newStock = Math.max(0, p.stock + delta);
-                const newValue = Math.round(unitValue * newStock);
-                return { ...p, stock: newStock, value: newValue };
-            }),
-        );
+        const result = await adjustStock({
+            productId: adjustProductId,
+            adjustType,
+            quantity: qty,
+            reason: adjustReason,
+            notes: adjustNotes,
+        });
 
-        if (adjustType === 'remove' && adjustReason && product) {
-            const lossValue = Math.round(Math.min(qty, product.stock) * unitValue);
-            setLosses((prev) => [
-                ...prev,
-                {
-                    id: `L${Date.now()}`,
-                    productId: adjustProductId,
-                    type: adjustReason,
-                    quantity: Math.min(qty, product.stock),
-                    value: lossValue,
-                    date: new Date().toISOString().slice(0, 10),
-                },
-            ]);
+        if (result.success) {
+            setAdjustModalOpen(false);
+            setAdjustProductId('');
+            setAdjustQuantity('');
+            setAdjustNotes('');
+            setAdjustReason('');
+            router.refresh();
+        } else {
+            alert(result.error);
         }
-
-        setAdjustModalOpen(false);
-        setAdjustProductId('');
-        setAdjustQuantity('');
-        setAdjustNotes('');
-        setAdjustReason('');
     };
 
     const handleExportCsv = () => exportInventoryToCsv(filtered);
@@ -325,7 +318,11 @@ export function InventoryTable({ initialInventory = [] }) {
                                             )}
                                         </TableCell>
                                         <TableCell className="text-zinc-100 px-2 py-2.5 tabular-nums text-xs font-medium group-hover:text-white">
-                                            ${p.value.toLocaleString()}
+                                            $
+                                            {p.value.toLocaleString(undefined, {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            })}
                                         </TableCell>
                                         <TableCell className="pl-4 pr-2 py-2.5 text-right">
                                             <div className="flex justify-end">
@@ -483,10 +480,12 @@ export function InventoryTable({ initialInventory = [] }) {
                                     <SelectValue placeholder="Select reason" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="spoilage">Spoilage</SelectItem>
-                                    <SelectItem value="return">Return</SelectItem>
-                                    <SelectItem value="damage">Damage</SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
+                                    <SelectItem value="spoiled">Spoiled</SelectItem>
+                                    <SelectItem value="donated">Donated</SelectItem>
+                                    <SelectItem value="given_away">Given Away</SelectItem>
+                                    <SelectItem value="lost">Lost</SelectItem>
+                                    <SelectItem value="correction">Correction</SelectItem>
+                                    <SelectItem value="guest_satisfaction">Guest Satisfaction</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

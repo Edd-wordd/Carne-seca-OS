@@ -5,16 +5,16 @@ function normalizeInventoryItem(row) {
     if (!row) return null;
     const product = row.products ?? {};
     return {
-        id: String(row.id ?? row.product_id ?? ''),
+        id: String(row.product_id ?? row.id ?? ''),
         sku: row.sku ?? product.sku ?? '',
         name: row.name ?? product.name ?? '',
         stock: row.available ?? 0,
         reserved: row.reserved ?? 0,
         consignment: row.consignment ?? 0,
         lowThreshold: row.low_threshold ?? row.lowThreshold ?? 10,
-        value: row.value ?? 0,
-        // costPerBag: row.cost_per_bag ?? row.costPerBag,
-        // sellPrice: row.sell_price ?? row.sellPrice,
+        value: (row.available ?? 0) * ((row.products?.price_cents ?? 0) / 100),
+        costPerBag: row.cost_per_bag ?? row.costPerBag,
+        sellPrice: row.sell_price ?? row.sellPrice,
     };
 }
 
