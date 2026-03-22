@@ -586,7 +586,7 @@ export function InventoryTable({ initialInventory = [] }) {
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Cost to make ($)</label>
+                                <label className="text-sm font-medium text-zinc-300">Cost to aquire ($)</label>
                                 <Input
                                     placeholder="e.g. 5.50"
                                     value={newCostPerBag}
