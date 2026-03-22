@@ -603,15 +603,6 @@ export function InventoryTable({ initialInventory = [] }) {
                                     className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Unit value ($)</label>
-                                <Input
-                                    placeholder="Inventory value basis"
-                                    value={newUnitValue}
-                                    onChange={(e) => setNewUnitValue(e.target.value)}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
-                                />
-                            </div>
                         </div>
                     </div>
                     <DialogFooter>
