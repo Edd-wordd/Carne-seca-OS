@@ -14,6 +14,7 @@ async function addInventoryHandler({ sku, name, stock, lowThreshold, consignment
                 name,
                 cost_per_bag: costToAcquire,
                 price_cents: Math.round(Number(sellPrice) * 100),
+                category: 'merch',
             })
             .select('id')
             .single();

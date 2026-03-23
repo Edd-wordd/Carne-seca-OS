@@ -36,13 +36,21 @@ import {
 import { InventoryKPIs } from './InventoryKPIs';
 import { cn } from '@/lib/utils/helpers';
 import { exportInventoryToCsv } from '@/lib/utils/exportInventory';
+import { addInventory } from '@/app/actions/inventory/addInventory';
 
-const INVENTORY_PAGE_SIZE = 5;
+const INVENTORY_PAGE_SIZE = 15;
 
 const DEFAULT_LOSSES = [];
 
 export function InventoryTable({ initialInventory = [] }) {
     const router = useRouter();
+    const mountedRef = React.useRef(true);
+    React.useEffect(
+        () => () => {
+            mountedRef.current = false;
+        },
+        [],
+    );
     const [inventory, setInventory] = React.useState(initialInventory);
     const [losses, setLosses] = React.useState(DEFAULT_LOSSES);
     const [search, setSearch] = React.useState('');
@@ -57,7 +65,6 @@ export function InventoryTable({ initialInventory = [] }) {
     const [newName, setNewName] = React.useState('');
     const [newStock, setNewStock] = React.useState('');
     const [newLowThreshold, setNewLowThreshold] = React.useState('');
-    const [newUnitValue, setNewUnitValue] = React.useState('');
     const [newCostPerBag, setNewCostPerBag] = React.useState('');
     const [newSellPrice, setNewSellPrice] = React.useState('');
     const [newConsignment, setNewConsignment] = React.useState('0');
@@ -87,6 +94,7 @@ export function InventoryTable({ initialInventory = [] }) {
             notes: adjustNotes,
         });
 
+        if (!mountedRef.current) return;
         if (result.success) {
             setAdjustModalOpen(false);
             setAdjustProductId('');
@@ -133,39 +141,38 @@ export function InventoryTable({ initialInventory = [] }) {
         setEditingProduct(null);
     };
 
-    const handleAddInventory = () => {
+    const handleAddInventory = async () => {
         const stock = parseInt(newStock, 10) || 0;
         const lowThreshold = parseInt(newLowThreshold, 10) || 10;
         const costPerBag = parseFloat(String(newCostPerBag).replace(/[^0-9.]/g, '')) || 0;
         const sellPrice = parseFloat(String(newSellPrice).replace(/[^0-9.]/g, '')) || 0;
-        const unitPrice = parseFloat(String(newUnitValue).replace(/[^0-9.]/g, '')) || costPerBag || 0;
-        const value = Math.round(stock * (unitPrice || costPerBag));
-        const nextId = String(Math.max(...inventory.map((p) => parseInt(p.id, 10)), 0) + 1);
         if (!newSku.trim() || !newName.trim()) return;
         const consignment = parseInt(newConsignment, 10) || 0;
-        setInventory((prev) => [
-            ...prev,
-            {
-                id: nextId,
-                sku: newSku.trim(),
-                name: newName.trim(),
-                stock,
-                consignment,
-                lowThreshold,
-                value,
-                costPerBag: costPerBag || undefined,
-                sellPrice: sellPrice || undefined,
-            },
-        ]);
-        setAddModalOpen(false);
-        setNewSku('');
-        setNewName('');
-        setNewStock('');
-        setNewLowThreshold('');
-        setNewUnitValue('');
-        setNewCostPerBag('');
-        setNewSellPrice('');
-        setNewConsignment('0');
+
+        const result = await addInventory({
+            sku: newSku.trim(),
+            name: newName.trim(),
+            stock,
+            lowThreshold,
+            consignment,
+            costToAcquire: costPerBag,
+            sellPrice,
+        });
+
+        if (!mountedRef.current) return;
+        if (result.success) {
+            setAddModalOpen(false);
+            setNewSku('');
+            setNewName('');
+            setNewStock('');
+            setNewLowThreshold('');
+            setNewCostPerBag('');
+            setNewSellPrice('');
+            setNewConsignment('0');
+            router.refresh();
+        } else {
+            alert(result.error ?? 'Failed to add inventory.');
+        }
     };
 
     const filtered = React.useMemo(() => {
@@ -406,14 +413,16 @@ export function InventoryTable({ initialInventory = [] }) {
             <Dialog
                 open={adjustModalOpen}
                 onOpenChange={(open) => {
-                    setAdjustModalOpen(open);
-                    if (!open) {
-                        setAdjustProductId('');
-                        setAdjustType('add');
-                        setAdjustQuantity('');
-                        setAdjustNotes('');
-                        setAdjustReason('');
-                    }
+                    queueMicrotask(() => {
+                        setAdjustModalOpen(open);
+                        if (!open) {
+                            setAdjustProductId('');
+                            setAdjustType('add');
+                            setAdjustQuantity('');
+                            setAdjustNotes('');
+                            setAdjustReason('');
+                        }
+                    });
                 }}
             >
                 <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
@@ -522,7 +531,7 @@ export function InventoryTable({ initialInventory = [] }) {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
+            <Dialog open={addModalOpen} onOpenChange={(open) => queueMicrotask(() => setAddModalOpen(open))}>
                 <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Add Inventory</DialogTitle>
@@ -627,10 +636,11 @@ export function InventoryTable({ initialInventory = [] }) {
             <Dialog
                 open={editModalOpen}
                 onOpenChange={(open) => {
-                    if (!open) {
-                        setEditModalOpen(false);
-                        setEditingProduct(null);
-                    }
+                    if (!open)
+                        queueMicrotask(() => {
+                            setEditModalOpen(false);
+                            setEditingProduct(null);
+                        });
                 }}
             >
                 <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
