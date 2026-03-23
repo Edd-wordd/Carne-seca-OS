@@ -20,8 +20,16 @@ function normalizeInventoryItem(row) {
 
 export default async function InventoryPage() {
     const data = await getProductionInventory();
-    const rows = Array.isArray(data) ? data : data?.success === false ? [] : (data?.data ?? []);
-    const initialInventory = rows.map(normalizeInventoryItem).filter(Boolean);
+    // data is expected to have { inventory, adjustmentsLog } if successful
+    let inventoryRows = [];
+    let adjustmentsLog = [];
 
-    return <InventoryTable initialInventory={initialInventory} />;
+    if (data && data.success !== false && typeof data === 'object' && data.inventory) {
+        inventoryRows = data.inventory;
+        adjustmentsLog = data.adjustmentsLog ?? [];
+    }
+
+    const initialInventory = (inventoryRows || []).map(normalizeInventoryItem).filter(Boolean);
+
+    return <InventoryTable initialInventory={initialInventory} adjustmentsLog={adjustmentsLog} />;
 }

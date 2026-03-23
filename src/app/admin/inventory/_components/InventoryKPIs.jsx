@@ -4,11 +4,11 @@ import { AlertTriangle, Store, RotateCcw, Trash2, Layers } from 'lucide-react';
 
 const CARD_BASE = 'flex min-w-0 flex-col gap-1.5 rounded border border-zinc-700/60 bg-zinc-900/40 px-2.5 py-2';
 
-export function InventoryKPIs({ inventory = [], losses = [] }) {
+export function InventoryKPIs({ inventory = [], adjustmentsLog = [] }) {
     const totalValue = inventory.reduce((s, p) => s + p.value, 0);
     const totalBags = inventory.reduce((s, p) => s + p.stock, 0);
     const totalCostToMake = inventory.reduce((s, p) => {
-        const costPerBag = p.costPerBag ?? (p.stock > 0 ? p.value / p.stock : 0);
+        const costPerBag = p.costPerBag ?? 0;
         return s + p.stock * costPerBag;
     }, 0);
     const totalConsignment = inventory.reduce((s, p) => s + (p.consignment ?? 0), 0);
@@ -19,14 +19,13 @@ export function InventoryKPIs({ inventory = [], losses = [] }) {
     const lowStockCount = inventory.filter((p) => p.stock > 0 && p.stock <= p.lowThreshold).length;
     const outOfStockCount = inventory.filter((p) => p.stock === 0).length;
 
-    const spoilageTotal = losses.filter((l) => l.type === 'spoilage').reduce((s, l) => s + l.value, 0);
-    const returnsTotal = losses.filter((l) => l.type === 'return').reduce((s, l) => s + l.value, 0);
-    const damageTotal = losses.filter((l) => l.type === 'damage').reduce((s, l) => s + l.value, 0);
-    const otherLossTotal = losses
-        .filter((l) => !['spoilage', 'return', 'damage'].includes(l.type))
-        .reduce((s, l) => s + l.value, 0);
-    const returnsAndDamage = returnsTotal + damageTotal + otherLossTotal;
-    const totalLosses = spoilageTotal + returnsAndDamage;
+    const spoilageTotal = adjustmentsLog
+        .filter((r) => r.reason === 'spoiled')
+        .reduce((s, r) => s + (Number(r.total_loss_cost) ?? 0), 0);
+    const otherLossTotal = adjustmentsLog
+        .filter((r) => r.reason !== 'spoiled')
+        .reduce((s, r) => s + (Number(r.total_loss_cost) ?? 0), 0);
+    const totalLosses = spoilageTotal + otherLossTotal;
 
     return (
         <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
@@ -79,7 +78,7 @@ export function InventoryKPIs({ inventory = [], losses = [] }) {
                     <p className="text-xs tabular-nums">
                         <span className="text-red-400/90">Spoilage ${spoilageTotal.toLocaleString()}</span>
                         {' · '}
-                        <span className="text-orange-400/90">Returns ${returnsAndDamage.toLocaleString()}</span>
+                        <span className="text-orange-400/90">Other Losses ${otherLossTotal.toLocaleString()}</span>
                     </p>
                     <p className="text-zinc-500 text-[10px] tabular-nums">
                         Total lost: ${totalLosses.toLocaleString()}

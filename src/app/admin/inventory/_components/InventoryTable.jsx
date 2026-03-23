@@ -40,9 +40,7 @@ import { addInventory } from '@/app/actions/inventory/addInventory';
 
 const INVENTORY_PAGE_SIZE = 15;
 
-const DEFAULT_LOSSES = [];
-
-export function InventoryTable({ initialInventory = [] }) {
+export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
     const router = useRouter();
     const mountedRef = React.useRef(true);
     React.useEffect(
@@ -52,7 +50,6 @@ export function InventoryTable({ initialInventory = [] }) {
         [],
     );
     const [inventory, setInventory] = React.useState(initialInventory);
-    const [losses, setLosses] = React.useState(DEFAULT_LOSSES);
     const [search, setSearch] = React.useState('');
     const [statusFilter, setStatusFilter] = React.useState('all');
     const [adjustModalOpen, setAdjustModalOpen] = React.useState(false);
@@ -223,7 +220,7 @@ export function InventoryTable({ initialInventory = [] }) {
                 </div>
             </div>
 
-            <InventoryKPIs inventory={inventory} losses={losses} />
+            <InventoryKPIs inventory={inventory} adjustmentsLog={adjustmentsLog} />
 
             <div className="flex flex-1 flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
