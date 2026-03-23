@@ -6,7 +6,9 @@ const CARD_BASE = 'flex min-w-0 flex-col gap-1.5 rounded border border-zinc-700/
 
 export function InventoryKPIs({ inventory = [], adjustmentsLog = [] }) {
     const totalValue = inventory.reduce((s, p) => s + p.value, 0);
-    const totalBags = inventory.reduce((s, p) => s + p.stock, 0);
+    const totalBags = inventory
+        .filter((p) => p.category === 'carne_seca')
+        .reduce((s, p) => s + p.stock, 0);
     const totalCostToMake = inventory.reduce((s, p) => {
         const costPerBag = p.costPerBag ?? 0;
         return s + p.stock * costPerBag;

@@ -15,6 +15,7 @@ function normalizeInventoryItem(row) {
         value: (row.available ?? 0) * ((row.products?.price_cents ?? 0) / 100),
         costPerBag: row.cost_per_bag ?? row.costPerBag,
         sellPrice: row.sell_price ?? row.sellPrice,
+        category: row.products?.category ?? 'carne_seca',
     };
 }
 
