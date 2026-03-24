@@ -10,7 +10,7 @@ async function getProductionInventoryHandler() {
         // Fetch production inventory
         const { data: inventory, error: inventoryError } = await supabase
             .from('production_inventory')
-            .select('*, products(sku, name, price_cents, cost_per_bag)')
+            .select('*, products(sku, name, price_cents, cost_per_bag, category)')
             .order('created_at', { ascending: true });
 
         // Fetch adjustments log
