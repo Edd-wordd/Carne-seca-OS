@@ -119,15 +119,17 @@ export default function ConvertBatchDialog({ open, onOpenChange, selectedBatch, 
                                                 <SelectValue placeholder="Select product" />
                                             </SelectTrigger>
                                             <SelectContent className="border-zinc-700 bg-zinc-900 text-zinc-100">
-                                                {products.map((product) => (
-                                                    <SelectItem
-                                                        key={product.id}
-                                                        value={String(product.id)}
-                                                        className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
-                                                    >
-                                                        {`${product.flavor} ${Math.round(product.size_grams / 28.3495)}oz`}
-                                                    </SelectItem>
-                                                ))}
+                                                {products
+                                                    .filter((p) => p.category === 'carne_seca')
+                                                    .map((product) => (
+                                                        <SelectItem
+                                                            key={product.id}
+                                                            value={String(product.id)}
+                                                            className="text-zinc-200 focus:bg-zinc-800 focus:text-zinc-100"
+                                                        >
+                                                            {`${product.flavor} ${Math.round(product.size_grams / 28.3495)}oz`}
+                                                        </SelectItem>
+                                                    ))}
                                             </SelectContent>
                                         </Select>
                                         <Input
