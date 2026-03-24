@@ -25,7 +25,9 @@ import {
     ChevronLeft,
     ChevronRight,
     Percent,
+    Download,
 } from 'lucide-react';
+import { exportCatalogToCsv } from '@/lib/utils/exportCatalog';
 import { cn } from '@/lib/utils/helpers';
 
 const CATALOG_PAGE_SIZE = 15;
@@ -308,28 +310,40 @@ export default function CatalogPage() {
             </div>
 
             {/* Filters & Controls */}
-            <div className="flex flex-1 flex-wrap items-center gap-2">
-                <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
-                    {[
-                        { value: 'all', label: 'All' },
-                        { value: 'active', label: 'Active' },
-                        { value: 'inactive', label: 'Hidden' },
-                    ].map((opt) => (
-                        <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => setStatusFilter(opt.value)}
-                            className={cn(
-                                'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
-                                statusFilter === opt.value
-                                    ? 'bg-zinc-700 text-zinc-100'
-                                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
-                            )}
-                        >
-                            {opt.label}
-                        </button>
-                    ))}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-1 flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
+                        {[
+                            { value: 'all', label: 'All' },
+                            { value: 'active', label: 'Active' },
+                            { value: 'inactive', label: 'Hidden' },
+                        ].map((opt) => (
+                            <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => setStatusFilter(opt.value)}
+                                className={cn(
+                                    'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                                    statusFilter === opt.value
+                                        ? 'bg-zinc-700 text-zinc-100'
+                                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
+                                )}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
+
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-2 border-zinc-700 bg-zinc-900/80 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                    onClick={() => exportCatalogToCsv(filtered)}
+                >
+                    <Download className="size-4" />
+                    Export CSV
+                </Button>
             </div>
 
             {/* Table */}
