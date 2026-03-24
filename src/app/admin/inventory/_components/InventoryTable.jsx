@@ -412,7 +412,7 @@ export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
                     });
                 }}
             >
-                <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
+                <DialogContent className="border-zinc-800 bg-zinc-900 text-zinc-100 sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Adjust Stock</DialogTitle>
                         <DialogDescription>
@@ -519,7 +519,7 @@ export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
             </Dialog>
 
             <Dialog open={addModalOpen} onOpenChange={(open) => queueMicrotask(() => setAddModalOpen(open))}>
-                <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
+                <DialogContent className="border-zinc-800 bg-zinc-900 text-zinc-100 sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Add Inventory</DialogTitle>
                         <DialogDescription>Add a new product to inventory.</DialogDescription>
@@ -630,7 +630,7 @@ export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
                         });
                 }}
             >
-                <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
+                <DialogContent className="border-zinc-800 bg-zinc-900 text-zinc-100 sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Edit Inventory</DialogTitle>
                         <DialogDescription>Update {editingProduct?.name ?? 'product'} details.</DialogDescription>
