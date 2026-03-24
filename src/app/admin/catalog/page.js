@@ -17,19 +17,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Package, Plus, Search, MoreHorizontal, Eye, EyeOff, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
 
-const SELL_PLATFORMS = [
-    { value: 'website', label: 'Website' },
-    { value: 'amazon', label: 'Amazon' },
-    { value: 'pos', label: 'POS' },
-];
-
-const SIZE_OPTIONS = [
-    { value: '4oz', label: '4oz' },
-    { value: '6oz', label: '6oz' },
-    { value: '8oz', label: '8oz' },
-    { value: '12oz', label: '12oz' },
-];
-
 const INITIAL_PRODUCTS = [
     {
         id: '1',
@@ -130,59 +117,56 @@ export default function CatalogPage() {
     const [editingId, setEditingId] = React.useState(null);
     const [form, setForm] = React.useState({
         name: '',
+        sku: '',
+        flavor: '',
         description: '',
         price: '',
         costPerBag: '',
-        stock: '',
         status: 'active',
         imageUrl: '',
-        platforms: ['website'],
         launchDate: '',
-        sizes: [],
+        size: '',
     });
 
     const resetForm = () => {
         setForm({
             name: '',
+            sku: '',
+            flavor: '',
             description: '',
             price: '',
             costPerBag: '',
-            stock: '',
             status: 'active',
             imageUrl: '',
-            platforms: ['website'],
             launchDate: '',
-            sizes: [],
+            size: '',
         });
         setEditingId(null);
     };
 
-    const toggleSize = (value) => {
-        setForm((f) => ({
-            ...f,
-            sizes: f.sizes.includes(value) ? f.sizes.filter((x) => x !== value) : [...f.sizes, value],
-        }));
-    };
-
-    const togglePlatform = (value) => {
-        setForm((f) => ({
-            ...f,
-            platforms: f.platforms.includes(value) ? f.platforms.filter((x) => x !== value) : [...f.platforms, value],
-        }));
+    const toggleStatus = (p) => {
+        setItems((prev) =>
+            prev.map((item) =>
+                item.id === p.id
+                    ? { ...item, status: item.status === 'active' ? 'inactive' : 'active' }
+                    : item,
+            ),
+        );
     };
 
     const openEdit = (p) => {
+        const firstSize = Array.isArray(p.sizes) && p.sizes.length ? p.sizes[0] : '';
         setForm({
-            name: p.name,
-            description: p.description || '',
-            price: p.price_cents ? (p.price_cents / 100).toFixed(2) : '',
+            name: p.name ?? '',
+            sku: p.sku ?? '',
+            flavor: p.flavor ?? '',
+            description: p.description ?? '',
+            price: p.price_cents != null ? (p.price_cents / 100).toFixed(2) : '',
             costPerBag: p.cost_per_bag != null ? String(p.cost_per_bag) : '',
-            stock: String(p.stock ?? 0),
-            status: p.status,
-            imageUrl: p.image || '',
-            platforms: Array.isArray(p.platforms) && p.platforms.length ? p.platforms : ['website'],
-            launchDate: p.launchDate || '',
-            sizes: Array.isArray(p.sizes) ? p.sizes : [],
+            status: p.status ?? 'active',
+            imageUrl: p.image ?? p.image_url ?? '',
+            launchDate: p.launchDate ?? p.launch_date ?? '',
+            size: firstSize ?? '',
         });
         setEditingId(p.id);
         setAddModalOpen(true);
@@ -193,18 +177,20 @@ export default function CatalogPage() {
         const priceDollars = parseFloat(form.price) || 0;
         const priceCents = Math.round(priceDollars * 100);
         const costPerBag = parseFloat(form.costPerBag) || null;
-        const stock = parseInt(form.stock, 10) || 0;
+        const existing = editingId ? items.find((i) => i.id === editingId) : null;
         const payload = {
             name: form.name.trim() || 'Untitled',
+            sku: form.sku.trim() || null,
+            flavor: form.flavor.trim() || null,
             price_cents: priceCents,
             cost_per_bag: costPerBag,
             status: form.status,
-            stock,
+            stock: existing?.stock ?? 0,
             description: form.description.trim() || null,
             image: form.imageUrl.trim() || null,
-            platforms: form.platforms.length ? form.platforms : ['website'],
+            platforms: existing?.platforms ?? ['website'],
             launchDate: form.launchDate.trim() || null,
-            sizes: form.sizes,
+            sizes: form.size.trim() ? [form.size.trim()] : (existing?.sizes ?? []),
         };
         if (editingId) {
             setItems((prev) => prev.map((p) => (p.id === editingId ? { ...p, ...payload } : p)));
@@ -307,14 +293,14 @@ export default function CatalogPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="border-zinc-700/80 hover:!bg-transparent">
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px] w-14" />
+                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px] w-14">Image</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Item</TableHead>
+                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px] font-mono">SKU</TableHead>
+                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Flavor</TableHead>
+                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px] max-w-[180px]">Description</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px] text-right">Cost/Bag</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px] text-right">Sell Price</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Stock</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Sizes</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Platforms</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Launch</TableHead>
+                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Launch date</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Status</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px] w-24" />
                         </TableRow>
@@ -334,9 +320,9 @@ export default function CatalogPage() {
                                 >
                                     <TableCell className="px-3 py-1.5">
                                         <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded border border-zinc-700 bg-zinc-900/80">
-                                            {p.image ? (
+                                            {(p.image_url || p.image) ? (
                                                 <img
-                                                    src={p.image}
+                                                    src={p.image_url || p.image}
                                                     alt={p.name}
                                                     className="h-full w-full object-cover"
                                                 />
@@ -346,16 +332,20 @@ export default function CatalogPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell className="px-3 py-1.5">
-                                        <div>
-                                            <p className="text-zinc-200 text-[11px] font-medium group-hover:text-zinc-100">
-                                                {p.name}
-                                            </p>
-                                            {p.description && (
-                                                <p className="text-zinc-500 text-[10px] truncate max-w-[200px]">
-                                                    {p.description}
-                                                </p>
-                                            )}
-                                        </div>
+                                        <p className="text-zinc-200 text-[11px] font-medium group-hover:text-zinc-100">
+                                            {p.name}
+                                        </p>
+                                    </TableCell>
+                                    <TableCell className="px-3 py-1.5 font-mono text-zinc-400 text-[11px] group-hover:text-zinc-300">
+                                        {p.sku || '—'}
+                                    </TableCell>
+                                    <TableCell className="px-3 py-1.5 text-zinc-400 text-[11px] group-hover:text-zinc-300">
+                                        {p.flavor || '—'}
+                                    </TableCell>
+                                    <TableCell className="px-3 py-1.5 max-w-[180px]">
+                                        <p className="text-zinc-500 text-[10px] line-clamp-2" title={p.description || ''}>
+                                            {p.description || '—'}
+                                        </p>
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-right tabular-nums text-[11px] group-hover:text-zinc-300">
                                         {p.cost_per_bag != null ? formatCurrency(p.cost_per_bag) : '—'}
@@ -363,28 +353,20 @@ export default function CatalogPage() {
                                     <TableCell className="text-emerald-400 px-3 py-1.5 text-right tabular-nums text-[11px] group-hover:text-emerald-300">
                                         {formatPrice(p.price_cents)}
                                     </TableCell>
-                                    <TableCell className="text-zinc-400 px-3 py-1.5 tabular-nums text-[11px] group-hover:text-zinc-300">
-                                        {p.stock}
-                                    </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
-                                        {(p.sizes?.length ? p.sizes : []).join(', ') || '—'}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
-                                        {(p.platforms?.length ? p.platforms : ['website'])
-                                            .map((pf) => SELL_PLATFORMS.find((s) => s.value === pf)?.label ?? pf)
-                                            .join(', ') || '—'}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
-                                        {formatDate(p.launchDate)}
+                                        {formatDate(p.launch_date ?? p.launchDate)}
                                     </TableCell>
                                     <TableCell className="px-3 py-1.5">
-                                        <span
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleStatus(p)}
                                             className={cn(
-                                                'inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium',
+                                                'inline-flex cursor-pointer items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium transition-colors hover:opacity-90',
                                                 p.status === 'active'
-                                                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-                                                    : 'border-zinc-600/50 bg-zinc-800/50 text-zinc-500',
+                                                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+                                                    : 'border-zinc-600/50 bg-zinc-800/50 text-zinc-500 hover:bg-zinc-700/50',
                                             )}
+                                            aria-label={p.status === 'active' ? 'Set to hidden' : 'Set to active'}
                                         >
                                             {p.status === 'active' ? (
                                                 <>
@@ -397,7 +379,7 @@ export default function CatalogPage() {
                                                     Hidden
                                                 </>
                                             )}
-                                        </span>
+                                        </button>
                                     </TableCell>
                                     <TableCell className="px-3 py-1.5">
                                         <Button
@@ -452,9 +434,9 @@ export default function CatalogPage() {
                                 <div className="flex flex-1 flex-col gap-2">
                                     <Input
                                         placeholder="Image URL (e.g. https://...)"
-                                        value={form.imageUrl}
+                                        value={form.imageUrl ?? ''}
                                         onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
-                                        className="h-9 border-zinc-700 bg-zinc-950/80 text-xs"
+                                        className="h-9 border-zinc-700 bg-zinc-950/80 text-xs text-white placeholder:text-zinc-500"
                                     />
                                     <p className="text-[10px] text-zinc-500">Or drag & drop (coming soon)</p>
                                 </div>
@@ -469,11 +451,39 @@ export default function CatalogPage() {
                             <Input
                                 id="prod-name"
                                 placeholder="e.g. Premium Brisket 12oz"
-                                value={form.name}
+                                value={form.name ?? ''}
                                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                                className="h-9 border-zinc-700 bg-zinc-950/80"
+                                className="h-9 border-zinc-700 bg-zinc-950/80 text-white placeholder:text-zinc-500"
                                 required
                             />
+                        </div>
+
+                        {/* SKU & Flavor */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="prod-sku" className="text-xs text-zinc-400">
+                                    SKU
+                                </Label>
+                                <Input
+                                    id="prod-sku"
+                                    placeholder="e.g. CS-XX-00"
+                                    value={form.sku ?? ''}
+                                    onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
+                                    className="h-9 border-zinc-700 bg-zinc-950/80 text-white placeholder:text-zinc-500 font-mono"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="prod-flavor" className="text-xs text-zinc-400">
+                                    Flavor
+                                </Label>
+                                <Input
+                                    id="prod-flavor"
+                                    placeholder="e.g. Brisket, Classic"
+                                    value={form.flavor ?? ''}
+                                    onChange={(e) => setForm((f) => ({ ...f, flavor: e.target.value }))}
+                                    className="h-9 border-zinc-700 bg-zinc-950/80 text-white placeholder:text-zinc-500"
+                                />
+                            </div>
                         </div>
 
                         {/* Description */}
@@ -484,14 +494,14 @@ export default function CatalogPage() {
                             <textarea
                                 id="prod-desc"
                                 placeholder="Describe the product for customers..."
-                                value={form.description}
+                                value={form.description ?? ''}
                                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                                 rows={3}
-                                className="w-full rounded-md border border-zinc-700 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                className="w-full rounded-md border border-zinc-700 bg-zinc-950/80 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                             />
                         </div>
 
-                        {/* Price, Cost & Stock */}
+                        {/* Price, Cost & Size */}
                         <div className="grid grid-cols-3 gap-4">
                             <div className="space-y-1.5">
                                 <Label htmlFor="prod-cost" className="text-xs text-zinc-400">
@@ -503,9 +513,9 @@ export default function CatalogPage() {
                                     min={0}
                                     step={0.01}
                                     placeholder="5.50"
-                                    value={form.costPerBag}
+                                    value={form.costPerBag ?? ''}
                                     onChange={(e) => setForm((f) => ({ ...f, costPerBag: e.target.value }))}
-                                    className="h-9 border-zinc-700 bg-zinc-950/80"
+                                    className="h-9 border-zinc-700 bg-zinc-950/80 text-white placeholder:text-zinc-500"
                                 />
                             </div>
                             <div className="space-y-1.5">
@@ -518,23 +528,21 @@ export default function CatalogPage() {
                                     min={0}
                                     step={0.01}
                                     placeholder="14.99"
-                                    value={form.price}
+                                    value={form.price ?? ''}
                                     onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                                    className="h-9 border-zinc-700 bg-zinc-950/80"
+                                    className="h-9 border-zinc-700 bg-zinc-950/80 text-white placeholder:text-zinc-500"
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <Label htmlFor="prod-stock" className="text-xs text-zinc-400">
-                                    Stock
+                                <Label htmlFor="prod-size" className="text-xs text-zinc-400">
+                                    Size/oz
                                 </Label>
                                 <Input
-                                    id="prod-stock"
-                                    type="number"
-                                    min={0}
-                                    placeholder="0"
-                                    value={form.stock}
-                                    onChange={(e) => setForm((f) => ({ ...f, stock: e.target.value }))}
-                                    className="h-9 border-zinc-700 bg-zinc-950/80"
+                                    id="prod-size"
+                                    placeholder="e.g. 6oz"
+                                    value={form.size ?? ''}
+                                    onChange={(e) => setForm((f) => ({ ...f, size: e.target.value }))}
+                                    className="h-9 border-zinc-700 bg-zinc-950/80 text-white placeholder:text-zinc-500"
                                 />
                             </div>
                         </div>
@@ -547,59 +555,17 @@ export default function CatalogPage() {
                             <Input
                                 id="prod-launch"
                                 type="date"
-                                value={form.launchDate}
+                                value={form.launchDate ?? ''}
                                 onChange={(e) => setForm((f) => ({ ...f, launchDate: e.target.value }))}
-                                className="h-9 border-zinc-700 bg-zinc-950/80"
+                                className="h-9 border-zinc-700 bg-zinc-950/80 text-white placeholder:text-zinc-500"
                             />
-                        </div>
-
-                        {/* Sizes */}
-                        <div className="space-y-1.5">
-                            <Label className="text-xs text-zinc-400">Sizes offered</Label>
-                            <div className="flex flex-wrap gap-2">
-                                {SIZE_OPTIONS.map((sz) => (
-                                    <label
-                                        key={sz.value}
-                                        className="flex cursor-pointer items-center gap-2 rounded border border-zinc-700 px-3 py-2 text-xs transition-colors hover:bg-zinc-800/50"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={form.sizes.includes(sz.value)}
-                                            onChange={() => toggleSize(sz.value)}
-                                            className="rounded border-zinc-600 bg-zinc-900"
-                                        />
-                                        <span className="text-zinc-300">{sz.label}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Platforms */}
-                        <div className="space-y-1.5">
-                            <Label className="text-xs text-zinc-400">Sell on</Label>
-                            <div className="flex flex-wrap gap-2">
-                                {SELL_PLATFORMS.map((pf) => (
-                                    <label
-                                        key={pf.value}
-                                        className="flex cursor-pointer items-center gap-2 rounded border border-zinc-700 px-3 py-2 text-xs transition-colors hover:bg-zinc-800/50"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={form.platforms.includes(pf.value)}
-                                            onChange={() => togglePlatform(pf.value)}
-                                            className="rounded border-zinc-600 bg-zinc-900"
-                                        />
-                                        <span className="text-zinc-300">{pf.label}</span>
-                                    </label>
-                                ))}
-                            </div>
                         </div>
 
                         {/* Status */}
                         <div className="space-y-1.5">
                             <Label className="text-xs text-zinc-400">Visibility</Label>
-                            <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
-                                <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
+                            <Select value={form.status ?? 'active'} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
+                                <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80 text-white">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
