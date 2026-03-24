@@ -14,7 +14,18 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Package, Plus, Search, MoreHorizontal, Eye, EyeOff, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+    Package,
+    Plus,
+    Search,
+    MoreHorizontal,
+    Eye,
+    EyeOff,
+    Image as ImageIcon,
+    ChevronLeft,
+    ChevronRight,
+    Percent,
+} from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
 
 const CATALOG_PAGE_SIZE = 15;
@@ -224,6 +235,25 @@ export default function CatalogPage() {
 
     const activeCount = items.filter((p) => p.status === 'active').length;
 
+    const avgMargin = React.useMemo(() => {
+        const withCost = items.filter(
+            (p) => p.price_cents > 0 && p.cost_per_bag != null,
+        );
+        if (withCost.length === 0) return null;
+        let sumPct = 0;
+        let sumDollars = 0;
+        withCost.forEach((p) => {
+            const sellPrice = p.price_cents / 100;
+            const cost = Number(p.cost_per_bag) || 0;
+            sumDollars += sellPrice - cost;
+            sumPct += sellPrice > 0 ? ((sellPrice - cost) / sellPrice) * 100 : 0;
+        });
+        return {
+            dollars: sumDollars / withCost.length,
+            pct: sumPct / withCost.length,
+        };
+    }, [items]);
+
     return (
         <div className="space-y-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -242,7 +272,7 @@ export default function CatalogPage() {
             </div>
 
             {/* Summary */}
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                     <Package className="size-4 shrink-0 text-indigo-400/80" />
                     <div className="min-w-0">
@@ -264,6 +294,42 @@ export default function CatalogPage() {
                         <p className="text-zinc-100 text-sm font-semibold tabular-nums">{items.length - activeCount}</p>
                     </div>
                 </div>
+                <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
+                    <Percent className="size-4 shrink-0 text-amber-400/80" />
+                    <div className="min-w-0">
+                        <p className="text-zinc-400 text-[10px]">Avg margin</p>
+                        <p className="text-zinc-100 text-sm font-semibold tabular-nums">
+                            {avgMargin != null
+                                ? `${formatCurrency(avgMargin.dollars)} · ${avgMargin.pct.toFixed(1)}%`
+                                : '—'}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filters & Controls */}
+            <div className="flex flex-1 flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
+                    {[
+                        { value: 'all', label: 'All' },
+                        { value: 'active', label: 'Active' },
+                        { value: 'inactive', label: 'Hidden' },
+                    ].map((opt) => (
+                        <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setStatusFilter(opt.value)}
+                            className={cn(
+                                'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                                statusFilter === opt.value
+                                    ? 'bg-zinc-700 text-zinc-100'
+                                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
+                            )}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Table */}
@@ -271,32 +337,14 @@ export default function CatalogPage() {
                 <div className="border-b border-zinc-700/80 bg-zinc-900/80 px-3 py-1.5">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <h2 className="text-zinc-100 text-xs font-medium">Catalog Items</h2>
-                        <div className="flex flex-wrap items-center gap-2">
-                            <div className="relative">
-                                <Search className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-zinc-500" />
-                                <Input
-                                    placeholder="Search catalog…"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="h-7 w-[160px] border-zinc-700 bg-zinc-950 pl-8 text-[10px] text-zinc-100 placeholder:text-zinc-500"
-                                />
-                            </div>
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger className="h-7 w-[120px] border-zinc-700 bg-zinc-950 text-zinc-100 text-[10px]">
-                                    <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all" className="text-xs">
-                                        All
-                                    </SelectItem>
-                                    <SelectItem value="active" className="text-xs">
-                                        Active
-                                    </SelectItem>
-                                    <SelectItem value="inactive" className="text-xs">
-                                        Hidden
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-zinc-500" />
+                            <Input
+                                placeholder="Search catalog…"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="h-7 w-[160px] border-zinc-700 bg-zinc-950 pl-8 text-[10px] text-zinc-100 placeholder:text-zinc-500"
+                            />
                         </div>
                     </div>
                 </div>
