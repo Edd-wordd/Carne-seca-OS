@@ -1,14 +1,19 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { withSentryAction } from '@/lib/sentry/with-sentry-action';
 
-export async function getProducts() {
+async function getProductsHandler() {
     const supabase = await createClient();
-
-    const { data, error } = await supabase.from('products').select('*');
-    if (error) {
-        console.error('no products', error);
-        return { success: false, message: 'no products' };
+    try {
+        const { data, error } = await supabase.from('products').select('*');
+        return data;
+    } catch (error) {
+        if (error) {
+            console.error('no products', error);
+            return { success: false, message: 'no products' };
+        }
     }
-    return data;
 }
+
+export const getProducts = withSentryAction('getProducts', getProductsHandler);
