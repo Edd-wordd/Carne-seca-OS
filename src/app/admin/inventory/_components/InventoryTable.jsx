@@ -37,6 +37,7 @@ import { InventoryKPIs } from './InventoryKPIs';
 import { cn } from '@/lib/utils/helpers';
 import { exportInventoryToCsv } from '@/lib/utils/exportInventory';
 import { addInventory } from '@/app/actions/inventory/addInventory';
+import { updatedInventory } from '@/app/actions/inventory/updateInventory';
 
 const INVENTORY_PAGE_SIZE = 15;
 
@@ -68,11 +69,7 @@ export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
     const [adjustReason, setAdjustReason] = React.useState('');
     const [editModalOpen, setEditModalOpen] = React.useState(false);
     const [editingProduct, setEditingProduct] = React.useState(null);
-    const [editForm, setEditForm] = React.useState({
-        sku: '',
-        name: '',
-        lowThreshold: '',
-    });
+    const [editForm, setEditForm] = React.useState({ lowThreshold: '' });
     const [inventoryPage, setInventoryPage] = React.useState(1);
     React.useEffect(() => {
         setInventory(initialInventory);
@@ -108,34 +105,27 @@ export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
 
     const openEditModal = (product) => {
         setEditingProduct(product);
-        setEditForm({
-            sku: product.sku ?? '',
-            name: product.name ?? '',
-            lowThreshold: String(product.lowThreshold ?? ''),
-        });
+        setEditForm({ lowThreshold: String(product.lowThreshold ?? '') });
         setEditModalOpen(true);
     };
 
-    const handleUpdateInventory = (e) => {
+    const handleUpdateInventory = async (e) => {
         e.preventDefault();
         if (!editingProduct) return;
         const lowThresholdVal = parseInt(editForm.lowThreshold, 10);
         const lowThreshold = Number.isNaN(lowThresholdVal) ? (editingProduct.lowThreshold ?? 10) : lowThresholdVal;
 
-        setInventory((prev) =>
-            prev.map((p) =>
-                p.id === editingProduct.id
-                    ? {
-                          ...p,
-                          sku: editForm.sku.trim() || p.sku,
-                          name: editForm.name.trim() || p.name,
-                          lowThreshold,
-                      }
-                    : p,
-            ),
-        );
-        setEditModalOpen(false);
-        setEditingProduct(null);
+        const result = await updatedInventory({
+            productId: editingProduct.id,
+            lowThreshold: lowThreshold,
+        });
+        if (result.success) {
+            setEditModalOpen(false);
+            setEditingProduct(null);
+            router.refresh();
+        } else {
+            alert(result.message ?? 'Failed to update inventory.');
+        }
     };
 
     const handleAddInventory = async () => {
@@ -646,26 +636,6 @@ export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
                         <DialogDescription>Update {editingProduct?.name ?? 'product'} details.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleUpdateInventory} className="grid gap-4 py-2">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">SKU</label>
-                                <Input
-                                    placeholder="e.g. CS-XX-00"
-                                    value={editForm.sku}
-                                    onChange={(e) => setEditForm((f) => ({ ...f, sku: e.target.value }))}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500 font-mono"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Product name</label>
-                                <Input
-                                    placeholder="Product name"
-                                    value={editForm.name}
-                                    onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
-                                />
-                            </div>
-                        </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-zinc-300">Low threshold</label>
                             <Input
@@ -686,11 +656,7 @@ export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
                             >
                                 Cancel
                             </Button>
-                            <Button
-                                type="submit"
-                                disabled={!editForm.sku.trim() || !editForm.name.trim()}
-                                className="bg-indigo-600 text-white hover:bg-indigo-500"
-                            >
+                            <Button type="submit" className="bg-indigo-600 text-white hover:bg-indigo-500">
                                 Save
                             </Button>
                         </DialogFooter>
