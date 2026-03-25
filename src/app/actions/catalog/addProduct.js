@@ -10,7 +10,7 @@ async function addProductHandler({
     flavor,
     description,
     costPerBag,
-    sellPrice,
+    priceCents,
     size,
     launchDate,
     status,
@@ -28,11 +28,11 @@ async function addProductHandler({
                 flavor: flavor,
                 description: description,
                 cost_per_bag: costPerBag,
-                sell_price: Math.round(Number(sellPrice) * 100),
+                price_cents: Math.round(Number(priceCents) * 100),
                 size_grams: size ? Math.round(Number(size) * 28.3495) : null,
                 launch_date: launchDate,
                 status: status,
-                category: category,
+                category: category === 'merch' ? 'merch' : 'carne_seca',
             })
             .select('id')
             .single();
@@ -40,7 +40,7 @@ async function addProductHandler({
             return { success: false, error: error?.message ?? 'Failed to add product' };
         }
 
-        return { success: true };
+        return { success: true, id: data.id };
     } catch (error) {
         return { success: false, error: error?.message ?? 'Unknown error' };
     }

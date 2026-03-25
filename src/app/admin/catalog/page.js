@@ -31,6 +31,7 @@ import {
 import { exportCatalogToCsv } from '@/lib/utils/exportCatalog';
 import { cn } from '@/lib/utils/helpers';
 import { getProducts } from '@/lib/supabase/queries/getProducts';
+import { addProduct } from '@/app/actions/catalog/addProduct';
 
 const CATALOG_PAGE_SIZE = 15;
 
@@ -39,73 +40,73 @@ const PRODUCT_CATEGORIES = [
     { value: 'merch', label: 'Merch' },
 ];
 
-const INITIAL_PRODUCTS = [
-    {
-        id: '1',
-        name: 'Premium Brisket 12oz',
-        price_cents: 1500,
-        cost_per_bag: 5.5,
-        status: 'active',
-        stock: 84,
-        description: 'Premium dried brisket, 12oz. Slow-smoked for 18 hours.',
-        image: null,
-        platforms: ['website', 'amazon'],
-        launchDate: '2024-01-15',
-        sizes: ['8oz', '12oz'],
-    },
-    {
-        id: '2',
-        name: 'Seasoned Classic 8oz',
-        price_cents: 1100,
-        cost_per_bag: 4.25,
-        status: 'active',
-        stock: 8,
-        description: 'Classic seasoned blend, 8oz.',
-        image: null,
-        platforms: ['website'],
-        launchDate: '2024-03-22',
-        sizes: ['6oz', '8oz'],
-    },
-    {
-        id: '3',
-        name: 'Original 6oz',
-        price_cents: 899,
-        cost_per_bag: 3.8,
-        status: 'inactive',
-        stock: 0,
-        description: 'Original recipe, 6oz.',
-        image: null,
-        platforms: ['website', 'pos'],
-        launchDate: '2023-11-01',
-        sizes: ['6oz'],
-    },
-    {
-        id: '4',
-        name: 'Limited Smoked',
-        price_cents: 1999,
-        cost_per_bag: 6.2,
-        status: 'active',
-        stock: 45,
-        description: 'Limited edition smoked.',
-        image: null,
-        platforms: ['website', 'amazon', 'pos'],
-        launchDate: '2025-02-01',
-        sizes: ['6oz', '8oz', '12oz'],
-    },
-    {
-        id: '5',
-        name: 'Garlic & Herb 6oz',
-        price_cents: 899,
-        cost_per_bag: 4.0,
-        status: 'active',
-        stock: 32,
-        description: 'Garlic and herb seasoned.',
-        image: null,
-        platforms: ['website', 'pos'],
-        launchDate: '2024-08-10',
-        sizes: ['4oz', '6oz'],
-    },
-];
+// const INITIAL_PRODUCTS = [
+//     {
+//         id: '1',
+//         name: 'Premium Brisket 12oz',
+//         price_cents: 1500,
+//         cost_per_bag: 5.5,
+//         status: 'active',
+//         stock: 84,
+//         description: 'Premium dried brisket, 12oz. Slow-smoked for 18 hours.',
+//         image: null,
+//         platforms: ['website', 'amazon'],
+//         launchDate: '2024-01-15',
+//         sizes: ['8oz', '12oz'],
+//     },
+//     {
+//         id: '2',
+//         name: 'Seasoned Classic 8oz',
+//         price_cents: 1100,
+//         cost_per_bag: 4.25,
+//         status: 'active',
+//         stock: 8,
+//         description: 'Classic seasoned blend, 8oz.',
+//         image: null,
+//         platforms: ['website'],
+//         launchDate: '2024-03-22',
+//         sizes: ['6oz', '8oz'],
+//     },
+//     {
+//         id: '3',
+//         name: 'Original 6oz',
+//         price_cents: 899,
+//         cost_per_bag: 3.8,
+//         status: 'inactive',
+//         stock: 0,
+//         description: 'Original recipe, 6oz.',
+//         image: null,
+//         platforms: ['website', 'pos'],
+//         launchDate: '2023-11-01',
+//         sizes: ['6oz'],
+//     },
+//     {
+//         id: '4',
+//         name: 'Limited Smoked',
+//         price_cents: 1999,
+//         cost_per_bag: 6.2,
+//         status: 'active',
+//         stock: 45,
+//         description: 'Limited edition smoked.',
+//         image: null,
+//         platforms: ['website', 'amazon', 'pos'],
+//         launchDate: '2025-02-01',
+//         sizes: ['6oz', '8oz', '12oz'],
+//     },
+//     {
+//         id: '5',
+//         name: 'Garlic & Herb 6oz',
+//         price_cents: 899,
+//         cost_per_bag: 4.0,
+//         status: 'active',
+//         stock: 32,
+//         description: 'Garlic and herb seasoned.',
+//         image: null,
+//         platforms: ['website', 'pos'],
+//         launchDate: '2024-08-10',
+//         sizes: ['4oz', '6oz'],
+//     },
+// ];
 
 function formatPrice(cents) {
     return new Intl.NumberFormat('en-US', {
@@ -203,33 +204,64 @@ export default function CatalogPage() {
         setAddModalOpen(true);
     };
 
-    const handleSubmitProduct = (e) => {
+    const handleSubmitProduct = async (e) => {
         e.preventDefault();
         const priceDollars = parseFloat(form.price) || 0;
-        const priceCents = Math.round(priceDollars * 100);
-        const costPerBag = parseFloat(form.costPerBag) || null;
+        const price_cents = Math.round(priceDollars * 100);
+        const cost_per_bag = parseFloat(form.costPerBag) || null;
+        const productName = form.name.trim() || 'Untitled';
         const existing = editingId ? items.find((i) => i.id === editingId) : null;
-        const payload = {
-            name: form.name.trim() || 'Untitled',
+
+        const rowShape = {
+            name: productName,
             sku: form.sku.trim() || null,
             flavor: form.flavor.trim() || null,
-            price_cents: priceCents,
-            cost_per_bag: costPerBag,
+            price_cents,
+            cost_per_bag,
             status: form.status,
-            stock: existing?.stock ?? 0,
             description: form.description.trim() || null,
             image: form.imageUrl.trim() || null,
-            platforms: existing?.platforms ?? ['website'],
-            launchDate: form.launchDate.trim() || null,
+            image_url: form.imageUrl.trim() || null,
+            launch_date: form.launchDate.trim() || null,
             sizes: form.size.trim() ? [form.size.trim()] : (existing?.sizes ?? []),
             category: form.category === 'merch' ? 'merch' : 'carne_seca',
+            platforms: existing?.platforms ?? ['website'],
+            stock: existing?.stock ?? 0,
         };
+
         if (editingId) {
-            setItems((prev) => prev.map((p) => (p.id === editingId ? { ...p, ...payload } : p)));
-        } else {
-            const newId = String(Math.max(...items.map((p) => parseInt(p.id, 10) || 0), 0) + 1);
-            setItems((prev) => [{ id: newId, ...payload }, ...prev]);
+            setItems((prev) => prev.map((p) => (p.id === editingId ? { ...p, ...rowShape } : p)));
+            resetForm();
+            setAddModalOpen(false);
+            return;
         }
+
+        const result = await addProduct({
+            productName,
+            SKU: form.sku.trim() || null,
+            flavor: form.flavor.trim() || null,
+            description: form.description.trim() || null,
+            costPerBag: cost_per_bag,
+            priceCents: priceDollars,
+            imageURL: form.imageUrl.trim() || null,
+            launchDate: form.launchDate.trim() || null,
+            size: form.size.trim() || null,
+            status: form.status,
+            category: rowShape.category,
+        });
+
+        if (!result || result.success === false) {
+            alert(result?.error ?? 'Failed to save product.');
+            return;
+        }
+
+        const numericIds = items
+            .map((p) => parseInt(String(p.id), 10))
+            .filter((n) => !Number.isNaN(n));
+        const fallbackId = String(Math.max(0, ...numericIds, 0) + 1);
+        const newId = result.id != null ? String(result.id) : fallbackId;
+
+        setItems((prev) => [{ id: newId, ...rowShape }, ...prev]);
         resetForm();
         setAddModalOpen(false);
     };
