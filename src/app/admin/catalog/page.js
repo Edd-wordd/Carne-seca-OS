@@ -34,6 +34,11 @@ import { getProducts } from '@/lib/supabase/queries/getProducts';
 
 const CATALOG_PAGE_SIZE = 15;
 
+const PRODUCT_CATEGORIES = [
+    { value: 'carne_seca', label: 'Carne seca' },
+    { value: 'merch', label: 'Merch' },
+];
+
 const INITIAL_PRODUCTS = [
     {
         id: '1',
@@ -144,6 +149,7 @@ export default function CatalogPage() {
         imageUrl: '',
         launchDate: '',
         size: '',
+        category: 'carne_seca',
     });
 
     const resetForm = () => {
@@ -158,6 +164,7 @@ export default function CatalogPage() {
             imageUrl: '',
             launchDate: '',
             size: '',
+            category: 'carne_seca',
         });
         setEditingId(null);
     };
@@ -190,6 +197,7 @@ export default function CatalogPage() {
             imageUrl: p.image ?? p.image_url ?? '',
             launchDate: p.launchDate ?? p.launch_date ?? '',
             size: firstSize ?? '',
+            category: p.category === 'merch' ? 'merch' : 'carne_seca',
         });
         setEditingId(p.id);
         setAddModalOpen(true);
@@ -214,6 +222,7 @@ export default function CatalogPage() {
             platforms: existing?.platforms ?? ['website'],
             launchDate: form.launchDate.trim() || null,
             sizes: form.size.trim() ? [form.size.trim()] : (existing?.sizes ?? []),
+            category: form.category === 'merch' ? 'merch' : 'carne_seca',
         };
         if (editingId) {
             setItems((prev) => prev.map((p) => (p.id === editingId ? { ...p, ...payload } : p)));
@@ -672,25 +681,45 @@ export default function CatalogPage() {
                             />
                         </div>
 
-                        {/* Status */}
-                        <div className="space-y-1.5">
-                            <Label className="text-xs text-zinc-300">Visibility</Label>
-                            <Select
-                                value={form.status ?? 'active'}
-                                onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}
-                            >
-                                <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80 text-white">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="active" className="text-xs">
-                                        Active (visible on site)
-                                    </SelectItem>
-                                    <SelectItem value="inactive" className="text-xs">
-                                        Hidden (draft)
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
+                        {/* Category & Status */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-zinc-300">Category</Label>
+                                <Select
+                                    value={form.category ?? 'carne_seca'}
+                                    onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}
+                                >
+                                    <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80 text-white">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {PRODUCT_CATEGORIES.map((c) => (
+                                            <SelectItem key={c.value} value={c.value} className="text-xs">
+                                                {c.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-zinc-300">Status</Label>
+                                <Select
+                                    value={form.status ?? 'active'}
+                                    onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}
+                                >
+                                    <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80 text-white">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="active" className="text-xs">
+                                            Active (visible on site)
+                                        </SelectItem>
+                                        <SelectItem value="inactive" className="text-xs">
+                                            Hidden (draft)
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
 
                         <DialogFooter className="gap-4 pt-4">

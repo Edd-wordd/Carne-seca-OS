@@ -13,7 +13,8 @@ async function addProductHandler({
     sellPrice,
     size,
     launchDate,
-    visablity,
+    status,
+    category,
 }) {
     const supabase = await createClient();
 
@@ -30,7 +31,8 @@ async function addProductHandler({
                 sell_price: Math.round(Number(sellPrice) * 100),
                 size_grams: size ? Math.round(Number(size) * 28.3495) : null,
                 launch_date: launchDate,
-                status: visablity,
+                status: status,
+                category: category,
             })
             .select('id')
             .single();
