@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ import {
 } from 'lucide-react';
 import { exportCatalogToCsv } from '@/lib/utils/exportCatalog';
 import { cn } from '@/lib/utils/helpers';
+import { getProducts } from '@/lib/supabase/queries/getProducts';
 
 const CATALOG_PAGE_SIZE = 15;
 
@@ -125,7 +127,7 @@ function formatDate(d) {
 }
 
 export default function CatalogPage() {
-    const [items, setItems] = React.useState(INITIAL_PRODUCTS);
+    const [items, setItems] = React.useState([]);
     const [search, setSearch] = React.useState('');
     const [statusFilter, setStatusFilter] = React.useState('all');
     const [addModalOpen, setAddModalOpen] = React.useState(false);
@@ -167,6 +169,13 @@ export default function CatalogPage() {
             ),
         );
     };
+
+    useEffect(() => {
+        getProducts().then((data) => {
+            setItems(data);
+            console.log('category', data);
+        });
+    }, []);
 
     const openEdit = (p) => {
         const firstSize = Array.isArray(p.sizes) && p.sizes.length ? p.sizes[0] : '';
@@ -238,9 +247,7 @@ export default function CatalogPage() {
     const activeCount = items.filter((p) => p.status === 'active').length;
 
     const avgMargin = React.useMemo(() => {
-        const withCost = items.filter(
-            (p) => p.price_cents > 0 && p.cost_per_bag != null,
-        );
+        const withCost = items.filter((p) => p.price_cents > 0 && p.cost_per_bag != null);
         if (withCost.length === 0) return null;
         let sumPct = 0;
         let sumDollars = 0;
