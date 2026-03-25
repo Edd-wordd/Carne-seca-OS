@@ -179,10 +179,7 @@ export default function CatalogPage() {
     };
 
     useEffect(() => {
-        getProducts().then((data) => {
-            setItems(data);
-            console.log('category', data);
-        });
+        getProducts().then(setItems);
     }, []);
 
     const openEdit = (p) => {
@@ -255,9 +252,7 @@ export default function CatalogPage() {
             return;
         }
 
-        const numericIds = items
-            .map((p) => parseInt(String(p.id), 10))
-            .filter((n) => !Number.isNaN(n));
+        const numericIds = items.map((p) => parseInt(String(p.id), 10)).filter((n) => !Number.isNaN(n));
         const fallbackId = String(Math.max(0, ...numericIds, 0) + 1);
         const newId = result.id != null ? String(result.id) : fallbackId;
 
