@@ -20,6 +20,14 @@ export function formatCurrency(n) {
     }).format(n ?? 0);
 }
 
+export function formatDate(d) {
+    if (!d) return '—';
+    const dt = new Date(d);
+    return isNaN(dt.getTime())
+        ? d
+        : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export function escapeCsv(val) {
     const s = String(val ?? '');
     if (s.includes(',') || s.includes('"') || s.includes('\n')) {

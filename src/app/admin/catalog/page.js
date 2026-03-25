@@ -32,6 +32,7 @@ import { exportCatalogToCsv } from '@/lib/utils/exportCatalog';
 import { cn } from '@/lib/utils/helpers';
 import { getProducts } from '@/lib/supabase/queries/getProducts';
 import { addProduct } from '@/app/actions/catalog/addProduct';
+import { formatPrice, formatCurrency, formatDate } from '@/lib/utils/helpers';
 
 const CATALOG_PAGE_SIZE = 15;
 
@@ -39,98 +40,6 @@ const PRODUCT_CATEGORIES = [
     { value: 'carne_seca', label: 'Carne seca' },
     { value: 'merch', label: 'Merch' },
 ];
-
-// const INITIAL_PRODUCTS = [
-//     {
-//         id: '1',
-//         name: 'Premium Brisket 12oz',
-//         price_cents: 1500,
-//         cost_per_bag: 5.5,
-//         status: 'active',
-//         stock: 84,
-//         description: 'Premium dried brisket, 12oz. Slow-smoked for 18 hours.',
-//         image: null,
-//         platforms: ['website', 'amazon'],
-//         launchDate: '2024-01-15',
-//         sizes: ['8oz', '12oz'],
-//     },
-//     {
-//         id: '2',
-//         name: 'Seasoned Classic 8oz',
-//         price_cents: 1100,
-//         cost_per_bag: 4.25,
-//         status: 'active',
-//         stock: 8,
-//         description: 'Classic seasoned blend, 8oz.',
-//         image: null,
-//         platforms: ['website'],
-//         launchDate: '2024-03-22',
-//         sizes: ['6oz', '8oz'],
-//     },
-//     {
-//         id: '3',
-//         name: 'Original 6oz',
-//         price_cents: 899,
-//         cost_per_bag: 3.8,
-//         status: 'inactive',
-//         stock: 0,
-//         description: 'Original recipe, 6oz.',
-//         image: null,
-//         platforms: ['website', 'pos'],
-//         launchDate: '2023-11-01',
-//         sizes: ['6oz'],
-//     },
-//     {
-//         id: '4',
-//         name: 'Limited Smoked',
-//         price_cents: 1999,
-//         cost_per_bag: 6.2,
-//         status: 'active',
-//         stock: 45,
-//         description: 'Limited edition smoked.',
-//         image: null,
-//         platforms: ['website', 'amazon', 'pos'],
-//         launchDate: '2025-02-01',
-//         sizes: ['6oz', '8oz', '12oz'],
-//     },
-//     {
-//         id: '5',
-//         name: 'Garlic & Herb 6oz',
-//         price_cents: 899,
-//         cost_per_bag: 4.0,
-//         status: 'active',
-//         stock: 32,
-//         description: 'Garlic and herb seasoned.',
-//         image: null,
-//         platforms: ['website', 'pos'],
-//         launchDate: '2024-08-10',
-//         sizes: ['4oz', '6oz'],
-//     },
-// ];
-
-function formatPrice(cents) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-    }).format(cents / 100);
-}
-
-function formatCurrency(n) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-    }).format(n ?? 0);
-}
-
-function formatDate(d) {
-    if (!d) return '—';
-    const dt = new Date(d);
-    return isNaN(dt.getTime())
-        ? d
-        : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
 
 export default function CatalogPage() {
     const [items, setItems] = React.useState([]);
@@ -605,20 +514,22 @@ export default function CatalogPage() {
                             />
                         </div>
 
-                        {/* SKU & Flavor */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="prod-sku" className="text-xs text-zinc-400">
-                                    SKU
-                                </Label>
-                                <Input
-                                    id="prod-sku"
-                                    placeholder="e.g. CS-XX-00"
-                                    value={form.sku ?? ''}
-                                    onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
-                                    className="h-9 border-zinc-700 bg-zinc-950/80 text-white placeholder:text-zinc-500 font-mono"
-                                />
-                            </div>
+                        {/* SKU (add only) & Flavor */}
+                        <div className={`grid gap-4 ${editingId ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                            {!editingId ? (
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="prod-sku" className="text-xs text-zinc-400">
+                                        SKU
+                                    </Label>
+                                    <Input
+                                        id="prod-sku"
+                                        placeholder="e.g. CS-XX-00"
+                                        value={form.sku ?? ''}
+                                        onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
+                                        className="h-9 border-zinc-700 bg-zinc-950/80 text-white placeholder:text-zinc-500 font-mono"
+                                    />
+                                </div>
+                            ) : null}
                             <div className="space-y-1.5">
                                 <Label htmlFor="prod-flavor" className="text-xs text-zinc-400">
                                     Flavor
