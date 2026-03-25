@@ -16,6 +16,12 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
     Package,
     Plus,
     Search,
@@ -27,6 +33,8 @@ import {
     ChevronRight,
     Percent,
     Download,
+    Pencil,
+    Trash2,
 } from 'lucide-react';
 import { exportCatalogToCsv } from '@/lib/utils/exportCatalog';
 import { cn } from '@/lib/utils/helpers';
@@ -79,19 +87,35 @@ export default function CatalogPage() {
         setEditingId(null);
     };
 
-    const toggleStatus = (p) => {
-        setItems((prev) =>
-            prev.map((item) =>
-                item.id === p.id ? { ...item, status: item.status === 'active' ? 'inactive' : 'active' } : item,
-            ),
-        );
+    /** Defer reset until after close animation so the header does not flash "Add Product" while exiting edit. */
+    const closeResetTimeoutRef = React.useRef(null);
+    const clearPendingCloseReset = () => {
+        if (closeResetTimeoutRef.current != null) {
+            clearTimeout(closeResetTimeoutRef.current);
+            closeResetTimeoutRef.current = null;
+        }
+    };
+    const scheduleResetAfterClose = () => {
+        clearPendingCloseReset();
+        closeResetTimeoutRef.current = setTimeout(() => {
+            resetForm();
+            closeResetTimeoutRef.current = null;
+        }, 250);
     };
 
     useEffect(() => {
         getProducts().then(setItems);
     }, []);
 
+    useEffect(() => () => clearPendingCloseReset(), []);
+
+    const handleDeleteProduct = (p) => {
+        if (!window.confirm(`Remove "${p.name}" from the catalog list?`)) return;
+        setItems((prev) => prev.filter((item) => item.id !== p.id));
+    };
+
     const openEdit = (p) => {
+        clearPendingCloseReset();
         const firstSize = Array.isArray(p.sizes) && p.sizes.length ? p.sizes[0] : '';
         setForm({
             name: p.name ?? '',
@@ -137,7 +161,6 @@ export default function CatalogPage() {
 
         if (editingId) {
             setItems((prev) => prev.map((p) => (p.id === editingId ? { ...p, ...rowShape } : p)));
-            resetForm();
             setAddModalOpen(false);
             return;
         }
@@ -166,7 +189,6 @@ export default function CatalogPage() {
         const newId = result.id != null ? String(result.id) : fallbackId;
 
         setItems((prev) => [{ id: newId, ...rowShape }, ...prev]);
-        resetForm();
         setAddModalOpen(false);
     };
 
@@ -218,7 +240,11 @@ export default function CatalogPage() {
                 <Button
                     size="sm"
                     className="gap-1.5 bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 w-fit"
-                    onClick={() => setAddModalOpen(true)}
+                    onClick={() => {
+                        clearPendingCloseReset();
+                        resetForm();
+                        setAddModalOpen(true);
+                    }}
                 >
                     <Plus className="size-3.5" />
                     Add Product
@@ -379,16 +405,13 @@ export default function CatalogPage() {
                                         {formatDate(p.launch_date ?? p.launchDate)}
                                     </TableCell>
                                     <TableCell className="px-3 py-1.5">
-                                        <button
-                                            type="button"
-                                            onClick={() => toggleStatus(p)}
+                                        <span
                                             className={cn(
-                                                'inline-flex cursor-pointer items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium transition-colors hover:opacity-90',
+                                                'inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-medium',
                                                 p.status === 'active'
-                                                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
-                                                    : 'border-zinc-600/50 bg-zinc-800/50 text-zinc-500 hover:bg-zinc-700/50',
+                                                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                                                    : 'border-zinc-600/50 bg-zinc-800/50 text-zinc-500',
                                             )}
-                                            aria-label={p.status === 'active' ? 'Set to hidden' : 'Set to active'}
                                         >
                                             {p.status === 'active' ? (
                                                 <>
@@ -401,18 +424,43 @@ export default function CatalogPage() {
                                                     Hidden
                                                 </>
                                             )}
-                                        </button>
+                                        </span>
                                     </TableCell>
                                     <TableCell className="px-3 py-1.5 text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 text-zinc-400 hover:bg-zinc-600/50 hover:text-zinc-100"
-                                            onClick={() => openEdit(p)}
-                                            aria-label="Edit"
-                                        >
-                                            <MoreHorizontal className="size-4" />
-                                        </Button>
+                                        <div className="flex justify-end">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-zinc-400 hover:bg-zinc-600/50 hover:text-zinc-100"
+                                                        aria-label="Open actions"
+                                                    >
+                                                        <MoreHorizontal className="size-4" />
+                                                        <span className="sr-only">Actions</span>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    className="border-zinc-800 bg-zinc-900"
+                                                >
+                                                    <DropdownMenuItem
+                                                        onClick={() => openEdit(p)}
+                                                        className="cursor-pointer text-zinc-200"
+                                                    >
+                                                        <Pencil className="mr-2 size-3.5" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleDeleteProduct(p)}
+                                                        className="cursor-pointer text-red-400 focus:text-red-400"
+                                                    >
+                                                        <Trash2 className="mr-2 size-3.5" />
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -458,7 +506,11 @@ export default function CatalogPage() {
                 open={addModalOpen}
                 onOpenChange={(open) => {
                     setAddModalOpen(open);
-                    if (!open) resetForm();
+                    if (open) {
+                        clearPendingCloseReset();
+                    } else {
+                        scheduleResetAfterClose();
+                    }
                 }}
             >
                 <DialogContent className="border-zinc-800 bg-zinc-900 text-zinc-100 sm:max-w-lg">
