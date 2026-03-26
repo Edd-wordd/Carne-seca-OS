@@ -192,7 +192,7 @@ export default function CatalogPage() {
             costPerBag: cost_per_bag,
             priceCents: priceDollars,
             imageURL: form.imageUrl.trim() || null,
-            launchDate: form.launchDate.trim() || null,
+            launchDate: (form.launchDate || '').trim(),
             size: form.size.trim() || null,
             status: form.status,
             category: rowShape.category,
