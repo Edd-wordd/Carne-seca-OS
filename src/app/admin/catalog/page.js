@@ -41,6 +41,7 @@ import { cn } from '@/lib/utils/helpers';
 import { getProducts } from '@/lib/supabase/queries/getProducts';
 import { addProduct } from '@/app/actions/catalog/addProduct';
 import { formatPrice, formatCurrency, formatDate } from '@/lib/utils/helpers';
+import { updateProduct } from '@/app/actions/catalog/updateProduct';
 
 const CATALOG_PAGE_SIZE = 15;
 
@@ -116,10 +117,10 @@ export default function CatalogPage() {
 
     const openEdit = (p) => {
         clearPendingCloseReset();
-        const firstSize = Array.isArray(p.sizes) && p.sizes.length ? p.sizes[0] : '';
+        console.log(p.size_grams);
+        const firstSize = p.size_grams ? (p.size_grams / 28.3495).toFixed(1) : '';
         setForm({
             name: p.name ?? '',
-            sku: p.sku ?? '',
             flavor: p.flavor ?? '',
             description: p.description ?? '',
             price: p.price_cents != null ? (p.price_cents / 100).toFixed(2) : '',
@@ -144,7 +145,6 @@ export default function CatalogPage() {
 
         const rowShape = {
             name: productName,
-            sku: form.sku.trim() || null,
             flavor: form.flavor.trim() || null,
             price_cents,
             cost_per_bag,
@@ -160,6 +160,25 @@ export default function CatalogPage() {
         };
 
         if (editingId) {
+            const updateResult = await updateProduct({
+                productID: editingId,
+                imageURL: form.imageUrl.trim() || null,
+                productName,
+                flavor: form.flavor.trim() || null,
+                description: form.description.trim() || null,
+                costPerBag: cost_per_bag,
+                priceDollars,
+                size: form.size.trim() || null,
+                launchDate: form.launchDate.trim() || null,
+                category: rowShape.category,
+                status: form.status,
+            });
+
+            if (!updateResult || updateResult.success === false) {
+                alert(updateResult?.message ?? 'Failed to update product.');
+                return;
+            }
+
             setItems((prev) => prev.map((p) => (p.id === editingId ? { ...p, ...rowShape } : p)));
             setAddModalOpen(false);
             return;

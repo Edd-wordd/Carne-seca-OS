@@ -3,47 +3,43 @@
 import { createClient } from '@/lib/supabase/server';
 import { withSentryAction } from '@/lib/sentry/with-sentry-action';
 
-async function addProductHandler({
+async function updateProductHandler({
+    productID,
     imageURL,
     productName,
-    SKU,
     flavor,
     description,
     costPerBag,
     priceDollars,
     size,
     launchDate,
-    status,
     category,
+    status,
 }) {
     const supabase = await createClient();
 
     try {
         const { data, error } = await supabase
             .from('products')
-            .insert({
+            .update({
                 image_url: imageURL,
                 name: productName,
-                sku: SKU,
-                flavor: flavor,
-                description: description,
+                flavor,
+                description,
                 cost_per_bag: costPerBag,
                 price_cents: Math.round(Number(priceDollars) * 100),
                 size_grams: size ? Math.round(Number(size) * 28.3495) : null,
                 launch_date: launchDate,
-                status: status,
-                category: category === 'merch' ? 'merch' : 'carne_seca',
+                category,
+                status,
             })
-            .select('id')
-            .single();
-        if (error || !data) {
-            return { success: false, error: error?.message ?? 'Failed to add product' };
-        }
+            .eq('id', productID);
 
-        return { success: true, id: data.id };
+        if (error) return { success: false, message: error.message };
+        return { success: true };
     } catch (error) {
-        return { success: false, error: error?.message ?? 'Unknown error' };
+        if (error) return { success: false, message: error?.message ?? 'unknown error' };
     }
 }
 
-export const addProduct = withSentryAction('addProduct', addProductHandler);
+export const updateProduct = withSentryAction('updateProduct', updateProductHandler);
