@@ -42,6 +42,8 @@ import { getProducts } from '@/lib/supabase/queries/getProducts';
 import { addProduct } from '@/app/actions/catalog/addProduct';
 import { formatPrice, formatCurrency, formatDate } from '@/lib/utils/helpers';
 import { updateProduct } from '@/app/actions/catalog/updateProduct';
+import { deleteProduct } from '@/app/actions/catalog/deleteProduct';
+import { toast } from 'sonner';
 
 const CATALOG_PAGE_SIZE = 15;
 
@@ -55,6 +57,9 @@ export default function CatalogPage() {
     const [search, setSearch] = React.useState('');
     const [statusFilter, setStatusFilter] = React.useState('all');
     const [addModalOpen, setAddModalOpen] = React.useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = React.useState(false);
+    const [deleteTarget, setDeleteTarget] = React.useState(null);
+    const [isDeleting, setIsDeleting] = React.useState(false);
     const [editingId, setEditingId] = React.useState(null);
     const [catalogPage, setCatalogPage] = React.useState(1);
     const [form, setForm] = React.useState({
@@ -110,9 +115,23 @@ export default function CatalogPage() {
 
     useEffect(() => () => clearPendingCloseReset(), []);
 
-    const handleDeleteProduct = (p) => {
-        if (!window.confirm(`Remove "${p.name}" from the catalog list?`)) return;
-        setItems((prev) => prev.filter((item) => item.id !== p.id));
+    const requestDeleteProduct = (p) => {
+        setDeleteTarget(p);
+        setDeleteModalOpen(true);
+    };
+
+    const handleDeleteProduct = async () => {
+        if (!deleteTarget?.id || isDeleting) return;
+        setIsDeleting(true);
+        const result = await deleteProduct(deleteTarget.id);
+        if (result && result.success) {
+            setItems((prev) => prev.filter((item) => item.id !== deleteTarget.id));
+            setDeleteModalOpen(false);
+            setDeleteTarget(null);
+        } else {
+            toast.error(result?.message || 'Failed to delete product.');
+        }
+        setIsDeleting(false);
     };
 
     const openEdit = (p) => {
@@ -471,7 +490,7 @@ export default function CatalogPage() {
                                                         Edit
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
-                                                        onClick={() => handleDeleteProduct(p)}
+                                                        onClick={() => requestDeleteProduct(p)}
                                                         className="cursor-pointer text-red-400 focus:text-red-400"
                                                     >
                                                         <Trash2 className="mr-2 size-3.5" />
@@ -745,6 +764,43 @@ export default function CatalogPage() {
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={deleteModalOpen}
+                onOpenChange={(open) => {
+                    setDeleteModalOpen(open);
+                    if (!open && !isDeleting) setDeleteTarget(null);
+                }}
+            >
+                <DialogContent className="border-zinc-800 bg-zinc-900 text-zinc-100 sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Delete Product</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete &quot;{deleteTarget?.name ?? 'this product'}&quot;? This
+                            action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 pt-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setDeleteModalOpen(false)}
+                            disabled={isDeleting}
+                            className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleDeleteProduct}
+                            disabled={isDeleting}
+                            className="bg-red-500/20 text-red-300 hover:bg-red-500/30"
+                        >
+                            {isDeleting ? 'Deleting...' : 'Delete'}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
