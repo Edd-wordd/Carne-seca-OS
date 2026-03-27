@@ -129,7 +129,16 @@ export default function CatalogPage() {
             setDeleteModalOpen(false);
             setDeleteTarget(null);
         } else {
-            toast.error(result?.message || 'Failed to delete product.');
+            const errorMessage = String(result?.message ?? '').toLowerCase();
+            const isForeignKeyError =
+                errorMessage.includes('foreign key') ||
+                errorMessage.includes('violates foreign key constraint') ||
+                errorMessage.includes('is still referenced');
+            toast.error(
+                isForeignKeyError
+                    ? "This product has inventory records and can't be deleted. Set it to Hidden instead."
+                    : result?.message || 'Failed to delete product.',
+            );
         }
         setIsDeleting(false);
     };
