@@ -173,6 +173,7 @@ export default function CatalogPage() {
 
         const rowShape = {
             name: productName,
+            sku: existing?.sku ?? null,
             flavor: form.flavor.trim() || null,
             price_cents,
             cost_per_bag,
@@ -214,11 +215,10 @@ export default function CatalogPage() {
 
         const result = await addProduct({
             productName,
-            SKU: form.sku.trim() || null,
             flavor: form.flavor.trim() || null,
             description: form.description.trim() || null,
             costPerBag: cost_per_bag,
-            priceCents: priceDollars,
+            priceDollars,
             imageURL: form.imageUrl.trim() || null,
             launchDate: (form.launchDate || '').trim(),
             size: form.size.trim() || null,
@@ -235,7 +235,7 @@ export default function CatalogPage() {
         const fallbackId = String(Math.max(0, ...numericIds, 0) + 1);
         const newId = result.id != null ? String(result.id) : fallbackId;
 
-        setItems((prev) => [{ id: newId, ...rowShape }, ...prev]);
+        setItems((prev) => [{ id: newId, ...rowShape, sku: result?.sku ?? rowShape.sku }, ...prev]);
         setAddModalOpen(false);
     };
 
