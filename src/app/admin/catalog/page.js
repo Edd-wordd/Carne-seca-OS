@@ -23,6 +23,8 @@ const PRODUCT_CATEGORIES = [
     { value: 'merch', label: 'Merch' },
 ];
 
+const getNormalizedStatus = (product) => String(product?.status ?? '').trim().toLowerCase();
+
 export default function CatalogPage() {
     const [items, setItems] = React.useState([]);
     const [search, setSearch] = React.useState('');
@@ -241,7 +243,11 @@ export default function CatalogPage() {
             const q = search.trim().toLowerCase();
             list = list.filter((p) => p.name.toLowerCase().includes(q));
         }
-        if (statusFilter !== 'all') list = list.filter((p) => p.status === statusFilter);
+        if (statusFilter === 'active') {
+            list = list.filter((p) => getNormalizedStatus(p) === 'active');
+        } else if (statusFilter === 'inactive') {
+            list = list.filter((p) => getNormalizedStatus(p) !== 'active');
+        }
         return list;
     }, [items, search, statusFilter]);
 
@@ -254,7 +260,7 @@ export default function CatalogPage() {
         safeCatalogPage * CATALOG_PAGE_SIZE,
     );
 
-    const activeCount = items.filter((p) => p.status === 'active').length;
+    const activeCount = items.filter((p) => getNormalizedStatus(p) === 'active').length;
 
     const avgMargin = React.useMemo(() => {
         const withCost = items.filter((p) => p.price_cents > 0 && p.cost_per_bag != null);

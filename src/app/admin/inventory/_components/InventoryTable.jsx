@@ -186,51 +186,51 @@ export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
                     <h1 className="text-zinc-100 text-lg font-semibold tracking-tight">Inventory</h1>
                     <p className="text-zinc-400 mt-0.5 text-xs">Product stock levels & alerts</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5 border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 hover:border-zinc-600 text-xs"
-                        onClick={handleExportCsv}
-                    >
-                        <Download className="size-3.5" />
-                        Export CSV
-                    </Button>
-                    <Button
-                        size="sm"
-                        className="gap-1.5 bg-indigo-600 text-white hover:bg-indigo-500 text-xs"
-                        onClick={() => setAddModalOpen(true)}
-                    >
-                        <Plus className="size-3.5" />
-                        Add Inventory
-                    </Button>
-                </div>
+                <Button
+                    size="sm"
+                    className="gap-1.5 bg-indigo-600 text-white hover:bg-indigo-500 text-xs"
+                    onClick={() => setAddModalOpen(true)}
+                >
+                    <Plus className="size-3.5" />
+                    Add Inventory
+                </Button>
             </div>
 
             <InventoryKPIs inventory={inventory} adjustmentsLog={adjustmentsLog} />
 
-            <div className="flex flex-1 flex-wrap items-center gap-2">
-                <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
-                    {[
-                        { value: 'all', label: 'All' },
-                        { value: 'low', label: 'Low stock' },
-                        { value: 'out', label: 'Out of stock' },
-                    ].map((opt) => (
-                        <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => setStatusFilter(opt.value)}
-                            className={cn(
-                                'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
-                                statusFilter === opt.value
-                                    ? 'bg-zinc-700 text-zinc-100'
-                                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
-                            )}
-                        >
-                            {opt.label}
-                        </button>
-                    ))}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-1 flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
+                        {[
+                            { value: 'all', label: 'All' },
+                            { value: 'low', label: 'Low stock' },
+                            { value: 'out', label: 'Out of stock' },
+                        ].map((opt) => (
+                            <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => setStatusFilter(opt.value)}
+                                className={cn(
+                                    'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                                    statusFilter === opt.value
+                                        ? 'bg-zinc-700 text-zinc-100'
+                                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
+                                )}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-2 border-zinc-700 bg-zinc-900/80 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                    onClick={handleExportCsv}
+                >
+                    <Download className="size-4" />
+                    Export CSV
+                </Button>
             </div>
 
             {/* Table */}

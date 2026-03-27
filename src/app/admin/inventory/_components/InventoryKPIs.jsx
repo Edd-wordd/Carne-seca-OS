@@ -30,61 +30,64 @@ export function InventoryKPIs({ inventory = [], adjustmentsLog = [] }) {
     const totalLosses = spoilageTotal + otherLossTotal;
 
     return (
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-            {/* Inventory: bags, value, cost */}
-            <div className={CARD_BASE}>
-                <div className="flex items-center gap-2">
-                    <Layers className="size-3.5 shrink-0 text-indigo-400/80" />
-                    <span className="text-zinc-500 text-[10px]">Inventory</span>
+        <div className="space-y-2">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Overview</span>
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                {/* Inventory: bags, value, cost */}
+                <div className={CARD_BASE}>
+                    <div className="flex items-center gap-2">
+                        <Layers className="size-3.5 shrink-0 text-indigo-400/80" />
+                        <span className="text-zinc-500 text-[10px]">Inventory</span>
+                    </div>
+                    <div className="space-y-0.5">
+                        <p className="text-zinc-100 text-xs font-semibold tabular-nums">
+                            {totalBags.toLocaleString()} bags · ${totalValue.toLocaleString()} value
+                        </p>
+                        <p className="text-amber-400/90 text-[10px] tabular-nums">
+                            Cost: ${totalCostToMake.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </p>
+                    </div>
                 </div>
-                <div className="space-y-0.5">
+
+                {/* Consignment */}
+                <div className={CARD_BASE}>
+                    <div className="flex items-center gap-2">
+                        <Store className="size-3.5 shrink-0 text-violet-400/80" />
+                        <span className="text-zinc-500 text-[10px]">Consignment</span>
+                    </div>
                     <p className="text-zinc-100 text-xs font-semibold tabular-nums">
-                        {totalBags.toLocaleString()} bags · ${totalValue.toLocaleString()} value
-                    </p>
-                    <p className="text-amber-400/90 text-[10px] tabular-nums">
-                        Cost: ${totalCostToMake.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        {totalConsignment} units · ${consignmentValue.toLocaleString()} value
                     </p>
                 </div>
-            </div>
 
-            {/* Consignment */}
-            <div className={CARD_BASE}>
-                <div className="flex items-center gap-2">
-                    <Store className="size-3.5 shrink-0 text-violet-400/80" />
-                    <span className="text-zinc-500 text-[10px]">Consignment</span>
-                </div>
-                <p className="text-zinc-100 text-xs font-semibold tabular-nums">
-                    {totalConsignment} units · ${consignmentValue.toLocaleString()} value
-                </p>
-            </div>
-
-            {/* Stock Alerts: low + out */}
-            <div className={CARD_BASE}>
-                <div className="flex items-center gap-2">
-                    <AlertTriangle className="size-3.5 shrink-0 text-amber-400/80" />
-                    <span className="text-zinc-500 text-[10px]">Stock Alerts</span>
-                </div>
-                <p className="text-zinc-100 text-xs font-semibold tabular-nums">
-                    {lowStockCount} low · {outOfStockCount} out
-                </p>
-            </div>
-
-            {/* Losses: spoilage + returns/damage */}
-            <div className={CARD_BASE}>
-                <div className="flex items-center gap-2">
-                    <Trash2 className="size-3.5 shrink-0 text-red-400/80" />
-                    <RotateCcw className="size-3.5 shrink-0 text-orange-400/80" />
-                    <span className="text-zinc-500 text-[10px]">Losses</span>
-                </div>
-                <div className="space-y-0.5">
-                    <p className="text-xs tabular-nums">
-                        <span className="text-red-400/90">Spoilage ${spoilageTotal.toLocaleString()}</span>
-                        {' · '}
-                        <span className="text-orange-400/90">Other Losses ${otherLossTotal.toLocaleString()}</span>
+                {/* Stock Alerts: low + out */}
+                <div className={CARD_BASE}>
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="size-3.5 shrink-0 text-amber-400/80" />
+                        <span className="text-zinc-500 text-[10px]">Stock Alerts</span>
+                    </div>
+                    <p className="text-zinc-100 text-xs font-semibold tabular-nums">
+                        {lowStockCount} low · {outOfStockCount} out
                     </p>
-                    <p className="text-zinc-500 text-[10px] tabular-nums">
-                        Total lost: ${totalLosses.toLocaleString()}
-                    </p>
+                </div>
+
+                {/* Losses: spoilage + returns/damage */}
+                <div className={CARD_BASE}>
+                    <div className="flex items-center gap-2">
+                        <Trash2 className="size-3.5 shrink-0 text-red-400/80" />
+                        <RotateCcw className="size-3.5 shrink-0 text-orange-400/80" />
+                        <span className="text-zinc-500 text-[10px]">Losses</span>
+                    </div>
+                    <div className="space-y-0.5">
+                        <p className="text-xs tabular-nums">
+                            <span className="text-red-400/90">Spoilage ${spoilageTotal.toLocaleString()}</span>
+                            {' · '}
+                            <span className="text-orange-400/90">Other Losses ${otherLossTotal.toLocaleString()}</span>
+                        </p>
+                        <p className="text-zinc-500 text-[10px] tabular-nums">
+                            Total lost: ${totalLosses.toLocaleString()}
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
