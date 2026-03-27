@@ -23,11 +23,15 @@ async function getBatchesHandler() {
             .is('deleted_at', null)
             .order('created_at', { ascending: false });
 
+        if (error) return { success: false, message: error.message };
+
         return data;
     } catch (error) {
-        if (error) {
-            console.error('Came back error', error);
-        }
+        if (error)
+            return {
+                success: false,
+                message: error?.message ?? 'unknown error',
+            };
     }
 }
 
