@@ -42,7 +42,6 @@ import {
     Download,
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils/helpers';
 
 const SUPPLY_CATEGORIES = [
     { value: 'meat', label: 'Meat', icon: Beef },
@@ -342,7 +341,6 @@ export default function SuppliesPage() {
             purchasedFrom: supply.purchasedFrom !== '—' ? supply.purchasedFrom : '',
             paymentMethod: supply.paymentMethod ?? 'credit_card',
             purchasedBy: supply.purchasedBy !== '—' ? supply.purchasedBy : '',
-            purchaseDate: supply.lastPurchasedAt || new Date().toISOString().slice(0, 10),
         });
         setEditModalOpen(true);
     };
@@ -352,7 +350,6 @@ export default function SuppliesPage() {
         if (!editingSupply) return;
         const lowThreshold =
             form.lowThreshold === '' || form.lowThreshold == null ? null : parseFloat(form.lowThreshold);
-        const purchaseDate = form.purchaseDate || editingSupply.lastPurchasedAt;
         const updated = {
             ...editingSupply,
             category: form.category,
@@ -360,7 +357,6 @@ export default function SuppliesPage() {
             unit: form.unit,
             description: form.description || '',
             lowThreshold,
-            lastPurchasedAt: purchaseDate,
         };
         setSupplies((prev) => prev.map((s) => (s.id === editingSupply.id ? updated : s)));
         setPurchaseHistory((prev) =>
@@ -368,7 +364,6 @@ export default function SuppliesPage() {
                 if (h.name === editingSupply.name && h.date === editingSupply.lastPurchasedAt) {
                     return {
                         ...h,
-                        date: purchaseDate,
                         name: form.name,
                         category: form.category,
                     };
@@ -388,7 +383,6 @@ export default function SuppliesPage() {
             purchasedFrom: '',
             paymentMethod: 'credit_card',
             purchasedBy: '',
-            purchaseDate: new Date().toISOString().slice(0, 10),
         });
         setEditingSupply(null);
         setEditModalOpen(false);
@@ -707,38 +701,6 @@ export default function SuppliesPage() {
                             <p className="text-zinc-400 text-[9px]">Compare month-by-month supply spend</p>
                         </div>
                         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
-                            <div
-                                className={cn(
-                                    'rounded border px-2.5 py-1.5 text-[10px] shrink-0',
-                                    spendTrack.lastMonthLabel != null && spendTrack.diffPct != null
-                                        ? spendTrack.diffPct > 5
-                                            ? 'border-amber-800/50 bg-amber-500/10 text-amber-400'
-                                            : spendTrack.diffPct < -5
-                                              ? 'border-emerald-800/50 bg-emerald-500/10 text-emerald-400'
-                                              : 'border-zinc-600/50 bg-zinc-800/50 text-zinc-300'
-                                        : 'border-zinc-600/50 bg-zinc-800/50 text-zinc-300',
-                                )}
-                            >
-                                {spendTrack.lastMonthLabel != null && spendTrack.diffPct != null ? (
-                                    <>
-                                        <span className="font-medium tabular-nums">
-                                            {spendTrack.diffPct > 5 ? '↑' : spendTrack.diffPct < -5 ? '↓' : '→'}
-                                            {Math.abs(Math.round(spendTrack.diffPct))}% vs {spendTrack.lastMonthLabel}
-                                        </span>
-                                        <span className="ml-1.5 text-zinc-400">
-                                            · On track for ~$
-                                            {spendTrack.projected.toLocaleString(undefined, {
-                                                maximumFractionDigits: 0,
-                                            })}
-                                        </span>
-                                    </>
-                                ) : (
-                                    <span>
-                                        On track for ~$
-                                        {spendTrack.projected.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                                    </span>
-                                )}
-                            </div>
                             <div className="flex items-center gap-3 shrink-0">
                                 <div className="text-right min-w-0">
                                     <p className="text-zinc-400 text-[9px]">Through {currentMonthName}</p>
@@ -830,7 +792,7 @@ export default function SuppliesPage() {
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Description</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Low Threshold</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Last Purchased</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-2 text-[10px] w-12" />
+                            <TableHead className="text-zinc-400 h-8 px-2 text-[10px] w-12 text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1385,15 +1347,6 @@ export default function SuppliesPage() {
                                     onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                                     placeholder="Add a short note about this supply"
                                     className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                                />
-                            </div>
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Purchase Date</Label>
-                                <Input
-                                    type="date"
-                                    value={form.purchaseDate}
-                                    onChange={(e) => setForm((f) => ({ ...f, purchaseDate: e.target.value }))}
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20 [color-scheme:dark]"
                                 />
                             </div>
                         </div>
