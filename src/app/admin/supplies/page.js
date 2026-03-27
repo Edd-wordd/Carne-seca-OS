@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import {
     Dialog,
     DialogContent,
@@ -414,16 +415,18 @@ export default function SuppliesPage() {
             };
         });
     }, [purchaseHistory]);
-    const defaultMetricsMonth = uniqueMonthsForMetrics[0]?.value ?? currentMonth;
-    const [metricsMonth, setMetricsMonth] = React.useState(defaultMetricsMonth);
-
-    const currentYear = new Date().getFullYear().toString();
+    const [metricsDateRange, setMetricsDateRange] = React.useState({ from: undefined, to: undefined });
     const thisMonthPurchases = React.useMemo(() => {
-        if (metricsMonth === 'ytd') {
-            return purchaseHistory.filter((h) => h.date.startsWith(currentYear));
-        }
-        return purchaseHistory.filter((h) => h.date.slice(0, 7) === metricsMonth);
-    }, [purchaseHistory, metricsMonth, currentYear]);
+        if (!metricsDateRange?.from) return purchaseHistory;
+        return purchaseHistory.filter((h) => {
+            const historyDate = new Date(h.date);
+            const startOfDay = new Date(metricsDateRange.from);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = metricsDateRange.to ? new Date(metricsDateRange.to) : new Date(metricsDateRange.from);
+            endOfDay.setHours(23, 59, 59, 999);
+            return historyDate >= startOfDay && historyDate <= endOfDay;
+        });
+    }, [purchaseHistory, metricsDateRange]);
     const byCategory = React.useMemo(() => {
         const acc = { meat: 0, equipment: 0, packaging: 0, seasoning: 0, other: 0 };
         thisMonthPurchases.forEach((h) => {
@@ -434,11 +437,6 @@ export default function SuppliesPage() {
     }, [thisMonthPurchases]);
     const totalValue = Object.values(byCategory).reduce((a, b) => a + b, 0);
 
-    const metricsMonthLabel =
-        metricsMonth === 'ytd'
-            ? `YTD ${currentYear}`
-            : (uniqueMonthsForMetrics.find((m) => m.value === metricsMonth)?.label ?? metricsMonth);
-
     const [historyFilterMonth, setHistoryFilterMonth] = React.useState('all');
     const [historyFilterSupply, setHistoryFilterSupply] = React.useState('all');
     const [historyFilterPurchasedBy, setHistoryFilterPurchasedBy] = React.useState('all');
@@ -447,7 +445,6 @@ export default function SuppliesPage() {
     const [historyPage, setHistoryPage] = React.useState(1);
 
     const HISTORY_PAGE_SIZE = 5;
-
     const uniqueMonths = uniqueMonthsForMetrics;
 
     const filteredSupplies = React.useMemo(() => {
@@ -636,12 +633,19 @@ export default function SuppliesPage() {
             </div>
 
             {/* Summary: supply spend by month */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch">
-                <div className="grid min-w-0 flex-1 grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Overview</p>
+                        <p className="text-[9px] text-zinc-600">Supplies KPIs</p>
+                    </div>
+                    <DateRangePicker date={metricsDateRange} onDateChange={setMetricsDateRange} />
+                </div>
+                <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
                     <div className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5">
                         <CircleDollarSign className="size-4 shrink-0 text-indigo-400/80" />
                         <div className="min-w-0">
-                            <p className="truncate text-zinc-400 text-[10px]">Total ({metricsMonthLabel})</p>
+                            <p className="truncate text-zinc-400 text-[10px]">Total</p>
                             <p className="text-zinc-100 text-sm font-semibold tabular-nums">
                                 ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                             </p>
@@ -667,28 +671,6 @@ export default function SuppliesPage() {
                             </div>
                         );
                     })}
-                </div>
-                <div className="flex shrink-0 items-center sm:ml-auto">
-                    <Select value={metricsMonth} onValueChange={setMetricsMonth}>
-                        <SelectTrigger className="h-8 w-[140px] border-zinc-700 bg-zinc-950 text-zinc-100 text-[10px]">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="ytd" className="text-xs">
-                                YTD {currentYear}
-                            </SelectItem>
-                            <SelectItem value={currentMonth} className="text-xs">
-                                {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} (current)
-                            </SelectItem>
-                            {uniqueMonthsForMetrics
-                                .filter((m) => m.value !== currentMonth)
-                                .map((m) => (
-                                    <SelectItem key={m.value} value={m.value} className="text-xs">
-                                        {m.label}
-                                    </SelectItem>
-                                ))}
-                        </SelectContent>
-                    </Select>
                 </div>
             </div>
 
