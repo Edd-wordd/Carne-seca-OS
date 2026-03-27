@@ -416,7 +416,7 @@ export default function CatalogPage() {
                     <TableHeader>
                         <TableRow className="border-zinc-700/80 hover:!bg-transparent">
                             <TableHead className="text-zinc-400 h-8 w-[5%] min-w-14 px-3 text-[10px]">Image</TableHead>
-                            <TableHead className="text-zinc-400 h-8 w-[20%] px-3 text-[10px]">Flavor</TableHead>
+                            <TableHead className="text-zinc-400 h-8 w-[20%] px-3 text-[10px]">Name</TableHead>
                             <TableHead className="text-zinc-400 h-8 w-[15%] px-3 text-[10px] font-mono">SKU</TableHead>
                             <TableHead className="text-zinc-400 h-8 w-[12%] px-3 text-[10px] text-right">
                                 Cost/Bag
