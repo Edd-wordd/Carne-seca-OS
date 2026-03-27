@@ -64,7 +64,6 @@ export default function CatalogPage() {
     const [catalogPage, setCatalogPage] = React.useState(1);
     const [form, setForm] = React.useState({
         name: '',
-        sku: '',
         flavor: '',
         description: '',
         price: '',
@@ -79,7 +78,6 @@ export default function CatalogPage() {
     const resetForm = () => {
         setForm({
             name: '',
-            sku: '',
             flavor: '',
             description: '',
             price: '',
@@ -134,18 +132,45 @@ export default function CatalogPage() {
                 errorMessage.includes('foreign key') ||
                 errorMessage.includes('violates foreign key constraint') ||
                 errorMessage.includes('is still referenced');
-            toast.error(
-                isForeignKeyError
-                    ? "This product has inventory records and can't be deleted. Set it to Hidden instead."
-                    : result?.message || 'Failed to delete product.',
-            );
+            if (isForeignKeyError) {
+                const sizeInOunces = deleteTarget.size_grams
+                    ? (Number(deleteTarget.size_grams) / 28.3495).toFixed(1)
+                    : null;
+                const updateResult = await updateProduct({
+                    productID: deleteTarget.id,
+                    imageURL: deleteTarget.image ?? deleteTarget.image_url ?? null,
+                    productName: deleteTarget.name ?? 'Untitled',
+                    flavor: deleteTarget.flavor ?? null,
+                    description: deleteTarget.description ?? null,
+                    costPerBag: deleteTarget.cost_per_bag ?? null,
+                    priceDollars: Number(deleteTarget.price_cents ?? 0) / 100,
+                    size: sizeInOunces,
+                    launchDate: deleteTarget.launchDate ?? deleteTarget.launch_date ?? null,
+                    category: deleteTarget.category === 'merch' ? 'merch' : 'carne_seca',
+                    status: 'inactive',
+                });
+
+                if (updateResult && updateResult.success) {
+                    setItems((prev) =>
+                        prev.map((item) =>
+                            item.id === deleteTarget.id ? { ...item, status: 'inactive' } : item,
+                        ),
+                    );
+                    setDeleteModalOpen(false);
+                    setDeleteTarget(null);
+                    toast.success('Product has inventory records - moved to Hidden.');
+                } else {
+                    toast.error(updateResult?.message || 'Failed to hide product.');
+                }
+            } else {
+                toast.error(result?.message || 'Failed to delete product.');
+            }
         }
         setIsDeleting(false);
     };
 
     const openEdit = (p) => {
         clearPendingCloseReset();
-        console.log(p.size_grams);
         const firstSize = p.size_grams ? (p.size_grams / 28.3495).toFixed(1) : '';
         setForm({
             name: p.name ?? '',
