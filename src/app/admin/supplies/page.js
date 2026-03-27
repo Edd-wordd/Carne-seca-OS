@@ -262,6 +262,8 @@ export default function SuppliesPage() {
         weight: '',
         unit: 'lb',
         unitCost: '',
+        description: '',
+        lowThreshold: '',
         purchasedFrom: '',
         paymentMethod: 'credit_card',
         purchasedBy: '',
@@ -316,6 +318,8 @@ export default function SuppliesPage() {
             weight: '',
             unit: 'lb',
             unitCost: '',
+            description: '',
+            lowThreshold: '',
             purchasedFrom: '',
             paymentMethod: 'credit_card',
             purchasedBy: '',
@@ -333,6 +337,8 @@ export default function SuppliesPage() {
             weight: supply.weight != null ? String(supply.weight) : '',
             unit: supply.unit,
             unitCost: String(supply.unitCost),
+            description: supply.description ?? '',
+            lowThreshold: supply.lowThreshold != null ? String(supply.lowThreshold) : '',
             purchasedFrom: supply.purchasedFrom !== '—' ? supply.purchasedFrom : '',
             paymentMethod: supply.paymentMethod ?? 'credit_card',
             purchasedBy: supply.purchasedBy !== '—' ? supply.purchasedBy : '',
@@ -344,23 +350,16 @@ export default function SuppliesPage() {
     const handleUpdateSupply = (e) => {
         e.preventDefault();
         if (!editingSupply) return;
-        const qty = parseFloat(form.quantity) || 0;
-        const cost = parseFloat(form.unitCost) || 0;
-        const weight = form.weight ? parseFloat(form.weight) : null;
-        const value = qty * cost;
+        const lowThreshold =
+            form.lowThreshold === '' || form.lowThreshold == null ? null : parseFloat(form.lowThreshold);
         const purchaseDate = form.purchaseDate || editingSupply.lastPurchasedAt;
         const updated = {
             ...editingSupply,
             category: form.category,
             name: form.name,
-            quantity: qty,
-            weight,
             unit: form.unit,
-            unitCost: cost,
-            purchasedFrom: form.purchasedFrom || '—',
-            paymentMethod: form.paymentMethod,
-            purchasedBy: form.purchasedBy || '—',
-            value,
+            description: form.description || '',
+            lowThreshold,
             lastPurchasedAt: purchaseDate,
         };
         setSupplies((prev) => prev.map((s) => (s.id === editingSupply.id ? updated : s)));
@@ -372,12 +371,6 @@ export default function SuppliesPage() {
                         date: purchaseDate,
                         name: form.name,
                         category: form.category,
-                        quantity: qty,
-                        weight: weight ?? undefined,
-                        purchasedFrom: form.purchasedFrom || '—',
-                        paymentMethod: form.paymentMethod,
-                        purchasedBy: form.purchasedBy || '—',
-                        cost: value,
                     };
                 }
                 return h;
@@ -390,9 +383,12 @@ export default function SuppliesPage() {
             weight: '',
             unit: 'lb',
             unitCost: '',
+            description: '',
+            lowThreshold: '',
             purchasedFrom: '',
             paymentMethod: 'credit_card',
             purchasedBy: '',
+            purchaseDate: new Date().toISOString().slice(0, 10),
         });
         setEditingSupply(null);
         setEditModalOpen(false);
@@ -830,29 +826,23 @@ export default function SuppliesPage() {
                         <TableRow className="border-zinc-700/80 hover:bg-transparent">
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Item</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Category</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Qty / Weight</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Purchased From</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Payment</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Purchased By</TableHead>
+                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Unit</TableHead>
+                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Description</TableHead>
+                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Low Threshold</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Last Purchased</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px] text-right">Value</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-2 text-[10px] w-12" />
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {paginatedSupplies.length === 0 ? (
                             <TableRow className="border-zinc-700/80">
-                                <TableCell colSpan={9} className="text-zinc-400 py-8 text-center text-[11px]">
+                                <TableCell colSpan={8} className="text-zinc-400 py-8 text-center text-[11px]">
                                     {supplySearch.trim() ? 'No supplies match your search' : 'No supply items'}
                                 </TableCell>
                             </TableRow>
                         ) : (
                             paginatedSupplies.map((s) => {
                                 const cat = SUPPLY_CATEGORIES.find((c) => c.value === s.category)?.label ?? s.category;
-                                const qtyWeight =
-                                    s.weight != null
-                                        ? `${s.quantity} ${s.unit} (${s.weight} lb)`
-                                        : `${s.quantity} ${s.unit}`;
                                 return (
                                     <TableRow
                                         key={s.id}
@@ -865,24 +855,16 @@ export default function SuppliesPage() {
                                             {cat}
                                         </TableCell>
                                         <TableCell className="text-zinc-400 px-3 py-1.5 tabular-nums text-[11px] group-hover:text-zinc-300">
-                                            {qtyWeight}
+                                            {s.unit ?? '—'}
                                         </TableCell>
                                         <TableCell className="text-zinc-500 px-3 py-1.5 text-[11px] group-hover:text-zinc-400">
-                                            {s.purchasedFrom}
+                                            {s.description ?? '—'}
                                         </TableCell>
                                         <TableCell className="text-zinc-500 px-3 py-1.5 text-[11px] group-hover:text-zinc-400">
-                                            {PAYMENT_METHODS.find((p) => p.value === s.paymentMethod)?.label ??
-                                                s.paymentMethod ??
-                                                '—'}
-                                        </TableCell>
-                                        <TableCell className="text-zinc-500 px-3 py-1.5 text-[11px] group-hover:text-zinc-400">
-                                            {s.purchasedBy ?? '—'}
+                                            {s.lowThreshold ?? '—'}
                                         </TableCell>
                                         <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
                                             {formatDate(s.lastPurchasedAt)}
-                                        </TableCell>
-                                        <TableCell className="text-zinc-100 px-3 py-1.5 text-right tabular-nums text-[11px] font-medium group-hover:text-white">
-                                            ${s.value.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                         </TableCell>
                                         <TableCell className="px-2 py-1.5">
                                             <DropdownMenu>
@@ -1330,7 +1312,7 @@ export default function SuppliesPage() {
                             Edit Supply
                         </DialogTitle>
                         <DialogDescription className="text-zinc-500 text-xs mt-0.5">
-                            Update supply details and purchase info
+                            Update supply details shown in the table
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleUpdateSupply} className="pt-3 space-y-4">
@@ -1363,29 +1345,7 @@ export default function SuppliesPage() {
                                 </Select>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Qty</Label>
-                                <Input
-                                    type="number"
-                                    step="any"
-                                    value={form.quantity}
-                                    onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))}
-                                    placeholder="50"
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                                />
-                            </div>
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Weight (lb)</Label>
-                                <Input
-                                    type="number"
-                                    step="0.1"
-                                    value={form.weight}
-                                    onChange={(e) => setForm((f) => ({ ...f, weight: e.target.value }))}
-                                    placeholder="—"
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                                />
-                            </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <Label className="text-zinc-500 text-[11px] font-medium">Unit</Label>
                                 <Select value={form.unit} onValueChange={(v) => setForm((f) => ({ ...f, unit: v }))}>
@@ -1406,18 +1366,27 @@ export default function SuppliesPage() {
                                 </Select>
                             </div>
                             <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Unit Cost ($)</Label>
+                                <Label className="text-zinc-500 text-[11px] font-medium">Low Threshold</Label>
                                 <Input
                                     type="number"
-                                    step="0.01"
-                                    value={form.unitCost}
-                                    onChange={(e) => setForm((f) => ({ ...f, unitCost: e.target.value }))}
-                                    placeholder="0.00"
+                                    step="any"
+                                    value={form.lowThreshold}
+                                    onChange={(e) => setForm((f) => ({ ...f, lowThreshold: e.target.value }))}
+                                    placeholder="e.g. 20"
                                     className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20 tabular-nums"
                                 />
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3">
+                            <div>
+                                <Label className="text-zinc-500 text-[11px] font-medium">Description</Label>
+                                <Input
+                                    value={form.description}
+                                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                                    placeholder="Add a short note about this supply"
+                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
+                                />
+                            </div>
                             <div>
                                 <Label className="text-zinc-500 text-[11px] font-medium">Purchase Date</Label>
                                 <Input
@@ -1425,42 +1394,6 @@ export default function SuppliesPage() {
                                     value={form.purchaseDate}
                                     onChange={(e) => setForm((f) => ({ ...f, purchaseDate: e.target.value }))}
                                     className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20 [color-scheme:dark]"
-                                />
-                            </div>
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Purchased From</Label>
-                                <Input
-                                    value={form.purchasedFrom}
-                                    onChange={(e) => setForm((f) => ({ ...f, purchasedFrom: e.target.value }))}
-                                    placeholder="e.g. Restaurant Depot"
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                                />
-                            </div>
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Payment Method</Label>
-                                <Select
-                                    value={form.paymentMethod}
-                                    onValueChange={(v) => setForm((f) => ({ ...f, paymentMethod: v }))}
-                                >
-                                    <SelectTrigger className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {PAYMENT_METHODS.map((p) => (
-                                            <SelectItem key={p.value} value={p.value} className="text-sm">
-                                                {p.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Purchased By</Label>
-                                <Input
-                                    value={form.purchasedBy}
-                                    onChange={(e) => setForm((f) => ({ ...f, purchasedBy: e.target.value }))}
-                                    placeholder="e.g. John, Maria"
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
                                 />
                             </div>
                         </div>
