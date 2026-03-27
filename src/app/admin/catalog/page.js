@@ -613,34 +613,18 @@ export default function CatalogPage() {
                             />
                         </div>
 
-                        {/* SKU (add only) & Flavor */}
-                        <div className={`grid gap-4 ${editingId ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                            {!editingId ? (
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="prod-sku" className="text-xs text-zinc-400">
-                                        SKU
-                                    </Label>
-                                    <Input
-                                        id="prod-sku"
-                                        placeholder="e.g. CS-XX-00"
-                                        value={form.sku ?? ''}
-                                        onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
-                                        className="h-9 border-zinc-700 bg-zinc-950/80 text-white placeholder:text-zinc-500 font-mono"
-                                    />
-                                </div>
-                            ) : null}
-                            <div className="space-y-1.5">
-                                <Label htmlFor="prod-flavor" className="text-xs text-zinc-400">
-                                    Flavor
-                                </Label>
-                                <Input
-                                    id="prod-flavor"
-                                    placeholder="e.g. Brisket, Classic"
-                                    value={form.flavor ?? ''}
-                                    onChange={(e) => setForm((f) => ({ ...f, flavor: e.target.value }))}
-                                    className="h-9 border-zinc-700 bg-zinc-950/80 text-white placeholder:text-zinc-500"
-                                />
-                            </div>
+                        {/* Flavor */}
+                        <div className="space-y-1.5">
+                            <Label htmlFor="prod-flavor" className="text-xs text-zinc-400">
+                                Flavor
+                            </Label>
+                            <Input
+                                id="prod-flavor"
+                                placeholder="e.g. Brisket, Classic"
+                                value={form.flavor ?? ''}
+                                onChange={(e) => setForm((f) => ({ ...f, flavor: e.target.value }))}
+                                className="h-9 border-zinc-700 bg-zinc-950/80 text-white placeholder:text-zinc-500"
+                            />
                         </div>
 
                         {/* Description */}

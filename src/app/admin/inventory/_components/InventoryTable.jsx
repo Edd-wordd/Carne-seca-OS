@@ -59,7 +59,6 @@ export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
     const [adjustType, setAdjustType] = React.useState('add');
     const [adjustQuantity, setAdjustQuantity] = React.useState('');
     const [adjustNotes, setAdjustNotes] = React.useState('');
-    const [newSku, setNewSku] = React.useState('');
     const [newName, setNewName] = React.useState('');
     const [newStock, setNewStock] = React.useState('');
     const [newLowThreshold, setNewLowThreshold] = React.useState('');
@@ -133,11 +132,10 @@ export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
         const lowThreshold = parseInt(newLowThreshold, 10) || 10;
         const costPerBag = parseFloat(String(newCostPerBag).replace(/[^0-9.]/g, '')) || 0;
         const sellPrice = parseFloat(String(newSellPrice).replace(/[^0-9.]/g, '')) || 0;
-        if (!newSku.trim() || !newName.trim()) return;
+        if (!newName.trim()) return;
         const consignment = parseInt(newConsignment, 10) || 0;
 
         const result = await addInventory({
-            sku: newSku.trim(),
             name: newName.trim(),
             stock,
             lowThreshold,
@@ -149,7 +147,6 @@ export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
         if (!mountedRef.current) return;
         if (result.success) {
             setAddModalOpen(false);
-            setNewSku('');
             setNewName('');
             setNewStock('');
             setNewLowThreshold('');
@@ -525,25 +522,15 @@ export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
                         <DialogDescription>Add a new product to inventory.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-2">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">SKU</label>
-                                <Input
-                                    placeholder="e.g. CS-XX-00"
-                                    value={newSku}
-                                    onChange={(e) => setNewSku(e.target.value)}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500 font-mono"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Product name</label>
-                                <Input
-                                    placeholder="Product name"
-                                    value={newName}
-                                    onChange={(e) => setNewName(e.target.value)}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
-                                />
-                            </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-zinc-300">Product name</label>
+                            <Input
+                                placeholder="Product name"
+                                value={newName}
+                                onChange={(e) => setNewName(e.target.value)}
+                                className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
+                            />
+                            <p className="text-xs text-zinc-500">SKU will be generated automatically.</p>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                             <div className="space-y-2">
@@ -611,7 +598,7 @@ export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
                         </Button>
                         <Button
                             onClick={handleAddInventory}
-                            disabled={!newSku.trim() || !newName.trim()}
+                            disabled={!newName.trim()}
                             className="bg-indigo-600 text-white hover:bg-indigo-500"
                         >
                             Add
