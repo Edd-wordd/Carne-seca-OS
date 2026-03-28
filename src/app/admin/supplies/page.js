@@ -18,6 +18,7 @@ import SuppliesMonthlySpendChart from './_components/SuppliesMonthlySpendChart.j
 import SuppliesItemsTable from './_components/SuppliesItemsTable.jsx';
 import SuppliesPurchaseHistoryTable from './_components/SuppliesPurchaseHistoryTable.jsx';
 import { Plus, Beef, Wrench, Box, Sparkles, Layers, Download } from 'lucide-react';
+import { exportSuppliesToCsv } from '@/lib/utils/exportSupplies';
 
 const SUPPLY_CATEGORIES = [
     { value: 'meat', label: 'Meat', icon: Beef },
@@ -206,12 +207,6 @@ const MOCK_PURCHASE_HISTORY = [
         cost: 311.6,
     },
 ];
-
-function escapeCsv(val) {
-    const s = String(val ?? '');
-    if (s.includes(',') || s.includes('"') || s.includes('\n')) return `"${s.replace(/"/g, '""')}"`;
-    return s;
-}
 
 function formatDate(d) {
     if (!d) return '—';
@@ -483,47 +478,6 @@ export default function SuppliesPage() {
         safeHistoryPage * HISTORY_PAGE_SIZE,
     );
 
-    const handleExportCsv = () => {
-        const headers = [
-            'ID',
-            'Item',
-            'Category',
-            'Qty / Weight',
-            'Purchased From',
-            'Payment',
-            'Purchased By',
-            'Last Purchased',
-            'Value',
-        ];
-        const rows = filteredSupplies.map((s) => {
-            const cat = SUPPLY_CATEGORIES.find((c) => c.value === s.category)?.label ?? s.category ?? '';
-            const qtyWeight = s.weight != null ? `${s.quantity} ${s.unit} (${s.weight} lb)` : `${s.quantity} ${s.unit}`;
-            const paymentLabel =
-                PAYMENT_METHODS.find((p) => p.value === s.paymentMethod)?.label ?? s.paymentMethod ?? '';
-            return [
-                s.id ?? '',
-                s.name ?? '',
-                cat,
-                qtyWeight,
-                s.purchasedFrom ?? '',
-                paymentLabel,
-                s.purchasedBy ?? '',
-                formatDate(s.lastPurchasedAt),
-                s.value?.toLocaleString(undefined, { minimumFractionDigits: 2 }) ?? '',
-            ]
-                .map(escapeCsv)
-                .join(',');
-        });
-        const csv = [headers.map(escapeCsv).join(','), ...rows].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `supplies-${new Date().toISOString().slice(0, 10)}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-    };
-
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -536,7 +490,9 @@ export default function SuppliesPage() {
                         variant="outline"
                         size="sm"
                         className="h-9 gap-1.5 border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 hover:border-zinc-600 text-xs"
-                        onClick={handleExportCsv}
+                        onClick={() =>
+                            exportSuppliesToCsv(filteredSupplies, SUPPLY_CATEGORIES, PAYMENT_METHODS)
+                        }
                     >
                         <Download className="size-3.5" />
                         Export CSV
