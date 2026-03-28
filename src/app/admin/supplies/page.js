@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,19 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import SuppliesKPIs from './_components/SuppliesKPIs.jsx';
 import SuppliesMonthlySpendChart from './_components/SuppliesMonthlySpendChart.jsx';
 import SuppliesItemsTable from './_components/SuppliesItemsTable.jsx';
-import {
-    Plus,
-    Beef,
-    Wrench,
-    Box,
-    Sparkles,
-    Layers,
-    ChevronUp,
-    ChevronDown,
-    ChevronLeft,
-    ChevronRight,
-    Download,
-} from 'lucide-react';
+import SuppliesPurchaseHistoryTable from './_components/SuppliesPurchaseHistoryTable.jsx';
+import { Plus, Beef, Wrench, Box, Sparkles, Layers, Download } from 'lucide-react';
 
 const SUPPLY_CATEGORIES = [
     { value: 'meat', label: 'Meat', icon: Beef },
@@ -589,183 +577,31 @@ export default function SuppliesPage() {
                 onDelete={openDeleteModal}
             />
 
-            {/* Purchase History */}
-            <div className="overflow-hidden rounded border border-zinc-700/80">
-                <div className="border-b border-zinc-700/80 bg-zinc-900/80 px-3 py-1.5">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                            <h2 className="text-zinc-100 text-xs font-medium">Purchase History</h2>
-                            <p className="text-zinc-400 text-[9px]">When you last bought each supply</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            <Select value={historyFilterMonth} onValueChange={setHistoryFilterMonth}>
-                                <SelectTrigger className="h-7 w-[120px] border-zinc-700 bg-zinc-950 text-zinc-100 text-[10px]">
-                                    <SelectValue placeholder="Month" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all" className="text-xs">
-                                        All months
-                                    </SelectItem>
-                                    {uniqueMonths.map((m) => (
-                                        <SelectItem key={m.value} value={m.value} className="text-xs">
-                                            {m.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select value={historyFilterSupply} onValueChange={setHistoryFilterSupply}>
-                                <SelectTrigger className="h-7 w-[140px] border-zinc-700 bg-zinc-950 text-zinc-100 text-[10px]">
-                                    <SelectValue placeholder="Supply" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all" className="text-xs">
-                                        All supplies
-                                    </SelectItem>
-                                    {uniqueSupplies.map((s) => (
-                                        <SelectItem key={s.value} value={s.value} className="text-xs">
-                                            {s.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select value={historyFilterPurchasedBy} onValueChange={setHistoryFilterPurchasedBy}>
-                                <SelectTrigger className="h-7 w-[130px] border-zinc-700 bg-zinc-950 text-zinc-100 text-[10px]">
-                                    <SelectValue placeholder="Purchased by" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all" className="text-xs">
-                                        All purchasers
-                                    </SelectItem>
-                                    {uniquePurchasers.map((p) => (
-                                        <SelectItem key={p.value} value={p.value} className="text-xs">
-                                            {p.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select value={historyFilterPayment} onValueChange={setHistoryFilterPayment}>
-                                <SelectTrigger className="h-7 min-w-[150px] border-zinc-700 bg-zinc-950 text-zinc-100 text-[10px]">
-                                    <SelectValue placeholder="Payment" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all" className="text-xs">
-                                        All payment methods
-                                    </SelectItem>
-                                    {PAYMENT_METHODS.map((p) => (
-                                        <SelectItem key={p.value} value={p.value} className="text-xs">
-                                            {p.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                </div>
-                <Table>
-                    <TableHeader>
-                        <TableRow className="border-zinc-700/80 hover:bg-transparent">
-                            <TableHead
-                                className="text-zinc-400 h-8 px-3 text-[10px] cursor-pointer select-none hover:text-zinc-300 transition-colors"
-                                onClick={() => setHistoryDateSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
-                            >
-                                <span className="flex w-full items-center justify-between">
-                                    Date
-                                    {historyDateSortOrder === 'asc' ? (
-                                        <ChevronUp className="size-3.5 shrink-0" />
-                                    ) : (
-                                        <ChevronDown className="size-3.5 shrink-0" />
-                                    )}
-                                </span>
-                            </TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Item</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Category</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Qty</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Purchased From</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Payment</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Purchased By</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px] text-right">Cost</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {paginatedHistory.length === 0 ? (
-                            <TableRow className="border-zinc-700/80">
-                                <TableCell colSpan={8} className="text-zinc-400 py-4 text-center text-[11px]">
-                                    No purchases match the selected filters
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            paginatedHistory.map((h) => (
-                                <TableRow
-                                    key={h.id}
-                                    className="border-zinc-700/80 group transition-colors hover:!bg-zinc-700/50"
-                                >
-                                    <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
-                                        {h.date}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-200 px-3 py-1.5 text-[11px] font-medium group-hover:text-zinc-100">
-                                        {h.name}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
-                                        {SUPPLY_CATEGORIES.find((c) => c.value === h.category)?.label ?? h.category}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-400 px-3 py-1.5 tabular-nums text-[11px] group-hover:text-zinc-300">
-                                        {h.quantity}
-                                        {h.weight != null ? ` (${h.weight} lb)` : ''}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-500 px-3 py-1.5 text-[11px] group-hover:text-zinc-400">
-                                        {h.purchasedFrom}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-500 px-3 py-1.5 text-[11px] group-hover:text-zinc-400">
-                                        {PAYMENT_METHODS.find((p) => p.value === h.paymentMethod)?.label ??
-                                            h.paymentMethod ??
-                                            '—'}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-500 px-3 py-1.5 text-[11px] group-hover:text-zinc-400">
-                                        {h.purchasedBy ?? '—'}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-100 px-3 py-1.5 text-right tabular-nums text-[11px] font-medium group-hover:text-white">
-                                        ${h.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-                {sortedFilteredHistory.length > 0 && (
-                    <div className="flex items-center justify-between gap-4 border-t border-zinc-800/80 px-4 py-3">
-                        <p className="text-zinc-500 text-xs">
-                            Showing {(safeHistoryPage - 1) * HISTORY_PAGE_SIZE + 1}–
-                            {Math.min(safeHistoryPage * HISTORY_PAGE_SIZE, sortedFilteredHistory.length)} of{' '}
-                            {sortedFilteredHistory.length}
-                        </p>
-                        <div className="flex items-center gap-1">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 gap-1 border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 hover:border-zinc-600 disabled:opacity-50 disabled:hover:bg-zinc-900/80 text-xs"
-                                onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
-                                disabled={safeHistoryPage <= 1}
-                            >
-                                <ChevronLeft className="size-3.5" />
-                                Prev
-                            </Button>
-                            <span className="px-2 text-xs text-zinc-500">
-                                Page {safeHistoryPage} of {historyTotalPages}
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 gap-1 border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 hover:border-zinc-600 disabled:opacity-50 disabled:hover:bg-zinc-900/80 text-xs"
-                                onClick={() => setHistoryPage((p) => Math.min(historyTotalPages, p + 1))}
-                                disabled={safeHistoryPage >= historyTotalPages}
-                            >
-                                Next
-                                <ChevronRight className="size-3.5" />
-                            </Button>
-                        </div>
-                    </div>
-                )}
-            </div>
+            <SuppliesPurchaseHistoryTable
+                categories={SUPPLY_CATEGORIES}
+                paymentMethods={PAYMENT_METHODS}
+                monthOptions={uniqueMonths}
+                supplyOptions={uniqueSupplies}
+                purchaserOptions={uniquePurchasers}
+                filterMonth={historyFilterMonth}
+                onFilterMonthChange={setHistoryFilterMonth}
+                filterSupply={historyFilterSupply}
+                onFilterSupplyChange={setHistoryFilterSupply}
+                filterPurchasedBy={historyFilterPurchasedBy}
+                onFilterPurchasedByChange={setHistoryFilterPurchasedBy}
+                filterPayment={historyFilterPayment}
+                onFilterPaymentChange={setHistoryFilterPayment}
+                dateSortOrder={historyDateSortOrder}
+                onToggleDateSort={() =>
+                    setHistoryDateSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+                }
+                paginatedHistory={paginatedHistory}
+                sortedFilteredCount={sortedFilteredHistory.length}
+                pageSize={HISTORY_PAGE_SIZE}
+                currentPage={safeHistoryPage}
+                totalPages={historyTotalPages}
+                onPageChange={setHistoryPage}
+            />
 
             <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
                 <DialogContent className="border-zinc-700/80 bg-zinc-900/95 backdrop-blur-xl shadow-2xl shadow-black/30 sm:max-w-xl overflow-hidden">
