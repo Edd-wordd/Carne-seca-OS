@@ -39,66 +39,6 @@ const PAYMENT_METHODS = [
     { value: 'other', label: 'Other' },
 ];
 
-// Mock supplies with last purchased date
-const MOCK_SUPPLIES = [
-    {
-        id: 'SUP-1',
-        category: 'meat',
-        name: 'Beef Brisket',
-        quantity: 50,
-        weight: 50,
-        unit: 'lb',
-        unitCost: 8.2,
-        purchasedFrom: 'Restaurant Depot',
-        paymentMethod: 'debit_card',
-        purchasedBy: 'John',
-        value: 410,
-        lastPurchasedAt: '2025-02-14',
-    },
-    {
-        id: 'SUP-2',
-        category: 'equipment',
-        name: 'Vacuum Sealer Pro',
-        quantity: 1,
-        weight: null,
-        unit: 'ea',
-        unitCost: 700,
-        purchasedFrom: 'WebstaurantStore',
-        paymentMethod: 'credit_card',
-        purchasedBy: 'Maria',
-        value: 700,
-        lastPurchasedAt: '2025-01-08',
-    },
-    {
-        id: 'SUP-3',
-        category: 'packaging',
-        name: 'Vacuum Bags 8x10',
-        quantity: 420,
-        weight: null,
-        unit: 'pcs',
-        unitCost: 0.12,
-        purchasedFrom: 'Uline',
-        paymentMethod: 'credit_card',
-        purchasedBy: 'John',
-        value: 50.4,
-        lastPurchasedAt: '2025-02-10',
-    },
-    {
-        id: 'SUP-4',
-        category: 'seasoning',
-        name: 'Seasoning Mix Bulk',
-        quantity: 15,
-        weight: 15,
-        unit: 'lb',
-        unitCost: 8.5,
-        purchasedFrom: 'Spice World',
-        paymentMethod: 'cash',
-        purchasedBy: 'Alex',
-        value: 127.5,
-        lastPurchasedAt: '2025-02-01',
-    },
-];
-
 // Purchase history: all past purchases
 const MOCK_PURCHASE_HISTORY = [
     {
@@ -219,7 +159,7 @@ function formatDate(d) {
     return dt.toLocaleDateString();
 }
 
-export default function SuppliesPage() {
+export default function SuppliesClient({ initialSupplies }) {
     const [addModalOpen, setAddModalOpen] = React.useState(false);
     const [editModalOpen, setEditModalOpen] = React.useState(false);
     const [editingSupply, setEditingSupply] = React.useState(null);
@@ -239,7 +179,7 @@ export default function SuppliesPage() {
         purchasedBy: '',
         purchaseDate: new Date().toISOString().slice(0, 10),
     });
-    const [supplies, setSupplies] = React.useState(MOCK_SUPPLIES);
+    const [supplies, setSupplies] = React.useState(initialSupplies);
     const [supplySearch, setSupplySearch] = React.useState('');
     const [supplyPage, setSupplyPage] = React.useState(1);
 
