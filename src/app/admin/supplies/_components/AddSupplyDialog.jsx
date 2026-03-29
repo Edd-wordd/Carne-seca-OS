@@ -13,6 +13,8 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { addSupplies } from '@/app/actions/supplies/addSupplies';
+import { toast } from 'sonner';
 
 function getDefaultAddSupplyForm() {
     return {
@@ -24,12 +26,32 @@ function getDefaultAddSupplyForm() {
     };
 }
 
+function mapInsertedRowToSupply(row) {
+    if (!row) return null;
+    return {
+        id: String(row.id),
+        name: row.name,
+        category: row.category,
+        unit: row.unit ?? 'lb',
+        description: row.description ?? '',
+        lowThreshold: row.low_threshold ?? null,
+        purchasedFrom: '—',
+        purchasedBy: '—',
+        value: 0,
+        // lastPurchasedAt: null,
+    };
+}
+
 export default function AddSupplyDialog({ open, onOpenChange, categories = [], onAddSupply }) {
     const [form, setForm] = React.useState(getDefaultAddSupplyForm);
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
 
     const handleDialogOpenChange = React.useCallback(
         (next) => {
-            if (!next) setForm(getDefaultAddSupplyForm());
+            if (!next) {
+                setForm(getDefaultAddSupplyForm());
+                setIsSubmitting(false);
+            }
             onOpenChange(next);
         },
         [onOpenChange],
@@ -39,34 +61,40 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
         if (open) setForm(getDefaultAddSupplyForm());
     }, [open]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const lowThreshold =
-            form.lowThreshold === '' || form.lowThreshold == null ? null : parseFloat(form.lowThreshold);
-        const recordedAt = new Date().toISOString().slice(0, 10);
-        const value = 0;
-        const supplyDraft = {
-            category: form.category,
-            name: form.name,
-            description: form.description || '',
-            lowThreshold,
-            unit: form.unit,
-            purchasedFrom: '—',
-            purchasedBy: '—',
-            value,
-            lastPurchasedAt: recordedAt,
-        };
-        const historyEntry = {
-            id: `PH-${Date.now()}`,
-            date: recordedAt,
-            name: form.name,
-            category: form.category,
-            purchasedFrom: '—',
-            purchasedBy: '—',
-            cost: value,
-        };
-        onAddSupply?.(supplyDraft, historyEntry);
-        handleDialogOpenChange(false);
+        const name = form.name.trim();
+        if (!name) {
+            toast.error('Name is required');
+            return;
+        }
+        const parsedLow = form.lowThreshold === '' || form.lowThreshold == null ? null : parseFloat(form.lowThreshold);
+        const lowThreshold = parsedLow != null && !Number.isNaN(parsedLow) ? parsedLow : null;
+        setIsSubmitting(true);
+        try {
+            const result = await addSupplies({
+                item: name,
+                category: form.category,
+                unit: form.unit,
+                lowThreshold,
+                description: form.description.trim() || null,
+            });
+            if (!result?.success) {
+                toast.error(result?.message ?? 'Failed to add supply');
+                return;
+            }
+            const supply = mapInsertedRowToSupply(result.supply);
+            if (!supply) {
+                toast.error('Supply was created but the response was empty');
+                return;
+            }
+
+            onAddSupply?.(supply);
+            toast.success('Supply added');
+            handleDialogOpenChange(false);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -77,7 +105,9 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
                     aria-hidden
                 />
                 <DialogHeader className="pb-3 border-b border-zinc-800/80">
-                    <DialogTitle className="text-zinc-100 text-base font-semibold tracking-tight">Add Supply</DialogTitle>
+                    <DialogTitle className="text-zinc-100 text-base font-semibold tracking-tight">
+                        Add Supply
+                    </DialogTitle>
                     <DialogDescription className="text-zinc-500 text-xs mt-0.5">
                         Log a new supply item
                     </DialogDescription>
@@ -95,7 +125,10 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
                         </div>
                         <div>
                             <Label className="text-zinc-500 text-[11px] font-medium">Category</Label>
-                            <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
+                            <Select
+                                value={form.category}
+                                onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}
+                            >
                                 <SelectTrigger className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20">
                                     <SelectValue />
                                 </SelectTrigger>
@@ -165,9 +198,10 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
                         <Button
                             type="submit"
                             size="sm"
-                            className="bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/20 text-sm font-medium"
+                            disabled={isSubmitting}
+                            className="bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/20 text-sm font-medium disabled:opacity-60"
                         >
-                            Add Supply
+                            {isSubmitting ? 'Adding…' : 'Add Supply'}
                         </Button>
                     </DialogFooter>
                 </form>

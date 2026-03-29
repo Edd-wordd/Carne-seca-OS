@@ -7,15 +7,19 @@ async function addSuppliesHandler({ item, category, unit, lowThreshold, descript
     const supabase = await createClient();
 
     try {
-        const { data, error } = await supabase.from('supplies').insert({
-            name: item,
-            category: category,
-            unit: unit,
-            low_threshold: lowThreshold,
-            description: description,
-        });
+        const { data, error } = await supabase
+            .from('supplies')
+            .insert({
+                name: item,
+                category,
+                unit,
+                low_threshold: lowThreshold,
+                description: description || null,
+            })
+            .select('id, name, category, unit, low_threshold, description')
+            .single();
         if (error) return { success: false, message: error?.message ?? 'Failed to Add Supply' };
-        return { success: true };
+        return { success: true, supply: data };
     } catch (error) {
         return { success: false, message: error?.message ?? 'unknown error' };
     }

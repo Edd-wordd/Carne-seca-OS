@@ -39,6 +39,14 @@ const PAYMENT_METHODS = [
     { value: 'other', label: 'Other' },
 ];
 
+function asSuppliesArray(prev) {
+    return Array.isArray(prev) ? prev : [];
+}
+
+function purchaseHistoryHasDate(h) {
+    return h?.date != null && String(h.date).trim() !== '';
+}
+
 function formatDate(d) {
     if (!d) return '—';
     const dt = new Date(d);
@@ -88,7 +96,8 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
     };
 
     const uniqueMonthsForMetrics = React.useMemo(() => {
-        const months = [...new Set(purchaseHistory.map((h) => h.date.slice(0, 7)))].sort().reverse();
+        const withDate = purchaseHistory.filter(purchaseHistoryHasDate);
+        const months = [...new Set(withDate.map((h) => String(h.date).slice(0, 7)))].sort().reverse();
         return months.map((m) => {
             const [y, mo] = m.split('-');
             return {
@@ -104,6 +113,7 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
     const thisMonthPurchases = React.useMemo(() => {
         if (!metricsDateRange?.from) return purchaseHistory;
         return purchaseHistory.filter((h) => {
+            if (!purchaseHistoryHasDate(h)) return false;
             const historyDate = new Date(h.date);
             const startOfDay = new Date(metricsDateRange.from);
             startOfDay.setHours(0, 0, 0, 0);
@@ -168,7 +178,8 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
 
     const filteredHistory = React.useMemo(() => {
         return purchaseHistory.filter((h) => {
-            if (historyFilterMonth !== 'all' && h.date.slice(0, 7) !== historyFilterMonth) return false;
+            if (!purchaseHistoryHasDate(h)) return false;
+            if (historyFilterMonth !== 'all' && String(h.date).slice(0, 7) !== historyFilterMonth) return false;
             if (historyFilterSupply !== 'all' && h.name !== historyFilterSupply) return false;
             if (historyFilterPurchasedBy !== 'all' && h.purchasedBy !== historyFilterPurchasedBy) return false;
             if (historyFilterPayment !== 'all' && h.paymentMethod !== historyFilterPayment) return false;
@@ -178,7 +189,7 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
 
     const sortedFilteredHistory = React.useMemo(() => {
         return [...filteredHistory].sort((a, b) => {
-            const da = a.date.localeCompare(b.date);
+            const da = String(a.date).localeCompare(String(b.date));
             return historyDateSortOrder === 'asc' ? da : -da;
         });
     }, [filteredHistory, historyDateSortOrder]);
@@ -296,13 +307,9 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
                 open={addModalOpen}
                 onOpenChange={setAddModalOpen}
                 categories={SUPPLY_CATEGORIES}
-                onAddSupply={(supplyDraft, historyEntry) => {
-                    setSupplies((prev) => {
-                        const list = asSuppliesArray(prev);
-                        const supply = { ...supplyDraft, id: `SUP-${list.length + 1}` };
-                        return [supply, ...list];
-                    });
-                    setPurchaseHistory((prev) => [historyEntry, ...prev]);
+                onAddSupply={(supply) => {
+                    setSupplies((prev) => [supply, ...asSuppliesArray(prev)]);
+                    setPurchaseHistory((prev) => [...prev]);
                 }}
             />
 

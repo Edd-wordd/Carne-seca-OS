@@ -15,7 +15,8 @@ export default function SuppliesMonthlySpendChart({ purchaseHistory = [] }) {
     const monthlySpendChartData = React.useMemo(() => {
         const byMonth = {};
         purchaseHistory.forEach((h) => {
-            const m = h.date.slice(0, 7);
+            if (h?.date == null || String(h.date).trim() === '') return;
+            const m = String(h.date).slice(0, 7);
             byMonth[m] = (byMonth[m] || 0) + h.cost;
         });
         return Object.entries(byMonth)
