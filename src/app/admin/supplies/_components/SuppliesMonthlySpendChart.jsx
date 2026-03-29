@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Area, AreaChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Progress } from '@/components/ui/progress';
+import { purchaseHistoryLineCost } from '@/lib/utils/purchaseHistoryLineCost';
 
 const spendChartConfig = {
     total: { label: 'Spend', color: 'var(--chart-1)' },
@@ -17,7 +18,7 @@ export default function SuppliesMonthlySpendChart({ purchaseHistory = [] }) {
         purchaseHistory.forEach((h) => {
             if (h?.date == null || String(h.date).trim() === '') return;
             const m = String(h.date).slice(0, 7);
-            byMonth[m] = (byMonth[m] || 0) + h.cost;
+            byMonth[m] = (byMonth[m] || 0) + purchaseHistoryLineCost(h);
         });
         return Object.entries(byMonth)
             .sort(([a], [b]) => a.localeCompare(b))

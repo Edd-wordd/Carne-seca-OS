@@ -19,6 +19,7 @@ import AddSupplyDialog from './AddSupplyDialog.jsx';
 import EditSupplyDialog from './EditSupplyDialog.jsx';
 import { Plus, Beef, Wrench, Box, Sparkles, Layers, Download } from 'lucide-react';
 import { exportSuppliesToCsv } from '@/lib/utils/exportSupplies';
+import { purchaseHistoryLineCost } from '@/lib/utils/purchaseHistoryLineCost';
 
 const SUPPLY_CATEGORIES = [
     { value: 'meat', label: 'Meat', icon: Beef },
@@ -126,7 +127,7 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
         const acc = { meat: 0, equipment: 0, packaging: 0, seasoning: 0, other: 0 };
         thisMonthPurchases.forEach((h) => {
             const cat = SUPPLY_CATEGORIES.some((c) => c.value === h.category) ? h.category : 'other';
-            acc[cat] = (acc[cat] || 0) + h.cost;
+            acc[cat] = (acc[cat] || 0) + purchaseHistoryLineCost(h);
         });
         return acc;
     }, [thisMonthPurchases]);
