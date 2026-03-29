@@ -50,22 +50,18 @@ function formatDate(d) {
     return dt.toLocaleDateString();
 }
 
-function asSuppliesArray(data) {
-    return Array.isArray(data) ? data : [];
-}
-
 export default function SuppliesClient({ initialSupplies = [], initialPurchaseHistory = [] }) {
     const [addModalOpen, setAddModalOpen] = React.useState(false);
     const [editModalOpen, setEditModalOpen] = React.useState(false);
     const [editingSupply, setEditingSupply] = React.useState(null);
     const [deleteModalOpen, setDeleteModalOpen] = React.useState(false);
     const [supplyToDelete, setSupplyToDelete] = React.useState(null);
-    const [supplies, setSupplies] = React.useState(() => asSuppliesArray(initialSupplies));
+    const [supplies, setSupplies] = React.useState(initialSupplies);
     const [supplySearch, setSupplySearch] = React.useState('');
     const [supplyPage, setSupplyPage] = React.useState(1);
 
     const SUPPLY_PAGE_SIZE = 5;
-    const [purchaseHistory, setPurchaseHistory] = React.useState(() => asSuppliesArray(initialPurchaseHistory));
+    const [purchaseHistory, setPurchaseHistory] = React.useState(initialPurchaseHistory);
     const [purchaseModalOpen, setPurchaseModalOpen] = React.useState(false);
 
     const uniqueSupplierNames = React.useMemo(() => {
@@ -137,7 +133,7 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
     const uniqueMonths = uniqueMonthsForMetrics;
 
     const filteredSupplies = React.useMemo(() => {
-        const list = asSuppliesArray(supplies);
+        const list = supplies;
         if (!supplySearch.trim()) return list;
         const q = supplySearch.trim().toLowerCase();
         return list.filter((s) => {
