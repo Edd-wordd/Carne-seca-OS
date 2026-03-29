@@ -27,6 +27,7 @@ export default function SuppliesPurchaseHistoryTable({
     currentPage,
     totalPages,
     onPageChange,
+    headerAction,
 }) {
     return (
         <div className="overflow-hidden rounded border border-zinc-700/80">
@@ -36,7 +37,8 @@ export default function SuppliesPurchaseHistoryTable({
                         <h2 className="text-zinc-100 text-xs font-medium">Purchase History</h2>
                         <p className="text-zinc-400 text-[9px]">When you last bought each supply</p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        {headerAction}
                         <Select value={filterMonth} onValueChange={onFilterMonthChange}>
                             <SelectTrigger className="h-7 w-[120px] border-zinc-700 bg-zinc-950 text-zinc-100 text-[10px]">
                                 <SelectValue placeholder="Month" />
