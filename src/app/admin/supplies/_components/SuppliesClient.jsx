@@ -159,7 +159,11 @@ function formatDate(d) {
     return dt.toLocaleDateString();
 }
 
-export default function SuppliesClient({ initialSupplies }) {
+function asSuppliesArray(data) {
+    return Array.isArray(data) ? data : [];
+}
+
+export default function SuppliesClient({ initialSupplies = [] }) {
     const [addModalOpen, setAddModalOpen] = React.useState(false);
     const [editModalOpen, setEditModalOpen] = React.useState(false);
     const [editingSupply, setEditingSupply] = React.useState(null);
@@ -179,7 +183,7 @@ export default function SuppliesClient({ initialSupplies }) {
         purchasedBy: '',
         purchaseDate: new Date().toISOString().slice(0, 10),
     });
-    const [supplies, setSupplies] = React.useState(initialSupplies);
+    const [supplies, setSupplies] = React.useState(() => asSuppliesArray(initialSupplies));
     const [supplySearch, setSupplySearch] = React.useState('');
     const [supplyPage, setSupplyPage] = React.useState(1);
 
@@ -194,7 +198,7 @@ export default function SuppliesClient({ initialSupplies }) {
         const purchaseDate = form.purchaseDate || new Date().toISOString().slice(0, 10);
         const value = qty * cost;
         const supply = {
-            id: `SUP-${supplies.length + 1}`,
+            id: `SUP-${asSuppliesArray(supplies).length + 1}`,
             category: form.category,
             name: form.name,
             quantity: qty,
@@ -219,7 +223,7 @@ export default function SuppliesClient({ initialSupplies }) {
             purchasedBy: form.purchasedBy || '—',
             cost: value,
         };
-        setSupplies((prev) => [supply, ...prev]);
+        setSupplies((prev) => [supply, ...asSuppliesArray(prev)]);
         setPurchaseHistory((prev) => [historyEntry, ...prev]);
         setForm({
             name: '',
@@ -269,7 +273,7 @@ export default function SuppliesClient({ initialSupplies }) {
             description: form.description || '',
             lowThreshold,
         };
-        setSupplies((prev) => prev.map((s) => (s.id === editingSupply.id ? updated : s)));
+        setSupplies((prev) => asSuppliesArray(prev).map((s) => (s.id === editingSupply.id ? updated : s)));
         setPurchaseHistory((prev) =>
             prev.map((h) => {
                 if (h.name === editingSupply.name && h.date === editingSupply.lastPurchasedAt) {
@@ -306,7 +310,7 @@ export default function SuppliesClient({ initialSupplies }) {
 
     const handleDeleteSupply = () => {
         if (!supplyToDelete) return;
-        setSupplies((prev) => prev.filter((s) => s.id !== supplyToDelete.id));
+        setSupplies((prev) => asSuppliesArray(prev).filter((s) => s.id !== supplyToDelete.id));
         setSupplyToDelete(null);
         setDeleteModalOpen(false);
     };
@@ -357,9 +361,10 @@ export default function SuppliesClient({ initialSupplies }) {
     const uniqueMonths = uniqueMonthsForMetrics;
 
     const filteredSupplies = React.useMemo(() => {
-        if (!supplySearch.trim()) return supplies;
+        const list = asSuppliesArray(supplies);
+        if (!supplySearch.trim()) return list;
         const q = supplySearch.trim().toLowerCase();
-        return supplies.filter((s) => {
+        return list.filter((s) => {
             const cat = SUPPLY_CATEGORIES.find((c) => c.value === s.category)?.label ?? '';
             return (
                 s.name.toLowerCase().includes(q) ||
