@@ -18,18 +18,12 @@ function getDefaultAddSupplyForm() {
     return {
         name: '',
         category: 'meat',
-        quantity: '',
         weight: '',
         unit: 'lb',
-        unitCost: '',
-        purchasedFrom: '',
-        paymentMethod: 'credit_card',
-        purchasedBy: '',
-        purchaseDate: new Date().toISOString().slice(0, 10),
     };
 }
 
-export default function AddSupplyDialog({ open, onOpenChange, categories = [], paymentMethods = [], onAddSupply }) {
+export default function AddSupplyDialog({ open, onOpenChange, categories = [], onAddSupply }) {
     const [form, setForm] = React.useState(getDefaultAddSupplyForm);
 
     const handleDialogOpenChange = React.useCallback(
@@ -46,34 +40,27 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], p
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const qty = parseFloat(form.quantity) || 0;
-        const cost = parseFloat(form.unitCost) || 0;
         const weight = form.weight ? parseFloat(form.weight) : null;
-        const purchaseDate = form.purchaseDate || new Date().toISOString().slice(0, 10);
-        const value = qty * cost;
+        const recordedAt = new Date().toISOString().slice(0, 10);
+        const value = 0;
         const supplyDraft = {
             category: form.category,
             name: form.name,
-            quantity: qty,
             weight,
             unit: form.unit,
-            unitCost: cost,
-            purchasedFrom: form.purchasedFrom || '—',
-            paymentMethod: form.paymentMethod,
-            purchasedBy: form.purchasedBy || '—',
+            purchasedFrom: '—',
+            purchasedBy: '—',
             value,
-            lastPurchasedAt: purchaseDate,
+            lastPurchasedAt: recordedAt,
         };
         const historyEntry = {
             id: `PH-${Date.now()}`,
-            date: purchaseDate,
+            date: recordedAt,
             name: form.name,
             category: form.category,
-            quantity: qty,
             weight: weight ?? undefined,
-            purchasedFrom: form.purchasedFrom || '—',
-            paymentMethod: form.paymentMethod,
-            purchasedBy: form.purchasedBy || '—',
+            purchasedFrom: '—',
+            purchasedBy: '—',
             cost: value,
         };
         onAddSupply?.(supplyDraft, historyEntry);
@@ -90,7 +77,7 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], p
                 <DialogHeader className="pb-3 border-b border-zinc-800/80">
                     <DialogTitle className="text-zinc-100 text-base font-semibold tracking-tight">Add Supply</DialogTitle>
                     <DialogDescription className="text-zinc-500 text-xs mt-0.5">
-                        Log a new supply with details and purchase info
+                        Log a new supply item
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="pt-3 space-y-4">
@@ -121,18 +108,7 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], p
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div>
-                            <Label className="text-zinc-500 text-[11px] font-medium">Qty</Label>
-                            <Input
-                                type="number"
-                                step="any"
-                                value={form.quantity}
-                                onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))}
-                                placeholder="50"
-                                className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                            />
-                        </div>
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
                             <Label className="text-zinc-500 text-[11px] font-medium">Weight (lb)</Label>
                             <Input
@@ -162,65 +138,6 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], p
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
-                        </div>
-                        <div>
-                            <Label className="text-zinc-500 text-[11px] font-medium">Unit Cost ($)</Label>
-                            <Input
-                                type="number"
-                                step="0.01"
-                                value={form.unitCost}
-                                onChange={(e) => setForm((f) => ({ ...f, unitCost: e.target.value }))}
-                                placeholder="0.00"
-                                className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20 tabular-nums"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <Label className="text-zinc-500 text-[11px] font-medium">Purchase Date</Label>
-                            <Input
-                                type="date"
-                                value={form.purchaseDate}
-                                onChange={(e) => setForm((f) => ({ ...f, purchaseDate: e.target.value }))}
-                                className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20 [color-scheme:dark]"
-                            />
-                        </div>
-                        <div>
-                            <Label className="text-zinc-500 text-[11px] font-medium">Purchased From</Label>
-                            <Input
-                                value={form.purchasedFrom}
-                                onChange={(e) => setForm((f) => ({ ...f, purchasedFrom: e.target.value }))}
-                                placeholder="e.g. Restaurant Depot, Costco"
-                                className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                            />
-                        </div>
-                        <div>
-                            <Label className="text-zinc-500 text-[11px] font-medium">Payment Method</Label>
-                            <Select
-                                value={form.paymentMethod}
-                                onValueChange={(v) => setForm((f) => ({ ...f, paymentMethod: v }))}
-                            >
-                                <SelectTrigger className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {paymentMethods.map((p) => (
-                                        <SelectItem key={p.value} value={p.value} className="text-sm">
-                                            {p.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div>
-                            <Label className="text-zinc-500 text-[11px] font-medium">Purchased By</Label>
-                            <Input
-                                value={form.purchasedBy}
-                                onChange={(e) => setForm((f) => ({ ...f, purchasedBy: e.target.value }))}
-                                placeholder="e.g. John, Maria"
-                                className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                            />
                         </div>
                     </div>
 

@@ -296,7 +296,6 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
                 open={addModalOpen}
                 onOpenChange={setAddModalOpen}
                 categories={SUPPLY_CATEGORIES}
-                paymentMethods={PAYMENT_METHODS}
                 onAddSupply={(supplyDraft, historyEntry) => {
                     setSupplies((prev) => {
                         const list = asSuppliesArray(prev);
