@@ -20,7 +20,6 @@ function getDefaultAddSupplyForm() {
         category: 'meat',
         description: '',
         lowThreshold: '',
-        weight: '',
         unit: 'lb',
     };
 }
@@ -42,7 +41,6 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const weight = form.weight ? parseFloat(form.weight) : null;
         const lowThreshold =
             form.lowThreshold === '' || form.lowThreshold == null ? null : parseFloat(form.lowThreshold);
         const recordedAt = new Date().toISOString().slice(0, 10);
@@ -52,7 +50,6 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
             name: form.name,
             description: form.description || '',
             lowThreshold,
-            weight,
             unit: form.unit,
             purchasedFrom: '—',
             purchasedBy: '—',
@@ -64,7 +61,6 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
             date: recordedAt,
             name: form.name,
             category: form.category,
-            weight: weight ?? undefined,
             purchasedFrom: '—',
             purchasedBy: '—',
             cost: value,
@@ -114,37 +110,24 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <Label className="text-zinc-500 text-[11px] font-medium">Weight (lb)</Label>
-                            <Input
-                                type="number"
-                                step="0.1"
-                                value={form.weight}
-                                onChange={(e) => setForm((f) => ({ ...f, weight: e.target.value }))}
-                                placeholder="—"
-                                className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                            />
-                        </div>
-                        <div>
-                            <Label className="text-zinc-500 text-[11px] font-medium">Unit</Label>
-                            <Select value={form.unit} onValueChange={(v) => setForm((f) => ({ ...f, unit: v }))}>
-                                <SelectTrigger className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="lb" className="text-sm">
-                                        lb
-                                    </SelectItem>
-                                    <SelectItem value="pcs" className="text-sm">
-                                        pcs
-                                    </SelectItem>
-                                    <SelectItem value="ea" className="text-sm">
-                                        ea
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                    <div className="max-w-[10rem]">
+                        <Label className="text-zinc-500 text-[11px] font-medium">Unit</Label>
+                        <Select value={form.unit} onValueChange={(v) => setForm((f) => ({ ...f, unit: v }))}>
+                            <SelectTrigger className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="lb" className="text-sm">
+                                    lb
+                                </SelectItem>
+                                <SelectItem value="pcs" className="text-sm">
+                                    pcs
+                                </SelectItem>
+                                <SelectItem value="ea" className="text-sm">
+                                    ea
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
