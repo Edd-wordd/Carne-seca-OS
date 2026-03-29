@@ -2,8 +2,6 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Dialog,
     DialogContent,
@@ -12,12 +10,13 @@ import {
     DialogDescription,
     DialogFooter,
 } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SuppliesKPIs from './SuppliesKPIs.jsx';
 import SuppliesMonthlySpendChart from './SuppliesMonthlySpendChart.jsx';
 import SuppliesItemsTable from './SuppliesItemsTable.jsx';
 import SuppliesPurchaseHistoryTable from './SuppliesPurchaseHistoryTable.jsx';
 import AddPurchaseDialog from './AddPurchaseDialog.jsx';
+import AddSupplyDialog from './AddSupplyDialog.jsx';
+import EditSupplyDialog from './EditSupplyDialog.jsx';
 import { Plus, Beef, Wrench, Box, Sparkles, Layers, Download } from 'lucide-react';
 import { exportSuppliesToCsv } from '@/lib/utils/exportSupplies';
 
@@ -170,20 +169,6 @@ export default function SuppliesClient({ initialSupplies = [] }) {
     const [editingSupply, setEditingSupply] = React.useState(null);
     const [deleteModalOpen, setDeleteModalOpen] = React.useState(false);
     const [supplyToDelete, setSupplyToDelete] = React.useState(null);
-    const [form, setForm] = React.useState({
-        name: '',
-        category: 'meat',
-        quantity: '',
-        weight: '',
-        unit: 'lb',
-        unitCost: '',
-        description: '',
-        lowThreshold: '',
-        purchasedFrom: '',
-        paymentMethod: 'credit_card',
-        purchasedBy: '',
-        purchaseDate: new Date().toISOString().slice(0, 10),
-    });
     const [supplies, setSupplies] = React.useState(() => asSuppliesArray(initialSupplies));
     const [supplySearch, setSupplySearch] = React.useState('');
     const [supplyPage, setSupplyPage] = React.useState(1);
@@ -198,117 +183,9 @@ export default function SuppliesClient({ initialSupplies = [] }) {
         );
     }, [purchaseHistory]);
 
-    const handleAddSupply = (e) => {
-        e.preventDefault();
-        const qty = parseFloat(form.quantity) || 0;
-        const cost = parseFloat(form.unitCost) || 0;
-        const weight = form.weight ? parseFloat(form.weight) : null;
-        const purchaseDate = form.purchaseDate || new Date().toISOString().slice(0, 10);
-        const value = qty * cost;
-        const supply = {
-            id: `SUP-${asSuppliesArray(supplies).length + 1}`,
-            category: form.category,
-            name: form.name,
-            quantity: qty,
-            weight,
-            unit: form.unit,
-            unitCost: cost,
-            purchasedFrom: form.purchasedFrom || '—',
-            paymentMethod: form.paymentMethod,
-            purchasedBy: form.purchasedBy || '—',
-            value,
-            lastPurchasedAt: purchaseDate,
-        };
-        const historyEntry = {
-            id: `PH-${Date.now()}`,
-            date: purchaseDate,
-            name: form.name,
-            category: form.category,
-            quantity: qty,
-            weight: weight ?? undefined,
-            purchasedFrom: form.purchasedFrom || '—',
-            paymentMethod: form.paymentMethod,
-            purchasedBy: form.purchasedBy || '—',
-            cost: value,
-        };
-        setSupplies((prev) => [supply, ...asSuppliesArray(prev)]);
-        setPurchaseHistory((prev) => [historyEntry, ...prev]);
-        setForm({
-            name: '',
-            category: 'meat',
-            quantity: '',
-            weight: '',
-            unit: 'lb',
-            unitCost: '',
-            description: '',
-            lowThreshold: '',
-            purchasedFrom: '',
-            paymentMethod: 'credit_card',
-            purchasedBy: '',
-            purchaseDate: new Date().toISOString().slice(0, 10),
-        });
-        setAddModalOpen(false);
-    };
-
     const openEditModal = (supply) => {
         setEditingSupply(supply);
-        setForm({
-            name: supply.name,
-            category: supply.category,
-            quantity: String(supply.quantity),
-            weight: supply.weight != null ? String(supply.weight) : '',
-            unit: supply.unit,
-            unitCost: String(supply.unitCost),
-            description: supply.description ?? '',
-            lowThreshold: supply.lowThreshold != null ? String(supply.lowThreshold) : '',
-            purchasedFrom: supply.purchasedFrom !== '—' ? supply.purchasedFrom : '',
-            paymentMethod: supply.paymentMethod ?? 'credit_card',
-            purchasedBy: supply.purchasedBy !== '—' ? supply.purchasedBy : '',
-        });
         setEditModalOpen(true);
-    };
-
-    const handleUpdateSupply = (e) => {
-        e.preventDefault();
-        if (!editingSupply) return;
-        const lowThreshold =
-            form.lowThreshold === '' || form.lowThreshold == null ? null : parseFloat(form.lowThreshold);
-        const updated = {
-            ...editingSupply,
-            category: form.category,
-            name: form.name,
-            unit: form.unit,
-            description: form.description || '',
-            lowThreshold,
-        };
-        setSupplies((prev) => asSuppliesArray(prev).map((s) => (s.id === editingSupply.id ? updated : s)));
-        setPurchaseHistory((prev) =>
-            prev.map((h) => {
-                if (h.name === editingSupply.name && h.date === editingSupply.lastPurchasedAt) {
-                    return {
-                        ...h,
-                        name: form.name,
-                        category: form.category,
-                    };
-                }
-                return h;
-            }),
-        );
-        setForm({
-            name: '',
-            category: 'meat',
-            quantity: '',
-            weight: '',
-            unit: 'lb',
-            unitCost: '',
-            description: '',
-            lowThreshold: '',
-            purchasedFrom: '',
-            paymentMethod: 'credit_card',
-            purchasedBy: '',
-        });
-        setEditingSupply(null);
-        setEditModalOpen(false);
     };
 
     const openDeleteModal = (supply) => {
@@ -528,299 +405,41 @@ export default function SuppliesClient({ initialSupplies = [] }) {
                 onAddPurchase={(entry) => setPurchaseHistory((prev) => [entry, ...prev])}
             />
 
-            <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
-                <DialogContent className="border-zinc-700/80 bg-zinc-900/95 backdrop-blur-xl shadow-2xl shadow-black/30 sm:max-w-xl overflow-hidden">
-                    <div
-                        className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500/60 via-indigo-500/30 to-transparent"
-                        aria-hidden
-                    />
-                    <DialogHeader className="pb-3 border-b border-zinc-800/80">
-                        <DialogTitle className="text-zinc-100 text-base font-semibold tracking-tight">
-                            Add Supply
-                        </DialogTitle>
-                        <DialogDescription className="text-zinc-500 text-xs mt-0.5">
-                            Log a new supply with details and purchase info
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleAddSupply} className="pt-3 space-y-4">
-                        {/* Item Details — single row */}
-                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_minmax(0,8rem)] gap-3">
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Name</Label>
-                                <Input
-                                    value={form.name}
-                                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                                    placeholder="e.g. Beef Brisket, Vacuum Bags"
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                                />
-                            </div>
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Category</Label>
-                                <Select
-                                    value={form.category}
-                                    onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}
-                                >
-                                    <SelectTrigger className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {SUPPLY_CATEGORIES.map((c) => (
-                                            <SelectItem key={c.value} value={c.value} className="text-sm">
-                                                {c.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        {/* Quantity & Cost — one row */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Qty</Label>
-                                <Input
-                                    type="number"
-                                    step="any"
-                                    value={form.quantity}
-                                    onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))}
-                                    placeholder="50"
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                                />
-                            </div>
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Weight (lb)</Label>
-                                <Input
-                                    type="number"
-                                    step="0.1"
-                                    value={form.weight}
-                                    onChange={(e) => setForm((f) => ({ ...f, weight: e.target.value }))}
-                                    placeholder="—"
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                                />
-                            </div>
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Unit</Label>
-                                <Select value={form.unit} onValueChange={(v) => setForm((f) => ({ ...f, unit: v }))}>
-                                    <SelectTrigger className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="lb" className="text-sm">
-                                            lb
-                                        </SelectItem>
-                                        <SelectItem value="pcs" className="text-sm">
-                                            pcs
-                                        </SelectItem>
-                                        <SelectItem value="ea" className="text-sm">
-                                            ea
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Unit Cost ($)</Label>
-                                <Input
-                                    type="number"
-                                    step="0.01"
-                                    value={form.unitCost}
-                                    onChange={(e) => setForm((f) => ({ ...f, unitCost: e.target.value }))}
-                                    placeholder="0.00"
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20 tabular-nums"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Purchase Info — two rows */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Purchase Date</Label>
-                                <Input
-                                    type="date"
-                                    value={form.purchaseDate}
-                                    onChange={(e) => setForm((f) => ({ ...f, purchaseDate: e.target.value }))}
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20 [color-scheme:dark]"
-                                />
-                            </div>
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Purchased From</Label>
-                                <Input
-                                    value={form.purchasedFrom}
-                                    onChange={(e) => setForm((f) => ({ ...f, purchasedFrom: e.target.value }))}
-                                    placeholder="e.g. Restaurant Depot, Costco"
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                                />
-                            </div>
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Payment Method</Label>
-                                <Select
-                                    value={form.paymentMethod}
-                                    onValueChange={(v) => setForm((f) => ({ ...f, paymentMethod: v }))}
-                                >
-                                    <SelectTrigger className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {PAYMENT_METHODS.map((p) => (
-                                            <SelectItem key={p.value} value={p.value} className="text-sm">
-                                                {p.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Purchased By</Label>
-                                <Input
-                                    value={form.purchasedBy}
-                                    onChange={(e) => setForm((f) => ({ ...f, purchasedBy: e.target.value }))}
-                                    placeholder="e.g. John, Maria"
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                                />
-                            </div>
-                        </div>
-
-                        <DialogFooter className="pt-2 gap-2 sm:gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setAddModalOpen(false)}
-                                className="border-zinc-700 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 text-sm"
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                type="submit"
-                                size="sm"
-                                className="bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/20 text-sm font-medium"
-                            >
-                                Add Supply
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
-
-            {/* Edit Supply Modal */}
-            <Dialog
-                open={editModalOpen}
-                onOpenChange={(open) => {
-                    if (!open) {
-                        setEditModalOpen(false);
-                        setEditingSupply(null);
-                    }
+            <AddSupplyDialog
+                open={addModalOpen}
+                onOpenChange={setAddModalOpen}
+                categories={SUPPLY_CATEGORIES}
+                paymentMethods={PAYMENT_METHODS}
+                onAddSupply={(supplyDraft, historyEntry) => {
+                    setSupplies((prev) => {
+                        const list = asSuppliesArray(prev);
+                        const supply = { ...supplyDraft, id: `SUP-${list.length + 1}` };
+                        return [supply, ...list];
+                    });
+                    setPurchaseHistory((prev) => [historyEntry, ...prev]);
                 }}
-            >
-                <DialogContent className="border-zinc-700/80 bg-zinc-900/95 backdrop-blur-xl shadow-2xl shadow-black/30 sm:max-w-xl overflow-hidden">
-                    <div
-                        className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-amber-500/60 via-amber-500/30 to-transparent"
-                        aria-hidden
-                    />
-                    <DialogHeader className="pb-3 border-b border-zinc-800/80">
-                        <DialogTitle className="text-zinc-100 text-base font-semibold tracking-tight">
-                            Edit Supply
-                        </DialogTitle>
-                        <DialogDescription className="text-zinc-500 text-xs mt-0.5">
-                            Update supply details shown in the table
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleUpdateSupply} className="pt-3 space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_minmax(0,8rem)] gap-3">
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Name</Label>
-                                <Input
-                                    value={form.name}
-                                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                                    placeholder="e.g. Beef Brisket"
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                                />
-                            </div>
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Category</Label>
-                                <Select
-                                    value={form.category}
-                                    onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}
-                                >
-                                    <SelectTrigger className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {SUPPLY_CATEGORIES.map((c) => (
-                                            <SelectItem key={c.value} value={c.value} className="text-sm">
-                                                {c.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Unit</Label>
-                                <Select value={form.unit} onValueChange={(v) => setForm((f) => ({ ...f, unit: v }))}>
-                                    <SelectTrigger className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="lb" className="text-sm">
-                                            lb
-                                        </SelectItem>
-                                        <SelectItem value="pcs" className="text-sm">
-                                            pcs
-                                        </SelectItem>
-                                        <SelectItem value="ea" className="text-sm">
-                                            ea
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Low Threshold</Label>
-                                <Input
-                                    type="number"
-                                    step="any"
-                                    value={form.lowThreshold}
-                                    onChange={(e) => setForm((f) => ({ ...f, lowThreshold: e.target.value }))}
-                                    placeholder="e.g. 20"
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20 tabular-nums"
-                                />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 gap-3">
-                            <div>
-                                <Label className="text-zinc-500 text-[11px] font-medium">Description</Label>
-                                <Input
-                                    value={form.description}
-                                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                                    placeholder="Add a short note about this supply"
-                                    className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
-                                />
-                            </div>
-                        </div>
-                        <DialogFooter className="pt-2 gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    setEditModalOpen(false);
-                                    setEditingSupply(null);
-                                }}
-                                className="border-zinc-700 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 text-sm"
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                type="submit"
-                                size="sm"
-                                className="bg-amber-600 text-white hover:bg-amber-500 shadow-lg shadow-amber-500/20 text-sm font-medium"
-                            >
-                                Save Changes
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            />
+
+            <EditSupplyDialog
+                open={editModalOpen}
+                supply={editingSupply}
+                onOpenChange={(next) => {
+                    setEditModalOpen(next);
+                    if (!next) setEditingSupply(null);
+                }}
+                categories={SUPPLY_CATEGORIES}
+                onSave={(updated, original) => {
+                    setSupplies((prev) => asSuppliesArray(prev).map((s) => (s.id === original.id ? updated : s)));
+                    setPurchaseHistory((prev) =>
+                        prev.map((h) => {
+                            if (h.name === original.name && h.date === original.lastPurchasedAt) {
+                                return { ...h, name: updated.name, category: updated.category };
+                            }
+                            return h;
+                        }),
+                    );
+                }}
+            />
 
             {/* Delete confirmation */}
             <Dialog
