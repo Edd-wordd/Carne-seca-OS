@@ -9,10 +9,8 @@ async function getSuppliersHandler() {
         const { data, error } = await supabase.from('suppliers').select('supplier_id, name');
         return data ?? [];
     } catch (error) {
-        if (error) {
-            console.error('Failed to fetch suppliers:', error);
-            return [];
-        }
+        console.error('Failed to fetch suppliers:', error);
+        return [];
     }
 }
 

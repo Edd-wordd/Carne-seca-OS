@@ -3,18 +3,16 @@
 import { createClient } from '@/lib/supabase/server';
 import { withSentryAction } from '@/lib/sentry/with-sentry-action';
 
-async function getSuppliesHandler() {
+async function getSupplyPurchasesHandler() {
     const supabase = await createClient();
 
     try {
-        const { data, error } = await supabase.rpc('get_supplies');
-
-        if (error) return { succes: false, message: error.message };
-
+        const { data, error } = await supabase.rpc('get_supply_purchases');
+        if (error) return { success: false, message: error.message };
         return data;
     } catch (error) {
         return { success: false, message: error?.message ?? 'unknown error' };
     }
 }
 
-export const getSupplies = withSentryAction('getSupplies', getSuppliesHandler);
+export const getSupplyPurchases = withSentryAction('getSupplyPurchases', getSupplyPurchasesHandler);

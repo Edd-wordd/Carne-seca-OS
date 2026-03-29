@@ -27,11 +27,10 @@ async function getBatchesHandler() {
 
         return data;
     } catch (error) {
-        if (error)
-            return {
-                success: false,
-                message: error?.message ?? 'unknown error',
-            };
+        return {
+            success: false,
+            message: error?.message ?? 'unknown error',
+        };
     }
 }
 

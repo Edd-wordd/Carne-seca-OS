@@ -9,10 +9,8 @@ async function getProductsHandler() {
         const { data, error } = await supabase.from('products').select('*');
         return data;
     } catch (error) {
-        if (error) {
-            console.error('no products', error);
-            return { success: false, message: 'no products' };
-        }
+        console.error('no products', error);
+        return { success: false, message: 'no products' };
     }
 }
 
