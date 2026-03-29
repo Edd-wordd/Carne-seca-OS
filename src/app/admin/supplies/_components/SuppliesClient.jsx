@@ -39,115 +39,6 @@ const PAYMENT_METHODS = [
     { value: 'other', label: 'Other' },
 ];
 
-// Purchase history: all past purchases
-const MOCK_PURCHASE_HISTORY = [
-    {
-        id: 'PH-1',
-        date: '2025-02-14',
-        name: 'Beef Brisket',
-        category: 'meat',
-        quantity: 50,
-        weight: 50,
-        purchasedFrom: 'Restaurant Depot',
-        paymentMethod: 'debit_card',
-        purchasedBy: 'John',
-        cost: 410,
-    },
-    {
-        id: 'PH-2',
-        date: '2025-02-10',
-        name: 'Vacuum Bags 8x10',
-        category: 'packaging',
-        quantity: 420,
-        purchasedFrom: 'Uline',
-        paymentMethod: 'credit_card',
-        purchasedBy: 'John',
-        cost: 50.4,
-    },
-    {
-        id: 'PH-3',
-        date: '2025-02-01',
-        name: 'Seasoning Mix Bulk',
-        category: 'seasoning',
-        quantity: 15,
-        weight: 15,
-        purchasedFrom: 'Spice World',
-        paymentMethod: 'cash',
-        purchasedBy: 'Alex',
-        cost: 127.5,
-    },
-    {
-        id: 'PH-4',
-        date: '2025-01-15',
-        name: 'Beef Brisket',
-        category: 'meat',
-        quantity: 40,
-        weight: 40,
-        purchasedFrom: 'Restaurant Depot',
-        paymentMethod: 'check',
-        purchasedBy: 'Maria',
-        cost: 328,
-    },
-    {
-        id: 'PH-5',
-        date: '2025-01-08',
-        name: 'Vacuum Sealer Pro',
-        category: 'equipment',
-        quantity: 1,
-        purchasedFrom: 'WebstaurantStore',
-        paymentMethod: 'credit_card',
-        purchasedBy: 'Maria',
-        cost: 700,
-    },
-    {
-        id: 'PH-6',
-        date: '2024-12-12',
-        name: 'Beef Brisket',
-        category: 'meat',
-        quantity: 45,
-        weight: 45,
-        purchasedFrom: 'Restaurant Depot',
-        paymentMethod: 'debit_card',
-        purchasedBy: 'John',
-        cost: 369,
-    },
-    {
-        id: 'PH-7',
-        date: '2024-12-05',
-        name: 'Vacuum Bags 8x10',
-        category: 'packaging',
-        quantity: 300,
-        purchasedFrom: 'Uline',
-        paymentMethod: 'credit_card',
-        purchasedBy: 'Maria',
-        cost: 36,
-    },
-    {
-        id: 'PH-8',
-        date: '2024-11-20',
-        name: 'Seasoning Mix Bulk',
-        category: 'seasoning',
-        quantity: 12,
-        weight: 12,
-        purchasedFrom: 'Spice World',
-        paymentMethod: 'cash',
-        purchasedBy: 'Alex',
-        cost: 102,
-    },
-    {
-        id: 'PH-9',
-        date: '2024-11-08',
-        name: 'Beef Brisket',
-        category: 'meat',
-        quantity: 38,
-        weight: 38,
-        purchasedFrom: 'Restaurant Depot',
-        paymentMethod: 'check',
-        purchasedBy: 'Maria',
-        cost: 311.6,
-    },
-];
-
 function formatDate(d) {
     if (!d) return '—';
     const dt = new Date(d);
@@ -163,7 +54,7 @@ function asSuppliesArray(data) {
     return Array.isArray(data) ? data : [];
 }
 
-export default function SuppliesClient({ initialSupplies = [] }) {
+export default function SuppliesClient({ initialSupplies = [], initialPurchaseHistory = [] }) {
     const [addModalOpen, setAddModalOpen] = React.useState(false);
     const [editModalOpen, setEditModalOpen] = React.useState(false);
     const [editingSupply, setEditingSupply] = React.useState(null);
@@ -174,7 +65,7 @@ export default function SuppliesClient({ initialSupplies = [] }) {
     const [supplyPage, setSupplyPage] = React.useState(1);
 
     const SUPPLY_PAGE_SIZE = 5;
-    const [purchaseHistory, setPurchaseHistory] = React.useState(MOCK_PURCHASE_HISTORY);
+    const [purchaseHistory, setPurchaseHistory] = React.useState(() => asSuppliesArray(initialPurchaseHistory));
     const [purchaseModalOpen, setPurchaseModalOpen] = React.useState(false);
 
     const uniqueSupplierNames = React.useMemo(() => {
