@@ -18,6 +18,8 @@ function getDefaultAddSupplyForm() {
     return {
         name: '',
         category: 'meat',
+        description: '',
+        lowThreshold: '',
         weight: '',
         unit: 'lb',
     };
@@ -41,11 +43,15 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
     const handleSubmit = (e) => {
         e.preventDefault();
         const weight = form.weight ? parseFloat(form.weight) : null;
+        const lowThreshold =
+            form.lowThreshold === '' || form.lowThreshold == null ? null : parseFloat(form.lowThreshold);
         const recordedAt = new Date().toISOString().slice(0, 10);
         const value = 0;
         const supplyDraft = {
             category: form.category,
             name: form.name,
+            description: form.description || '',
+            lowThreshold,
             weight,
             unit: form.unit,
             purchasedFrom: '—',
@@ -138,6 +144,28 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <Label className="text-zinc-500 text-[11px] font-medium">Low Threshold</Label>
+                            <Input
+                                type="number"
+                                step="any"
+                                value={form.lowThreshold}
+                                onChange={(e) => setForm((f) => ({ ...f, lowThreshold: e.target.value }))}
+                                placeholder="e.g. 10"
+                                className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
+                            />
+                        </div>
+                        <div>
+                            <Label className="text-zinc-500 text-[11px] font-medium">Description</Label>
+                            <Input
+                                value={form.description}
+                                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                                placeholder="Optional notes"
+                                className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
+                            />
                         </div>
                     </div>
 
