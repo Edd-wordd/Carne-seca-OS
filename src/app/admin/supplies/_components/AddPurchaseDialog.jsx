@@ -63,10 +63,8 @@ export default function AddPurchaseDialog({
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const qty = parseFloat(purchaseForm.quantity);
-        const costVal = parseFloat(purchaseForm.cost);
-        if (Number.isNaN(qty) || qty <= 0 || Number.isNaN(costVal) || costVal < 0) {
-            toast.error('Enter valid quantity and unit cost');
+        if (!purchaseForm.date?.trim()) {
+            toast.error('Date is required');
             return;
         }
         const supplyId = purchaseForm.itemSelect.trim();
@@ -77,6 +75,24 @@ export default function AddPurchaseDialog({
         const supplyRow = supplies.find((s) => String(s.id) === supplyId);
         if (!supplyRow) {
             toast.error('Selected supply was not found');
+            return;
+        }
+        if (purchaseForm.quantity === '' || purchaseForm.quantity == null) {
+            toast.error('Quantity is required');
+            return;
+        }
+        if (purchaseForm.cost === '' || purchaseForm.cost == null) {
+            toast.error('Unit cost is required');
+            return;
+        }
+        const qty = parseFloat(purchaseForm.quantity);
+        const costVal = parseFloat(purchaseForm.cost);
+        if (!Number.isFinite(qty) || qty <= 0) {
+            toast.error('Enter a valid quantity greater than zero');
+            return;
+        }
+        if (!Number.isFinite(costVal) || costVal < 0) {
+            toast.error('Enter a valid unit cost');
             return;
         }
         if (!purchaseForm.supplierSelect) {
@@ -90,10 +106,19 @@ export default function AddPurchaseDialog({
                 return;
             }
         }
+        if (!purchaseForm.paymentMethod) {
+            toast.error('Payment method is required');
+            return;
+        }
+        const purchasedByTrim = purchaseForm.purchasedBy.trim();
+        if (!purchasedByTrim) {
+            toast.error('Purchased by is required');
+            return;
+        }
 
-        const date = purchaseForm.date || new Date().toISOString().slice(0, 10);
+        const date = purchaseForm.date;
         const payment = purchaseForm.paymentMethod;
-        const purchasedBy = purchaseForm.purchasedBy.trim() || '';
+        const purchasedBy = purchasedByTrim;
 
         setIsSubmitting(true);
         try {
@@ -126,7 +151,7 @@ export default function AddPurchaseDialog({
                 cost: qty * costVal,
                 purchasedFrom: purchasedFromLabel,
                 paymentMethod: payment,
-                purchasedBy: purchasedBy || '—',
+                purchasedBy,
             };
             onAddPurchase?.(historyEntry);
             toast.success('Purchase recorded');
@@ -158,6 +183,7 @@ export default function AddPurchaseDialog({
                     <div>
                         <Label className="text-zinc-500 text-[11px] font-medium">Item</Label>
                         <select
+                            required
                             value={purchaseForm.itemSelect}
                             onChange={(e) => setPurchaseForm((f) => ({ ...f, itemSelect: e.target.value }))}
                             className="mt-1 flex h-9 w-full rounded-md border border-zinc-700/80 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20"
@@ -175,6 +201,7 @@ export default function AddPurchaseDialog({
                         <div>
                             <Label className="text-zinc-500 text-[11px] font-medium">Date</Label>
                             <Input
+                                required
                                 type="date"
                                 value={purchaseForm.date}
                                 onChange={(e) => setPurchaseForm((f) => ({ ...f, date: e.target.value }))}
@@ -184,8 +211,10 @@ export default function AddPurchaseDialog({
                         <div>
                             <Label className="text-zinc-500 text-[11px] font-medium">Qty</Label>
                             <Input
+                                required
                                 type="number"
                                 step="any"
+                                min="0"
                                 value={purchaseForm.quantity}
                                 onChange={(e) => setPurchaseForm((f) => ({ ...f, quantity: e.target.value }))}
                                 placeholder="50"
@@ -195,8 +224,10 @@ export default function AddPurchaseDialog({
                         <div>
                             <Label className="text-zinc-500 text-[11px] font-medium">Unit cost ($)</Label>
                             <Input
+                                required
                                 type="number"
                                 step="0.01"
+                                min="0"
                                 value={purchaseForm.cost}
                                 onChange={(e) => setPurchaseForm((f) => ({ ...f, cost: e.target.value }))}
                                 placeholder="0.00"
@@ -209,6 +240,7 @@ export default function AddPurchaseDialog({
                         <div className="sm:col-span-2">
                             <Label className="text-zinc-500 text-[11px] font-medium">Supplier</Label>
                             <select
+                                required
                                 value={purchaseForm.supplierSelect}
                                 onChange={(e) =>
                                     setPurchaseForm((f) => ({
@@ -229,6 +261,7 @@ export default function AddPurchaseDialog({
                             </select>
                             {isPurchaseNewSupplier && (
                                 <Input
+                                    required={isPurchaseNewSupplier}
                                     value={purchaseForm.newSupplierName}
                                     onChange={(e) =>
                                         setPurchaseForm((f) => ({ ...f, newSupplierName: e.target.value }))
@@ -241,6 +274,7 @@ export default function AddPurchaseDialog({
                         <div>
                             <Label className="text-zinc-500 text-[11px] font-medium">Payment</Label>
                             <Select
+                                required
                                 value={purchaseForm.paymentMethod}
                                 onValueChange={(v) => setPurchaseForm((f) => ({ ...f, paymentMethod: v }))}
                             >
@@ -259,6 +293,7 @@ export default function AddPurchaseDialog({
                         <div>
                             <Label className="text-zinc-500 text-[11px] font-medium">Purchased by</Label>
                             <Input
+                                required
                                 value={purchaseForm.purchasedBy}
                                 onChange={(e) => setPurchaseForm((f) => ({ ...f, purchasedBy: e.target.value }))}
                                 placeholder="e.g. John, Maria"

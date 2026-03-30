@@ -68,16 +68,36 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
             toast.error('Name is required');
             return;
         }
-        const parsedLow = form.lowThreshold === '' || form.lowThreshold == null ? null : parseFloat(form.lowThreshold);
-        const lowThreshold = parsedLow != null && !Number.isNaN(parsedLow) ? parsedLow : null;
+        if (!form.category) {
+            toast.error('Category is required');
+            return;
+        }
+        if (!form.unit) {
+            toast.error('Unit is required');
+            return;
+        }
+        if (form.lowThreshold === '' || form.lowThreshold == null) {
+            toast.error('Low threshold is required');
+            return;
+        }
+        const parsedLow = parseFloat(form.lowThreshold);
+        if (!Number.isFinite(parsedLow)) {
+            toast.error('Enter a valid low threshold');
+            return;
+        }
+        const description = form.description.trim();
+        if (!description) {
+            toast.error('Description is required');
+            return;
+        }
         setIsSubmitting(true);
         try {
             const result = await addSupplies({
                 item: name,
                 category: form.category,
                 unit: form.unit,
-                lowThreshold,
-                description: form.description.trim() || null,
+                lowThreshold: parsedLow,
+                description,
             });
             if (!result?.success) {
                 toast.error(result?.message ?? 'Failed to add supply');
@@ -117,6 +137,7 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
                         <div>
                             <Label className="text-zinc-500 text-[11px] font-medium">Name</Label>
                             <Input
+                                required
                                 value={form.name}
                                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                                 placeholder="e.g. Beef Brisket, Vacuum Bags"
@@ -145,7 +166,7 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
 
                     <div className="max-w-[10rem]">
                         <Label className="text-zinc-500 text-[11px] font-medium">Unit</Label>
-                        <Select value={form.unit} onValueChange={(v) => setForm((f) => ({ ...f, unit: v }))}>
+                        <Select required value={form.unit} onValueChange={(v) => setForm((f) => ({ ...f, unit: v }))}>
                             <SelectTrigger className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20">
                                 <SelectValue />
                             </SelectTrigger>
@@ -166,6 +187,7 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
                         <div>
                             <Label className="text-zinc-500 text-[11px] font-medium">Low Threshold</Label>
                             <Input
+                                required
                                 type="number"
                                 step="any"
                                 value={form.lowThreshold}
@@ -177,9 +199,10 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
                         <div>
                             <Label className="text-zinc-500 text-[11px] font-medium">Description</Label>
                             <Input
+                                required
                                 value={form.description}
                                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                                placeholder="Optional notes"
+                                placeholder="Short description"
                                 className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-indigo-500/50 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
                             />
                         </div>
