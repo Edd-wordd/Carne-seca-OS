@@ -1,5 +1,6 @@
 import { getSupplies } from '@/lib/supabase/queries/getSupplies';
 import { getSupplyPurchases } from '@/lib/supabase/queries/getSupplyPurchases';
+import { getSuppliers } from '@/lib/supabase/queries/getSuppliers';
 import SuppliesClient from './_components/SuppliesClient';
 
 function normalizeSupply(row) {
@@ -11,7 +12,7 @@ function normalizeSupply(row) {
         unit: row.unit ?? 'lb',
         description: row.description ?? '',
         lowThreshold: row.low_threshold ?? row.lowThreshold ?? null,
-        lastPurchasedAt: row.purchase_date ?? row.lastPurchasedAt ?? null,
+        lastPurchasedAt: row.last_purchase_date ?? row.lastPurchasedAt ?? null,
         purchasedFrom: row.purchased_from ?? row.purchasedFrom ?? '—',
         purchasedBy: row.purchased_by ?? row.purchasedBy ?? '—',
         quantity: row.quantity,
@@ -22,10 +23,25 @@ function normalizeSupply(row) {
     };
 }
 
+function normalizeSupplier(row) {
+    if (!row) return null;
+    const supplierId = row.supplier_id ?? row.id;
+    if (supplierId == null || supplierId === '') return null;
+    return { supplier_id: String(supplierId), name: row.name ?? '' };
+}
+
 export default async function SuppliesPage() {
-    const [suppliesData, purchasesData] = await Promise.all([getSupplies(), getSupplyPurchases()]);
+    const [suppliesData, purchasesData, suppliersData] = await Promise.all([
+        getSupplies(),
+        getSupplyPurchases(),
+        getSuppliers(),
+    ]);
     const rawSupplies = Array.isArray(suppliesData) ? suppliesData : [];
     const purchases = Array.isArray(purchasesData) ? purchasesData : [];
+    const rawSuppliersList = Array.isArray(suppliersData) ? suppliersData : [];
     const supplies = rawSupplies.map(normalizeSupply).filter(Boolean);
-    return <SuppliesClient initialSupplies={supplies} initialPurchaseHistory={purchases} />;
+    const suppliers = rawSuppliersList.map(normalizeSupplier).filter(Boolean);
+    return (
+        <SuppliesClient initialSupplies={supplies} initialPurchaseHistory={purchases} initialSuppliers={suppliers} />
+    );
 }

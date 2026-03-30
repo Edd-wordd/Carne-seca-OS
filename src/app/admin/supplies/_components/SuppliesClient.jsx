@@ -50,7 +50,7 @@ function purchaseHistoryHasDate(h) {
 
 function formatDate(d) {
     if (!d) return '—';
-    const dt = new Date(d);
+    const dt = new Date(String(d).slice(0, 10) + 'T00:00:00');
     const now = new Date();
     const diffDays = Math.floor((now - dt) / (1000 * 60 * 60 * 24));
     if (diffDays === 0) return 'Today';
@@ -59,7 +59,7 @@ function formatDate(d) {
     return dt.toLocaleDateString();
 }
 
-export default function SuppliesClient({ initialSupplies = [], initialPurchaseHistory = [] }) {
+export default function SuppliesClient({ initialSupplies = [], initialPurchaseHistory = [], initialSuppliers = [] }) {
     const [addModalOpen, setAddModalOpen] = React.useState(false);
     const [editModalOpen, setEditModalOpen] = React.useState(false);
     const [editingSupply, setEditingSupply] = React.useState(null);
@@ -72,12 +72,6 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
     const SUPPLY_PAGE_SIZE = 5;
     const [purchaseHistory, setPurchaseHistory] = React.useState(initialPurchaseHistory);
     const [purchaseModalOpen, setPurchaseModalOpen] = React.useState(false);
-
-    const uniqueSupplierNames = React.useMemo(() => {
-        return [...new Set(purchaseHistory.map((h) => h.purchasedFrom).filter((s) => s && s !== '—'))].sort((a, b) =>
-            a.localeCompare(b),
-        );
-    }, [purchaseHistory]);
 
     const openEditModal = (supply) => {
         setEditingSupply(supply);
@@ -299,7 +293,8 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
             <AddPurchaseDialog
                 open={purchaseModalOpen}
                 onOpenChange={setPurchaseModalOpen}
-                supplierNames={uniqueSupplierNames}
+                supplies={supplies}
+                suppliers={initialSuppliers}
                 paymentMethods={PAYMENT_METHODS}
                 onAddPurchase={(entry) => setPurchaseHistory((prev) => [entry, ...prev])}
             />

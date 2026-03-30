@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,20 +14,14 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-/** Mock catalog for item dropdown (aligned with demo purchase history). */
-const MOCK_PURCHASE_ITEMS = [
-    { id: 'item-beef-brisket', name: 'Beef Brisket', category: 'meat' },
-    { id: 'item-seasoning-mix', name: 'Seasoning Mix Bulk', category: 'seasoning' },
-    { id: 'item-vacuum-bags', name: 'Vacuum Bags 8x10', category: 'packaging' },
-    { id: 'item-vacuum-sealer', name: 'Vacuum Sealer Pro', category: 'equipment' },
-];
+import { addPurchase } from '@/app/actions/supplies/addPurchase';
+import { toast } from 'sonner';
 
 const SELECT_ADD_NEW = '__add_new__';
 
 function getDefaultPurchaseForm() {
     return {
-        date: new Date().toISOString().slice(0, 10),
+        date: new Date().toLocaleDateString('en-CA'),
         itemSelect: '',
         quantity: '',
         supplierSelect: '',
@@ -37,12 +32,24 @@ function getDefaultPurchaseForm() {
     };
 }
 
-export default function AddPurchaseDialog({ open, onOpenChange, supplierNames = [], paymentMethods = [], onAddPurchase }) {
+export default function AddPurchaseDialog({
+    open,
+    onOpenChange,
+    supplies = [],
+    suppliers = [],
+    paymentMethods = [],
+    onAddPurchase,
+}) {
+    const router = useRouter();
     const [purchaseForm, setPurchaseForm] = React.useState(getDefaultPurchaseForm);
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
 
     const handleDialogOpenChange = React.useCallback(
         (next) => {
-            if (!next) setPurchaseForm(getDefaultPurchaseForm());
+            if (!next) {
+                setPurchaseForm(getDefaultPurchaseForm());
+                setIsSubmitting(false);
+            }
             onOpenChange(next);
         },
         [onOpenChange],
@@ -54,38 +61,82 @@ export default function AddPurchaseDialog({ open, onOpenChange, supplierNames = 
 
     const isPurchaseNewSupplier = purchaseForm.supplierSelect === SELECT_ADD_NEW;
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const qty = parseFloat(purchaseForm.quantity);
         const costVal = parseFloat(purchaseForm.cost);
         if (Number.isNaN(qty) || qty <= 0 || Number.isNaN(costVal) || costVal < 0) {
+            toast.error('Enter valid quantity and unit cost');
             return;
         }
-        const sel = purchaseForm.itemSelect.trim();
-        if (!sel) return;
-        const row = MOCK_PURCHASE_ITEMS.find((x) => x.id === sel);
-        if (!row) return;
-        let purchasedFrom = '';
-        if (isPurchaseNewSupplier) {
-            purchasedFrom = purchaseForm.newSupplierName.trim();
-            if (!purchasedFrom) return;
-        } else {
-            purchasedFrom = purchaseForm.supplierSelect.trim();
-            if (!purchasedFrom) return;
+        const supplyId = purchaseForm.itemSelect.trim();
+        if (!supplyId) {
+            toast.error('Select a supply item');
+            return;
         }
-        const historyEntry = {
-            id: `PH-${Date.now()}`,
-            date: purchaseForm.date || new Date().toISOString().slice(0, 10),
-            name: row.name,
-            category: row.category,
-            quantity: qty,
-            purchasedFrom,
-            paymentMethod: purchaseForm.paymentMethod,
-            purchasedBy: purchaseForm.purchasedBy.trim() || '—',
-            cost: costVal,
-        };
-        onAddPurchase?.(historyEntry);
-        handleDialogOpenChange(false);
+        const supplyRow = supplies.find((s) => String(s.id) === supplyId);
+        if (!supplyRow) {
+            toast.error('Selected supply was not found');
+            return;
+        }
+        if (!purchaseForm.supplierSelect) {
+            toast.error('Select a supplier');
+            return;
+        }
+        if (isPurchaseNewSupplier) {
+            const name = purchaseForm.newSupplierName.trim();
+            if (!name) {
+                toast.error('Enter the new supplier name');
+                return;
+            }
+        }
+
+        const date = purchaseForm.date || new Date().toISOString().slice(0, 10);
+        const payment = purchaseForm.paymentMethod;
+        const purchasedBy = purchaseForm.purchasedBy.trim() || '';
+
+        setIsSubmitting(true);
+        try {
+            const result = await addPurchase({
+                item: supplyId,
+                date,
+                quantity: qty,
+                cost: costVal,
+                supplier: purchaseForm.supplierSelect,
+                payment,
+                purchasedBy,
+                newSupplier: isPurchaseNewSupplier ? purchaseForm.newSupplierName.trim() : undefined,
+            });
+            if (!result?.success) {
+                toast.error(result?.message ?? 'Failed to add purchase');
+                return;
+            }
+
+            const purchasedFromLabel = isPurchaseNewSupplier
+                ? purchaseForm.newSupplierName.trim()
+                : (suppliers.find((s) => String(s.supplier_id) === String(purchaseForm.supplierSelect))?.name ?? '—');
+
+            const historyEntry = {
+                id: `PH-${Date.now()}`,
+                date,
+                name: supplyRow.name,
+                category: supplyRow.category,
+                quantity: qty,
+                unit_cost: costVal,
+                cost: qty * costVal,
+                purchasedFrom: purchasedFromLabel,
+                paymentMethod: payment,
+                purchasedBy: purchasedBy || '—',
+            };
+            onAddPurchase?.(historyEntry);
+            toast.success('Purchase recorded');
+            router.refresh();
+            handleDialogOpenChange(false);
+        } catch (err) {
+            toast.error(err?.message ?? 'Failed to add purchase');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -96,7 +147,9 @@ export default function AddPurchaseDialog({ open, onOpenChange, supplierNames = 
                     aria-hidden
                 />
                 <DialogHeader className="pb-3 border-b border-zinc-800/80">
-                    <DialogTitle className="text-zinc-100 text-base font-semibold tracking-tight">Add purchase</DialogTitle>
+                    <DialogTitle className="text-zinc-100 text-base font-semibold tracking-tight">
+                        Add purchase
+                    </DialogTitle>
                     <DialogDescription className="text-zinc-500 text-xs mt-0.5">
                         Record a line in purchase history (same fields as the table below)
                     </DialogDescription>
@@ -110,8 +163,8 @@ export default function AddPurchaseDialog({ open, onOpenChange, supplierNames = 
                             className="mt-1 flex h-9 w-full rounded-md border border-zinc-700/80 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20"
                         >
                             <option value="">Select item</option>
-                            {MOCK_PURCHASE_ITEMS.map((item) => (
-                                <option key={item.id} value={item.id}>
+                            {supplies.map((item) => (
+                                <option key={item.id} value={String(item.id)}>
                                     {item.name}
                                 </option>
                             ))}
@@ -140,7 +193,7 @@ export default function AddPurchaseDialog({ open, onOpenChange, supplierNames = 
                             />
                         </div>
                         <div>
-                            <Label className="text-zinc-500 text-[11px] font-medium">Cost ($)</Label>
+                            <Label className="text-zinc-500 text-[11px] font-medium">Unit cost ($)</Label>
                             <Input
                                 type="number"
                                 step="0.01"
@@ -167,9 +220,9 @@ export default function AddPurchaseDialog({ open, onOpenChange, supplierNames = 
                                 className="mt-1 flex h-9 w-full rounded-md border border-zinc-700/80 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20"
                             >
                                 <option value="">Select supplier</option>
-                                {supplierNames.map((name) => (
-                                    <option key={name} value={name}>
-                                        {name}
+                                {suppliers.map((supplier) => (
+                                    <option key={supplier.supplier_id} value={supplier.supplier_id}>
+                                        {supplier.name}
                                     </option>
                                 ))}
                                 <option value={SELECT_ADD_NEW}>+ Add new</option>
@@ -177,7 +230,9 @@ export default function AddPurchaseDialog({ open, onOpenChange, supplierNames = 
                             {isPurchaseNewSupplier && (
                                 <Input
                                     value={purchaseForm.newSupplierName}
-                                    onChange={(e) => setPurchaseForm((f) => ({ ...f, newSupplierName: e.target.value }))}
+                                    onChange={(e) =>
+                                        setPurchaseForm((f) => ({ ...f, newSupplierName: e.target.value }))
+                                    }
                                     placeholder="New supplier name"
                                     className="mt-2 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-emerald-500/50 focus-visible:ring-2 focus-visible:ring-emerald-500/20"
                                 />
@@ -225,9 +280,10 @@ export default function AddPurchaseDialog({ open, onOpenChange, supplierNames = 
                         <Button
                             type="submit"
                             size="sm"
-                            className="bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 text-sm font-medium"
+                            disabled={isSubmitting}
+                            className="bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 text-sm font-medium disabled:opacity-60"
                         >
-                            Add purchase
+                            {isSubmitting ? 'Saving…' : 'Add purchase'}
                         </Button>
                     </DialogFooter>
                 </form>

@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { purchaseHistoryLineCost } from '@/lib/utils/purchaseHistoryLineCost';
 
 export default function SuppliesPurchaseHistoryTable({
     categories,
@@ -135,9 +136,13 @@ export default function SuppliesPurchaseHistoryTable({
                             </TableCell>
                         </TableRow>
                     ) : (
-                        paginatedHistory.map((h) => (
+                        paginatedHistory.map((h, index) => {
+                            const lineCost = purchaseHistoryLineCost(h);
+                            // Position in sortedFilteredHistory is unique; h.id may repeat (e.g. supply_id mislabeled as id).
+                            const rowKey = `ph-${(currentPage - 1) * pageSize + index}`;
+                            return (
                             <TableRow
-                                key={h.id}
+                                key={rowKey}
                                 className="border-zinc-700/80 group transition-colors hover:!bg-zinc-700/50"
                             >
                                 <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
@@ -165,10 +170,12 @@ export default function SuppliesPurchaseHistoryTable({
                                     {h.purchasedBy ?? '—'}
                                 </TableCell>
                                 <TableCell className="text-zinc-100 px-3 py-1.5 text-right tabular-nums text-[11px] font-medium group-hover:text-white">
-                                    ${h.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    $
+                                    {lineCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </TableCell>
                             </TableRow>
-                        ))
+                            );
+                        })
                     )}
                 </TableBody>
             </Table>
