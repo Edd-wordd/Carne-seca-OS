@@ -30,6 +30,25 @@ function normalizeSupplier(row) {
     return { supplier_id: String(supplierId), name: row.name ?? '' };
 }
 
+function normalizePurchase(row) {
+    if (!row) return null;
+    const unit = parseFloat(row.unit_cost ?? row.unitCost);
+    const qty = parseFloat(row.quantity);
+    const cost = Number.isFinite(unit) && Number.isFinite(qty) ? unit * qty : null;
+    return {
+        id: String(row.purchase_id ?? row.id ?? ''),
+        name: row.name ?? '',
+        category: row.category ?? '',
+        date: row.date ?? row.purchase_date ?? null,
+        quantity: row.quantity,
+        unit_cost: row.unit_cost ?? row.unitCost,
+        cost,
+        purchasedFrom: row.supplier_name ?? row.purchased_from ?? row.purchasedFrom ?? '—',
+        paymentMethod: row.payment_method ?? row.paymentMethod,
+        purchasedBy: row.purchased_by ?? row.purchasedBy ?? '—',
+    };
+}
+
 export default async function SuppliesPage() {
     const [suppliesData, purchasesData, suppliersData] = await Promise.all([
         getSupplies(),
@@ -37,9 +56,10 @@ export default async function SuppliesPage() {
         getSuppliers(),
     ]);
     const rawSupplies = Array.isArray(suppliesData) ? suppliesData : [];
-    const purchases = Array.isArray(purchasesData) ? purchasesData : [];
+    const rawPurchases = Array.isArray(purchasesData) ? purchasesData : [];
     const rawSuppliersList = Array.isArray(suppliersData) ? suppliersData : [];
     const supplies = rawSupplies.map(normalizeSupply).filter(Boolean);
+    const purchases = rawPurchases.map(normalizePurchase).filter(Boolean);
     const suppliers = rawSuppliersList.map(normalizeSupplier).filter(Boolean);
     return (
         <SuppliesClient initialSupplies={supplies} initialPurchaseHistory={purchases} initialSuppliers={suppliers} />
