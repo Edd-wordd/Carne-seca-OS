@@ -2,14 +2,6 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-} from '@/components/ui/dialog';
 import SuppliesKPIs from './SuppliesKPIs.jsx';
 import SuppliesMonthlySpendChart from './SuppliesMonthlySpendChart.jsx';
 import SuppliesItemsTable from './SuppliesItemsTable.jsx';
@@ -17,10 +9,10 @@ import SuppliesPurchaseHistoryTable from './SuppliesPurchaseHistoryTable.jsx';
 import AddPurchaseDialog from './AddPurchaseDialog.jsx';
 import AddSupplyDialog from './AddSupplyDialog.jsx';
 import EditSupplyDialog from './EditSupplyDialog.jsx';
+import DeleteSupplyDialog from './DeleteSupplyDialog.jsx';
 import { Plus, Beef, Wrench, Box, Sparkles, Layers, Download } from 'lucide-react';
 import { exportSuppliesToCsv } from '@/lib/utils/exportSupplies';
 import { purchaseHistoryLineCost } from '@/lib/utils/purchaseHistoryLineCost';
-
 const SUPPLY_CATEGORIES = [
     { value: 'meat', label: 'Meat', icon: Beef },
     { value: 'equipment', label: 'Equipment', icon: Wrench },
@@ -81,13 +73,6 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
     const openDeleteModal = (supply) => {
         setSupplyToDelete(supply);
         setDeleteModalOpen(true);
-    };
-
-    const handleDeleteSupply = () => {
-        if (!supplyToDelete) return;
-        setSupplies((prev) => asSuppliesArray(prev).filter((s) => s.id !== supplyToDelete.id));
-        setSupplyToDelete(null);
-        setDeleteModalOpen(false);
     };
 
     const handleUpdateSupply = React.useCallback((updated, original) => {
@@ -331,48 +316,17 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
                 onUpdateSupply={handleUpdateSupply}
             />
 
-            {/* Delete confirmation */}
-            <Dialog
+            <DeleteSupplyDialog
                 open={deleteModalOpen}
-                onOpenChange={(open) => {
-                    if (!open) {
-                        setDeleteModalOpen(false);
-                        setSupplyToDelete(null);
-                    }
+                onOpenChange={(next) => {
+                    setDeleteModalOpen(next);
+                    if (!next) setSupplyToDelete(null);
                 }}
-            >
-                <DialogContent className="border-zinc-700/80 bg-zinc-900/95 sm:max-w-sm">
-                    <DialogHeader>
-                        <DialogTitle className="text-zinc-100 text-base">Delete Supply</DialogTitle>
-                        <DialogDescription className="text-zinc-500 text-sm">
-                            Are you sure you want to delete{' '}
-                            <strong className="text-zinc-300">{supplyToDelete?.name}</strong>? This will remove it from
-                            the supply list. Purchase history will be kept for records.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2 sm:gap-2 pt-4">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                                setDeleteModalOpen(false);
-                                setSupplyToDelete(null);
-                            }}
-                            className="border-zinc-700 text-zinc-400"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={handleDeleteSupply}
-                            className="bg-red-600 hover:bg-red-500 text-white"
-                        >
-                            Delete
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                supply={supplyToDelete}
+                onDeleted={(supplyId) =>
+                    setSupplies((prev) => asSuppliesArray(prev).filter((s) => String(s.id) !== supplyId))
+                }
+            />
         </div>
     );
 }
