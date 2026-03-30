@@ -143,6 +143,7 @@ export default function AddPurchaseDialog({
 
             const historyEntry = {
                 id: `PH-${Date.now()}`,
+                supplyId: String(supplyId),
                 date,
                 name: supplyRow.name,
                 category: supplyRow.category,

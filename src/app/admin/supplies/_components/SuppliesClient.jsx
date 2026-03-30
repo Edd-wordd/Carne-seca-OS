@@ -90,6 +90,17 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
         setDeleteModalOpen(false);
     };
 
+    const handleUpdateSupply = React.useCallback((updated, original) => {
+        setSupplies((prev) => asSuppliesArray(prev).map((s) => (String(s.id) === String(original.id) ? updated : s)));
+        setPurchaseHistory((prev) =>
+            prev.map((h) =>
+                h.supplyId != null && String(h.supplyId) === String(original.id)
+                    ? { ...h, name: updated.name, category: updated.category }
+                    : h,
+            ),
+        );
+    }, []);
+
     const uniqueMonthsForMetrics = React.useMemo(() => {
         const withDate = purchaseHistory.filter(purchaseHistoryHasDate);
         const months = [...new Set(withDate.map((h) => String(h.date).slice(0, 7)))].sort().reverse();
@@ -317,17 +328,7 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
                     if (!next) setEditingSupply(null);
                 }}
                 categories={SUPPLY_CATEGORIES}
-                onSave={(updated, original) => {
-                    setSupplies((prev) => asSuppliesArray(prev).map((s) => (s.id === original.id ? updated : s)));
-                    setPurchaseHistory((prev) =>
-                        prev.map((h) => {
-                            if (h.name === original.name && h.date === original.lastPurchasedAt) {
-                                return { ...h, name: updated.name, category: updated.category };
-                            }
-                            return h;
-                        }),
-                    );
-                }}
+                onUpdateSupply={handleUpdateSupply}
             />
 
             {/* Delete confirmation */}

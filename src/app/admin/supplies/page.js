@@ -36,7 +36,8 @@ function normalizePurchase(row) {
     const qty = parseFloat(row.quantity);
     const cost = Number.isFinite(unit) && Number.isFinite(qty) ? unit * qty : null;
     return {
-        id: String(row.purchase_id ?? row.id ?? ''),
+        id: String(row.purchase_id ?? ''),
+        supplyId: String(row.id ?? row.supply_id ?? row.supplyId ?? ''),
         name: row.name ?? '',
         category: row.category ?? '',
         date: row.date ?? row.purchase_date ?? null,

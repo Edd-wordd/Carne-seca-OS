@@ -13,6 +13,8 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { updateSupplies } from '@/app/actions/supplies/updateSupplies';
+import { toast } from 'sonner';
 
 function formStateFromSupply(supply) {
     return {
@@ -24,7 +26,20 @@ function formStateFromSupply(supply) {
     };
 }
 
-export default function EditSupplyDialog({ open, onOpenChange, supply, categories = [], onSave }) {
+function mapUpdatedRowToSupply(row, previousSupply) {
+    if (!row) return null;
+    return {
+        ...previousSupply,
+        id: String(row.id ?? previousSupply.id),
+        name: row.name,
+        category: row.category,
+        unit: row.unit ?? 'lb',
+        description: row.description ?? '',
+        lowThreshold: row.low_threshold ?? null,
+    };
+}
+
+export default function EditSupplyDialog({ open, onOpenChange, supply, categories = [], onUpdateSupply }) {
     const [form, setForm] = React.useState({
         name: '',
         category: 'meat',
@@ -32,6 +47,7 @@ export default function EditSupplyDialog({ open, onOpenChange, supply, categorie
         description: '',
         lowThreshold: '',
     });
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
 
     React.useEffect(() => {
         if (open && supply) {
@@ -40,24 +56,68 @@ export default function EditSupplyDialog({ open, onOpenChange, supply, categorie
     }, [open, supply]);
 
     const handleClose = React.useCallback(() => {
+        setIsSubmitting(false);
         onOpenChange(false);
     }, [onOpenChange]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!supply) return;
-        const lowThreshold =
-            form.lowThreshold === '' || form.lowThreshold == null ? null : parseFloat(form.lowThreshold);
-        const updated = {
-            ...supply,
-            category: form.category,
-            name: form.name,
-            unit: form.unit,
-            description: form.description || '',
-            lowThreshold,
-        };
-        onSave?.(updated, supply);
-        handleClose();
+        const name = form.name.trim();
+        if (!name) {
+            toast.error('Name is required');
+            return;
+        }
+        if (!form.category) {
+            toast.error('Category is required');
+            return;
+        }
+        if (!form.unit) {
+            toast.error('Unit is required');
+            return;
+        }
+        if (form.lowThreshold === '' || form.lowThreshold == null) {
+            toast.error('Low threshold is required');
+            return;
+        }
+        const parsedLow = parseFloat(form.lowThreshold);
+        if (!Number.isFinite(parsedLow)) {
+            toast.error('Enter a valid low threshold');
+            return;
+        }
+        const description = form.description.trim();
+        if (!description) {
+            toast.error('Description is required');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const result = await updateSupplies({
+                supplyId: supply.id,
+                name,
+                category: form.category,
+                unit: form.unit,
+                lowThreshold: parsedLow,
+                description,
+            });
+            if (!result?.success) {
+                toast.error(result?.message ?? 'Failed to update supply');
+                return;
+            }
+            const updated = mapUpdatedRowToSupply(result.supply, supply);
+            if (!updated) {
+                toast.error('Supply was updated but the response was empty');
+                return;
+            }
+            onUpdateSupply?.(updated, supply);
+            toast.success('Supply updated');
+            handleClose();
+        } catch (err) {
+            toast.error(err?.message ?? 'Failed to update supply');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const dialogOpen = Boolean(open && supply);
@@ -163,9 +223,10 @@ export default function EditSupplyDialog({ open, onOpenChange, supply, categorie
                         <Button
                             type="submit"
                             size="sm"
-                            className="bg-amber-600 text-white hover:bg-amber-500 shadow-lg shadow-amber-500/20 text-sm font-medium"
+                            disabled={isSubmitting}
+                            className="bg-amber-600 text-white hover:bg-amber-500 shadow-lg shadow-amber-500/20 text-sm font-medium disabled:opacity-60"
                         >
-                            Save Changes
+                            {isSubmitting ? 'Saving…' : 'Save Changes'}
                         </Button>
                     </DialogFooter>
                 </form>
