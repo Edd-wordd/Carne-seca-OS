@@ -29,7 +29,6 @@ function getDefaultPurchaseForm() {
         date: new Date().toISOString().slice(0, 10),
         itemSelect: '',
         quantity: '',
-        weight: '',
         supplierSelect: '',
         newSupplierName: '',
         paymentMethod: 'credit_card',
@@ -74,15 +73,12 @@ export default function AddPurchaseDialog({ open, onOpenChange, supplierNames = 
             purchasedFrom = purchaseForm.supplierSelect.trim();
             if (!purchasedFrom) return;
         }
-        const weight =
-            purchaseForm.weight === '' || purchaseForm.weight == null ? undefined : parseFloat(purchaseForm.weight);
         const historyEntry = {
             id: `PH-${Date.now()}`,
             date: purchaseForm.date || new Date().toISOString().slice(0, 10),
             name: row.name,
             category: row.category,
             quantity: qty,
-            ...(weight != null && !Number.isNaN(weight) ? { weight } : {}),
             purchasedFrom,
             paymentMethod: purchaseForm.paymentMethod,
             purchasedBy: purchaseForm.purchasedBy.trim() || '—',
@@ -122,7 +118,7 @@ export default function AddPurchaseDialog({ open, onOpenChange, supplierNames = 
                         </select>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <div>
                             <Label className="text-zinc-500 text-[11px] font-medium">Date</Label>
                             <Input
@@ -140,17 +136,6 @@ export default function AddPurchaseDialog({ open, onOpenChange, supplierNames = 
                                 value={purchaseForm.quantity}
                                 onChange={(e) => setPurchaseForm((f) => ({ ...f, quantity: e.target.value }))}
                                 placeholder="50"
-                                className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-emerald-500/50 focus-visible:ring-2 focus-visible:ring-emerald-500/20 tabular-nums"
-                            />
-                        </div>
-                        <div>
-                            <Label className="text-zinc-500 text-[11px] font-medium">Weight (lb)</Label>
-                            <Input
-                                type="number"
-                                step="0.1"
-                                value={purchaseForm.weight}
-                                onChange={(e) => setPurchaseForm((f) => ({ ...f, weight: e.target.value }))}
-                                placeholder="—"
                                 className="mt-1 h-9 border-zinc-700/80 bg-zinc-950/80 text-zinc-100 text-sm placeholder:text-zinc-500 focus-visible:border-emerald-500/50 focus-visible:ring-2 focus-visible:ring-emerald-500/20 tabular-nums"
                             />
                         </div>
