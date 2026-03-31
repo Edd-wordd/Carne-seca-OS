@@ -1,4 +1,4 @@
-// middleware.js
+// proxy.js
 // Assigns a persistent guest ID to anonymous users on shop/cart/checkout routes
 // so the app can track their cart/session without requiring login.
 import { NextResponse } from 'next/server';
@@ -10,7 +10,7 @@ export const config = {
 
 const recentRequests = new Map();
 
-export function middleware(request) {
+export default function middleware(request) {
     const cookieName = 'guest_id';
     const guestId = request.cookies.get(cookieName)?.value;
 
