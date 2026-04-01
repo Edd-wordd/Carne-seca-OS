@@ -28,6 +28,10 @@ import {
     BookUser,
     Megaphone,
     TicketPercent,
+    CalendarDays,
+    ClipboardList,
+    TrendingUp,
+    Boxes,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
 import { Input } from '@/components/ui/input';
@@ -77,6 +81,16 @@ const navSections = [
         items: [{ href: '/admin/partners', label: 'Partners', icon: Users2 }],
     },
     {
+        title: 'Events',
+        icon: CalendarDays,
+        items: [
+            { href: '/admin/events', label: 'Calendar', icon: CalendarDays },
+            { href: '/admin/events/sales-log', label: 'Sales Log', icon: ClipboardList },
+            { href: '/admin/events/roi', label: 'ROI', icon: TrendingUp },
+            { href: '/admin/events/inventory-used', label: 'Inventory Used', icon: Boxes },
+        ],
+    },
+    {
         title: 'Socials',
         icon: Share2,
         items: [{ href: '/admin/social', label: 'Social', icon: Share2 }],
@@ -99,6 +113,18 @@ const navSections = [
     },
 ];
 
+function pathnameMatchesNavHref(pathname, href) {
+    if (pathname === href) return true;
+    if (href === '/admin') return false;
+    return pathname.startsWith(`${href}/`);
+}
+
+function getActiveNavHrefForSection(items, pathname) {
+    const matched = items.filter(({ href }) => pathnameMatchesNavHref(pathname, href));
+    if (matched.length === 0) return null;
+    return matched.reduce((a, b) => (a.href.length >= b.href.length ? a : b)).href;
+}
+
 export default function AdminLayout({ children }) {
     const pathname = usePathname();
     const router = useRouter();
@@ -109,7 +135,7 @@ export default function AdminLayout({ children }) {
     const { signOut } = useClerk();
 
     const sectionContainingCurrentPage = navSections.find((s) =>
-        s.items.some(({ href }) => pathname === href || (href !== '/admin' && pathname.startsWith(href))),
+        s.items.some(({ href }) => pathnameMatchesNavHref(pathname, href)),
     )?.title;
     const effectiveSection = hoveredSection ?? sectionContainingCurrentPage ?? navSections[0]?.title;
     const showItemsDrawer = isHovering && effectiveSection && !isUserPopoutOpen;
@@ -148,10 +174,7 @@ export default function AdminLayout({ children }) {
                                     const isHovered = hoveredSection === title;
                                     const hasActiveChild = navSections
                                         .find((s) => s.title === title)
-                                        ?.items.some(
-                                            ({ href }) =>
-                                                pathname === href || (href !== '/admin' && pathname.startsWith(href)),
-                                        );
+                                        ?.items.some(({ href }) => pathnameMatchesNavHref(pathname, href));
                                     return (
                                         <Tooltip key={title}>
                                             <TooltipTrigger asChild>
@@ -253,9 +276,11 @@ export default function AdminLayout({ children }) {
                                         navSections
                                             .find((s) => s.title === effectiveSection)
                                             ?.items.map(({ href, label, icon: Icon }) => {
+                                                const sectionItems =
+                                                    navSections.find((s) => s.title === effectiveSection)?.items ??
+                                                    [];
                                                 const isActive =
-                                                    pathname === href ||
-                                                    (href !== '/admin' && pathname.startsWith(href));
+                                                    getActiveNavHrefForSection(sectionItems, pathname) === href;
                                                 return (
                                                     <Link
                                                         key={href}

@@ -20,6 +20,10 @@ const PATH_LABELS = {
     customers: 'Customers',
     campaigns: 'Campaigns',
     coupons: 'Coupons',
+    events: 'Events',
+    'sales-log': 'Sales Log',
+    roi: 'ROI',
+    'inventory-used': 'Inventory Used',
     settings: 'Settings',
 };
 
