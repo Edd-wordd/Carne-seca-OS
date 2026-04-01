@@ -24,6 +24,7 @@ import {
     LogOut,
     Wallet,
     PieChart,
+    Handshake,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
 import { Input } from '@/components/ui/input';
@@ -60,6 +61,11 @@ const navSections = [
         ],
     },
     {
+        title: 'Partners',
+        icon: Handshake,
+        items: [{ href: '/admin/partners', label: 'Partners', icon: Users2 }],
+    },
+    {
         title: 'Socials',
         icon: Share2,
         items: [{ href: '/admin/social', label: 'Social', icon: Share2 }],
@@ -76,7 +82,6 @@ const navSections = [
             { href: '/admin/production', label: 'Production', icon: Flame },
             { href: '/admin/inventory', label: 'Inventory', icon: Box },
             { href: '/admin/supplies', label: 'Supplies', icon: Wrench },
-            { href: '/admin/partners', label: 'Partners', icon: Users2 },
             { href: '/admin/catalog', label: 'Catalog', icon: Package },
         ],
     },
