@@ -1,9 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -49,12 +46,6 @@ const FULFILLMENT_OPTIONS = [
     { value: 'delivered', label: 'Delivered' },
 ];
 
-const ORDER_SOURCES = [
-    { value: 'website', label: 'Website' },
-    { value: 'amazon', label: 'Amazon' },
-    { value: 'pos', label: 'POS' },
-];
-
 // Mock orders data
 const MOCK_ORDERS = [
     {
@@ -67,7 +58,6 @@ const MOCK_ORDERS = [
         total: 847,
         items: 3,
         refunded: false,
-        source: 'website',
     },
     {
         id: 'ORD-1081',
@@ -79,7 +69,6 @@ const MOCK_ORDERS = [
         total: 1242,
         items: 5,
         refunded: false,
-        source: 'amazon',
     },
     {
         id: 'ORD-1080',
@@ -91,7 +80,6 @@ const MOCK_ORDERS = [
         total: 389,
         items: 1,
         refunded: false,
-        source: 'website',
     },
     {
         id: 'ORD-1079',
@@ -103,7 +91,6 @@ const MOCK_ORDERS = [
         total: 621,
         items: 2,
         refunded: false,
-        source: 'pos',
     },
     {
         id: 'ORD-1078',
@@ -115,7 +102,6 @@ const MOCK_ORDERS = [
         total: 156,
         items: 1,
         refunded: false,
-        source: 'website',
     },
     {
         id: 'ORD-1077',
@@ -127,7 +113,6 @@ const MOCK_ORDERS = [
         total: 934,
         items: 4,
         refunded: false,
-        source: 'amazon',
     },
     {
         id: 'ORD-1076',
@@ -139,7 +124,6 @@ const MOCK_ORDERS = [
         total: 428,
         items: 2,
         refunded: true,
-        source: 'website',
     },
     {
         id: 'ORD-1075',
@@ -151,7 +135,6 @@ const MOCK_ORDERS = [
         total: 612,
         items: 3,
         refunded: true,
-        source: 'pos',
     },
 ];
 
@@ -232,10 +215,10 @@ function OrdersTable({
 
     return (
         <>
-            <div className="overflow-hidden rounded border border-zinc-700/80">
-                <div className="border-b border-zinc-700/80 bg-zinc-900/80 px-3 py-1.5">
+            <div className="overflow-hidden rounded border border-zinc-800">
+                <div className="border-b border-zinc-800 bg-zinc-900/80 px-3 py-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                        <h2 className="text-zinc-100 text-xs font-medium">Orders</h2>
+                        <h2 className="text-zinc-200 text-sm font-medium">Orders</h2>
                         <div className="relative">
                             <Search className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-zinc-500" />
                             <Input
@@ -265,7 +248,6 @@ function OrdersTable({
                                     )}
                                 </span>
                             </TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Source</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Items</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Status</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Fulfillment</TableHead>
@@ -277,7 +259,7 @@ function OrdersTable({
                     <TableBody>
                         {orders.length === 0 ? (
                             <TableRow className="border-zinc-700/80">
-                                <TableCell colSpan={10} className="text-zinc-400 py-4 text-center text-[11px]">
+                                <TableCell colSpan={9} className="text-zinc-400 py-4 text-center text-[11px]">
                                     {hasActiveSearch ? 'No orders match your search or filters' : 'No orders'}
                                 </TableCell>
                             </TableRow>
@@ -295,10 +277,6 @@ function OrdersTable({
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] tabular-nums group-hover:text-zinc-300">
                                         {formatDateTime(order.date)}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
-                                        {ORDER_SOURCES.find((s) => s.value === (order.source ?? 'website'))?.label ??
-                                            'Website'}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-center text-[11px] tabular-nums group-hover:text-zinc-300">
                                         {order.items ?? 0}
@@ -444,13 +422,6 @@ const FULFILLMENT_FILTER_OPTIONS = [
     { value: 'delivered', label: 'Delivered' },
 ];
 
-const SOURCE_FILTER_OPTIONS = [
-    { value: 'all', label: 'All sources' },
-    { value: 'website', label: 'Website' },
-    { value: 'amazon', label: 'Amazon' },
-    { value: 'pos', label: 'POS' },
-];
-
 const DATE_FILTER_OPTIONS = [
     { value: 'all', label: 'All dates' },
     { value: 'today', label: 'Today' },
@@ -512,7 +483,7 @@ function getOrderDate(order) {
     return isNaN(d.getTime()) ? null : d;
 }
 
-function applyOrderFilters(orders, statusFilter, fulfillmentFilter, sourceFilter, dateFilter, dateFrom, dateTo) {
+function applyOrderFilters(orders, statusFilter, fulfillmentFilter, dateFilter, dateFrom, dateTo) {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const todayEnd = new Date(todayStart);
@@ -554,7 +525,6 @@ function applyOrderFilters(orders, statusFilter, fulfillmentFilter, sourceFilter
     return orders.filter((o) => {
         if (statusFilter !== 'all' && o.status !== statusFilter) return false;
         if (fulfillmentFilter !== 'all' && o.fulfillment !== fulfillmentFilter) return false;
-        if (sourceFilter !== 'all' && (o.source ?? 'website') !== sourceFilter) return false;
 
         const orderDate = getOrderDate(o);
         if (!orderDate) return true;
@@ -613,7 +583,6 @@ export default function OrdersPage() {
     const [searchQuery, setSearchQuery] = React.useState('');
     const [filterStatus, setFilterStatus] = React.useState('all');
     const [filterFulfillment, setFilterFulfillment] = React.useState('all');
-    const [filterSource, setFilterSource] = React.useState('all');
     const [filterDate, setFilterDate] = React.useState('all');
     const [dateFrom, setDateFrom] = React.useState(() => {
         const d = new Date();
@@ -632,7 +601,6 @@ export default function OrdersPage() {
         items: 1,
         total: '',
         fulfillment: 'unfulfilled',
-        source: 'website',
     });
 
     const resetNewOrderForm = () =>
@@ -641,7 +609,6 @@ export default function OrdersPage() {
             items: 1,
             total: '',
             fulfillment: 'unfulfilled',
-            source: 'website',
         });
 
     const allOrders = orders;
@@ -669,7 +636,6 @@ export default function OrdersPage() {
                 total,
                 items: Math.max(1, newOrderForm.items),
                 refunded: false,
-                source: newOrderForm.source,
             },
             ...prev,
         ]);
@@ -681,8 +647,8 @@ export default function OrdersPage() {
 
     const filteredOrders = React.useMemo(() => {
         const bySearch = filterOrdersBySearch(allOrders, searchQuery);
-        return applyOrderFilters(bySearch, filterStatus, filterFulfillment, filterSource, filterDate, dateFrom, dateTo);
-    }, [allOrders, searchQuery, filterStatus, filterFulfillment, filterSource, filterDate, dateFrom, dateTo]);
+        return applyOrderFilters(bySearch, filterStatus, filterFulfillment, filterDate, dateFrom, dateTo);
+    }, [allOrders, searchQuery, filterStatus, filterFulfillment, filterDate, dateFrom, dateTo]);
 
     const sortedOrders = React.useMemo(() => {
         return [...filteredOrders].sort((a, b) => {
@@ -698,7 +664,7 @@ export default function OrdersPage() {
 
     React.useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, filterStatus, filterFulfillment, filterSource, filterDate, dateFrom, dateTo]);
+    }, [searchQuery, filterStatus, filterFulfillment, filterDate, dateFrom, dateTo]);
 
     const ordersForTab = sortedOrders;
     const totalPages = Math.max(1, Math.ceil(ordersForTab.length / PAGE_SIZE));
@@ -710,7 +676,6 @@ export default function OrdersPage() {
             'Order ID',
             'Customer',
             'Date',
-            'Source',
             'Items',
             'Status',
             'Fulfillment',
@@ -723,7 +688,6 @@ export default function OrdersPage() {
                 o.id,
                 o.customer,
                 formatDateTime(o.date),
-                ORDER_SOURCES.find((s) => s.value === (o.source ?? 'website'))?.label ?? 'Website',
                 o.items ?? 0,
                 o.status,
                 o.fulfillment,
@@ -781,19 +745,6 @@ export default function OrdersPage() {
             },
         ];
     }, [allOrders, pendingOrders, refundedOrders]);
-
-    const ordersBySourceData = React.useMemo(() => {
-        const counts = { website: 0, amazon: 0, pos: 0 };
-        filteredOrders.forEach((o) => {
-            const src = o.source ?? 'website';
-            if (src in counts) counts[src]++;
-        });
-        return ORDER_SOURCES.map((s) => ({
-            source: s.label,
-            count: counts[s.value] ?? 0,
-            fill: s.value === 'website' ? 'var(--chart-1)' : s.value === 'amazon' ? 'var(--chart-2)' : 'var(--chart-3)',
-        }));
-    }, [filteredOrders]);
 
     return (
         <div className="space-y-4">
@@ -908,104 +859,44 @@ export default function OrdersPage() {
                 })}
             </div>
 
-            <Card className="border-[0.5px] border-zinc-800 overflow-hidden bg-zinc-900">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-semibold text-zinc-100">Orders by Source</CardTitle>
-                    <CardDescription className="text-[10px] text-zinc-500">
-                        Distribution of orders (reflects current filters)
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ChartContainer
-                        config={{
-                            count: { label: 'Orders', color: 'var(--chart-1)' },
-                            website: { label: 'Website', color: 'var(--chart-1)' },
-                            amazon: { label: 'Amazon', color: 'var(--chart-2)' },
-                            pos: { label: 'POS', color: 'var(--chart-3)' },
-                        }}
-                        className="h-[180px] w-full"
-                    >
-                        <AreaChart data={ordersBySourceData} margin={{ top: 4, right: 4, bottom: 4, left: 0 }}>
-                            <defs>
-                                <linearGradient id="sourceAreaFill" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.4} />
-                                    <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.05} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid
-                                strokeDasharray="2 2"
-                                stroke="var(--border)"
-                                opacity={0.5}
-                                vertical={false}
-                            />
-                            <XAxis
-                                dataKey="source"
-                                tickLine={false}
-                                axisLine={false}
-                                tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
-                            />
-                            <YAxis
-                                tickLine={false}
-                                axisLine={false}
-                                tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
-                            />
-                            <ChartTooltip content={<ChartTooltipContent formatter={(v) => [`${v} orders`]} />} />
-                            <Area
-                                type="monotone"
-                                dataKey="count"
-                                stroke="var(--chart-1)"
-                                strokeWidth={1.5}
-                                fill="url(#sourceAreaFill)"
-                            />
-                        </AreaChart>
-                    </ChartContainer>
-                </CardContent>
-            </Card>
-
             <div className="flex flex-wrap items-center gap-2">
-                {STATUS_FILTER_OPTIONS.map((opt) => (
-                    <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setFilterStatus(opt.value)}
-                        className={cn(
-                            'rounded border px-2.5 py-1.5 text-[10px] font-medium transition-colors shrink-0',
-                            filterStatus === opt.value
-                                ? 'border-zinc-500 bg-zinc-700/80 text-zinc-100'
-                                : 'border-zinc-600/50 bg-zinc-800/50 text-zinc-300 hover:border-zinc-500/50 hover:bg-zinc-700/50 hover:text-zinc-200',
-                        )}
-                    >
-                        {opt.label}
-                    </button>
-                ))}
-                <button
-                    type="button"
-                    onClick={() => setFilterFulfillment(filterFulfillment === 'unfulfilled' ? 'all' : 'unfulfilled')}
-                    className={cn(
-                        'rounded border px-2.5 py-1.5 text-[10px] font-medium transition-colors shrink-0',
-                        filterFulfillment === 'unfulfilled'
-                            ? 'border-zinc-500 bg-zinc-700/80 text-zinc-100'
-                            : 'border-zinc-600/50 bg-zinc-800/50 text-zinc-300 hover:border-zinc-500/50 hover:bg-zinc-700/50 hover:text-zinc-200',
-                    )}
-                >
-                    Unfulfilled
-                </button>
-                <span className="h-4 w-px bg-zinc-600 shrink-0" />
-                {SOURCE_FILTER_OPTIONS.map((opt) => (
-                    <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setFilterSource(opt.value)}
-                        className={cn(
-                            'rounded border px-2.5 py-1.5 text-[10px] font-medium transition-colors shrink-0',
-                            filterSource === opt.value
-                                ? 'border-zinc-500 bg-zinc-700/80 text-zinc-100'
-                                : 'border-zinc-600/50 bg-zinc-800/50 text-zinc-300 hover:border-zinc-500/50 hover:bg-zinc-700/50 hover:text-zinc-200',
-                        )}
-                    >
-                        {opt.label}
-                    </button>
-                ))}
+                <div className="flex flex-wrap items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
+                    {STATUS_FILTER_OPTIONS.map((opt) => (
+                        <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setFilterStatus(opt.value)}
+                            className={cn(
+                                'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                                filterStatus === opt.value
+                                    ? 'bg-zinc-700 text-zinc-100'
+                                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
+                            )}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+                <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
+                    {[
+                        { value: 'all', label: 'All' },
+                        { value: 'unfulfilled', label: 'Unfulfilled' },
+                    ].map((opt) => (
+                        <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setFilterFulfillment(opt.value)}
+                            className={cn(
+                                'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                                filterFulfillment === opt.value
+                                    ? 'bg-zinc-700 text-zinc-100'
+                                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
+                            )}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             <div className="mt-4">
@@ -1015,7 +906,6 @@ export default function OrdersPage() {
                         !!searchQuery.trim() ||
                         filterStatus !== 'all' ||
                         filterFulfillment !== 'all' ||
-                        filterSource !== 'all' ||
                         filterDate !== 'all'
                     }
                     dateSortOrder={dateSortOrder}
@@ -1043,7 +933,7 @@ export default function OrdersPage() {
                 <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-sm">
                     <DialogHeader>
                         <DialogTitle>Create Order</DialogTitle>
-                        <DialogDescription>Add a manual order from any channel.</DialogDescription>
+                        <DialogDescription>Add a manual order.</DialogDescription>
                     </DialogHeader>
                     <form
                         onSubmit={(e) => {
@@ -1093,43 +983,23 @@ export default function OrdersPage() {
                                 />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <Label className="text-xs text-zinc-400">Source</Label>
-                                <Select
-                                    value={newOrderForm.source}
-                                    onValueChange={(v) => setNewOrderForm((f) => ({ ...f, source: v }))}
-                                >
-                                    <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {ORDER_SOURCES.map((opt) => (
-                                            <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                                                {opt.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label className="text-xs text-zinc-400">Fulfillment</Label>
-                                <Select
-                                    value={newOrderForm.fulfillment}
-                                    onValueChange={(v) => setNewOrderForm((f) => ({ ...f, fulfillment: v }))}
-                                >
-                                    <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {FULFILLMENT_OPTIONS.map((opt) => (
-                                            <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                                                {opt.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs text-zinc-400">Fulfillment</Label>
+                            <Select
+                                value={newOrderForm.fulfillment}
+                                onValueChange={(v) => setNewOrderForm((f) => ({ ...f, fulfillment: v }))}
+                            >
+                                <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {FULFILLMENT_OPTIONS.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                            {opt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <DialogFooter className="gap-4 pt-4">
                             <Button
