@@ -11,7 +11,7 @@ const PATH_LABELS = {
     production: 'Production',
     orders: 'Orders',
     inventory: 'Inventory',
-    reports: 'Reports',
+    reports: 'PostHog',
     social: 'Social',
     leads: 'Leads',
     supplies: 'Supplies',

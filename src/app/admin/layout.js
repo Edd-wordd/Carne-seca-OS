@@ -14,7 +14,6 @@ import {
     Search,
     ScrollText,
     Wrench,
-    FileText,
     BarChart2,
     DollarSign,
     Share2,
@@ -25,6 +24,7 @@ import {
     Wallet,
     PieChart,
     Handshake,
+    Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
 import { Input } from '@/components/ui/input';
@@ -47,7 +47,7 @@ const navSections = [
         icon: BarChart2,
         items: [
             { href: '/admin', label: 'Overview', icon: LayoutDashboard },
-            { href: '/admin/reports', label: 'Reports', icon: FileText },
+            { href: '/admin/reports', label: 'PostHog', icon: Activity },
         ],
     },
     {

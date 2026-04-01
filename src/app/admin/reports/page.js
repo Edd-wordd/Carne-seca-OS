@@ -454,8 +454,10 @@ export default function ReportsPage() {
         <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-4 print:hidden">
                 <div>
-                    <h1 className="text-zinc-100 text-lg font-semibold tracking-tight">Reports</h1>
-                    <p className="text-zinc-500 mt-0.5 text-xs">Print and export reports for your records</p>
+                    <h1 className="text-zinc-100 text-lg font-semibold tracking-tight">PostHog</h1>
+                    <p className="text-zinc-500 mt-0.5 text-xs">
+                        Product analytics views — print and export for your records
+                    </p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Select value={reportType} onValueChange={setReportType}>
