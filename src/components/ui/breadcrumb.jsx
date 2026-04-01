@@ -19,6 +19,7 @@ const PATH_LABELS = {
     catalog: 'Catalog',
     customers: 'Customers',
     campaigns: 'Campaigns',
+    coupons: 'Coupons',
     settings: 'Settings',
 };
 

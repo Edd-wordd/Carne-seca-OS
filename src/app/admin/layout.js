@@ -27,6 +27,7 @@ import {
     Activity,
     BookUser,
     Megaphone,
+    TicketPercent,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
 import { Input } from '@/components/ui/input';
@@ -93,6 +94,7 @@ const navSections = [
             { href: '/admin/inventory', label: 'Inventory', icon: Box },
             { href: '/admin/supplies', label: 'Supplies', icon: Wrench },
             { href: '/admin/catalog', label: 'Catalog', icon: Package },
+            { href: '/admin/coupons', label: 'Coupons', icon: TicketPercent },
         ],
     },
 ];
