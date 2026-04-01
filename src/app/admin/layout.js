@@ -29,7 +29,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
-import { supabase } from '@/lib/supabase/client';
+import { useClerk } from '@clerk/nextjs';
 const MOCK_LOGS = [
     { id: 1, type: 'success', msg: 'Stripe webhook: checkout.session.completed', time: '2m ago' },
     { id: 2, type: 'error', msg: 'Sentry: Unhandled promise rejection in CartSideBar', time: '15m ago' },
@@ -81,6 +81,8 @@ export default function AdminLayout({ children }) {
     const [isHovering, setIsHovering] = useState(false);
     const [hoveredSection, setHoveredSection] = useState(null);
     const [isUserPopoutOpen, setIsUserPopoutOpen] = useState(false);
+
+    const { signOut } = useClerk();
 
     const sectionContainingCurrentPage = navSections.find((s) =>
         s.items.some(({ href }) => pathname === href || (href !== '/admin' && pathname.startsWith(href))),
@@ -214,7 +216,7 @@ export default function AdminLayout({ children }) {
                                             <button
                                                 type="button"
                                                 onClick={async () => {
-                                                    await supabase.auth.signOut();
+                                                    await signOut();
                                                     router.push('/');
                                                 }}
                                                 className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-700/70 hover:text-red-400"
@@ -272,7 +274,7 @@ export default function AdminLayout({ children }) {
                                     <button
                                         type="button"
                                         onClick={async () => {
-                                            await supabase.auth.signOut();
+                                            await signOut();
                                             router.push('/');
                                         }}
                                         className="flex items-center gap-2 rounded-md px-3 py-2 text-left text-xs text-zinc-400 transition-colors hover:bg-zinc-700/70 hover:text-red-400"
