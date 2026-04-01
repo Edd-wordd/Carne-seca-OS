@@ -4,6 +4,7 @@ import ConditionalHeader from '../components/layout/ConditionalHeader';
 import StoreHeader from '../components/layout/StoreHeader';
 import './globals.css';
 import PosthogProvider from './providers/PosthogProvider.jsx';
+import { ClerkProvider } from '@clerk/nextjs';
 
 const geistSans = Geist({
     variable: '--font-geist-sans',
@@ -22,13 +23,15 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
     return (
-        <PosthogProvider>
-            <html lang="en">
-                <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                    <ConditionalHeader storeHeader={<StoreHeader />}>{children}</ConditionalHeader>
-                    <Toaster position="top-center" richColors />
-                </body>
-            </html>
-        </PosthogProvider>
+        <ClerkProvider>
+            <PosthogProvider>
+                <html lang="en">
+                    <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+                        <ConditionalHeader storeHeader={<StoreHeader />}>{children}</ConditionalHeader>
+                        <Toaster position="top-center" richColors />
+                    </body>
+                </html>
+            </PosthogProvider>
+        </ClerkProvider>
     );
 }

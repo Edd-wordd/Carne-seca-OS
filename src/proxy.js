@@ -2,15 +2,22 @@
 // Assigns a persistent guest ID to anonymous users on shop/cart/checkout routes
 // so the app can track their cart/session without requiring login.
 import { NextResponse } from 'next/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+
+const isAdminRoute = createRouteMatcher(['/admin/:path*']);
 
 // Only run this middleware on these routes (avoids touching every request).
 export const config = {
-    matcher: ['/', '/products/:path*', '/shop/:path*', '/cart', '/checkout'],
+    matcher: ['/', '/products/:path*', '/shop/:path*', '/cart', '/checkout', '/admin/:path*'],
 };
 
 const recentRequests = new Map();
 
-export default function middleware(request) {
+export default clerkMiddleware(async (auth, request) => {
+    if (isAdminRoute(request)) {
+        await auth.protect();
+    }
+
     const cookieName = 'guest_id';
     const guestId = request.cookies.get(cookieName)?.value;
 
@@ -60,4 +67,4 @@ export default function middleware(request) {
     }
 
     return response;
-}
+});
