@@ -688,15 +688,15 @@ function OrdersTable({
                                     >
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
                                                     className="h-7 w-7 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/50"
                                                     onClick={(e) => e.stopPropagation()}
-                                                >
+                                        >
                                                     <MoreHorizontal className="size-4" />
                                                     <span className="sr-only">Actions</span>
-                                                </Button>
+                                        </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent
                                                 align="end"
@@ -775,7 +775,7 @@ function OrdersTable({
                                         Order ID: <span className="font-mono text-zinc-300">{packingSlipOrder.id}</span>
                                     </p>
                                     <p>{formatDateTime(packingSlipOrder.date)}</p>
-                                </div>
+                    </div>
                             </div>
                             <div className="mt-3 space-y-1">
                                 <p className="text-[10px] uppercase tracking-wider text-zinc-500">Customer</p>
@@ -1284,7 +1284,7 @@ function filterOrdersBySearch(orders, query) {
             lineNames.includes(q) ||
             o.date.includes(q) ||
             (o.tracking && o.tracking.toLowerCase().includes(q))
-        );
+    );
     });
 }
 
@@ -1654,7 +1654,7 @@ export default function OrdersPage() {
                     <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Overview</span>
                     <DateRangePicker date={dateRange} onDateChange={setDateRange} />
                 </div>
-                <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
                 {orderMetrics.map((m) => {
                     const Icon = m.icon;
                     const accentCls =
@@ -1693,41 +1693,41 @@ export default function OrdersPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-1 flex-wrap items-center gap-2">
                     <div className="flex flex-wrap items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
-                        {STATUS_FILTER_OPTIONS.map((opt) => (
-                            <button
-                                key={opt.value}
-                                type="button"
-                                onClick={() => setFilterStatus(opt.value)}
-                                className={cn(
+                {STATUS_FILTER_OPTIONS.map((opt) => (
+                    <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setFilterStatus(opt.value)}
+                        className={cn(
                                     'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
-                                    filterStatus === opt.value
+                            filterStatus === opt.value
                                         ? 'bg-zinc-700 text-zinc-100'
                                         : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
-                                )}
-                            >
-                                {opt.label}
-                            </button>
-                        ))}
+                        )}
+                    >
+                        {opt.label}
+                    </button>
+                ))}
                     </div>
                     <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
                         {[
                             { value: 'all', label: 'All' },
                             { value: 'unfulfilled', label: 'Unfulfilled' },
                         ].map((opt) => (
-                            <button
-                                key={opt.value}
-                                type="button"
+                    <button
+                        key={opt.value}
+                        type="button"
                                 onClick={() => setFilterFulfillment(opt.value)}
-                                className={cn(
+                        className={cn(
                                     'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
                                     filterFulfillment === opt.value
                                         ? 'bg-zinc-700 text-zinc-100'
                                         : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
-                                )}
-                            >
-                                {opt.label}
-                            </button>
-                        ))}
+                        )}
+                    >
+                        {opt.label}
+                    </button>
+                ))}
                     </div>
                 </div>
                 <Button
@@ -1798,38 +1798,38 @@ export default function OrdersPage() {
                                 className="h-9 border-zinc-700 bg-zinc-950/80"
                             />
                         </div>
-                        <div className="space-y-1.5">
+                            <div className="space-y-1.5">
                             <Label htmlFor="order-email" className="text-xs text-zinc-400">
                                 Email
-                            </Label>
-                            <Input
+                                </Label>
+                                <Input
                                 id="order-email"
                                 type="email"
                                 autoComplete="email"
                                 placeholder="customer@example.com"
                                 value={newOrderForm.email ?? ''}
                                 onChange={(e) => setNewOrderForm((f) => ({ ...f, email: e.target.value }))}
-                                className="h-9 border-zinc-700 bg-zinc-950/80"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs text-zinc-400">Source</Label>
-                            <Select
+                                    className="h-9 border-zinc-700 bg-zinc-950/80"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-zinc-400">Source</Label>
+                                <Select
                                 value={newOrderForm.source ?? 'website'}
-                                onValueChange={(v) => setNewOrderForm((f) => ({ ...f, source: v }))}
-                            >
-                                <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ORDER_SOURCES.map((opt) => (
-                                        <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                                            {opt.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                                    onValueChange={(v) => setNewOrderForm((f) => ({ ...f, source: v }))}
+                                >
+                                    <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {ORDER_SOURCES.map((opt) => (
+                                            <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                                {opt.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/40 p-3">
                             <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
                                 Shipping address
@@ -2016,23 +2016,23 @@ export default function OrdersPage() {
                                 </span>
                             </div>
                         </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs text-zinc-400">Fulfillment</Label>
-                            <Select
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-zinc-400">Fulfillment</Label>
+                                <Select
                                 value={newOrderForm.fulfillment ?? 'unfulfilled'}
-                                onValueChange={(v) => setNewOrderForm((f) => ({ ...f, fulfillment: v }))}
-                            >
-                                <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {FULFILLMENT_OPTIONS.map((opt) => (
-                                        <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                                            {opt.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                    onValueChange={(v) => setNewOrderForm((f) => ({ ...f, fulfillment: v }))}
+                                >
+                                    <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {FULFILLMENT_OPTIONS.map((opt) => (
+                                            <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                                {opt.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                         </div>
                         <DialogFooter className="gap-4 pt-4">
                             <Button
