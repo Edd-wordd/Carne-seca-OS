@@ -14,11 +14,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -35,33 +35,57 @@ import {
     Download,
     Pencil,
     Plus,
-    Calendar,
+    MoreHorizontal,
+    Trash2,
+    CircleOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
+import { getProducts } from '@/lib/supabase/queries/getProducts';
 
 const FULFILLMENT_OPTIONS = [
     { value: 'unfulfilled', label: 'Unfulfilled' },
-    { value: 'processing', label: 'Processing' },
     { value: 'shipped', label: 'Shipped' },
     { value: 'delivered', label: 'Delivered' },
 ];
 
-// Mock orders data
+const ORDER_SOURCES = [
+    { value: 'website', label: 'Website' },
+    { value: 'pos', label: 'POS' },
+];
+
+// Mock orders data (lineItems unitPriceCents × quantity should match total where noted)
 const MOCK_ORDERS = [
     {
         id: 'ORD-1082',
         customer: 'Alex Rivera',
+        email: 'alex.rivera@email.com',
         date: '2025-02-17T14:32',
         status: 'shipped',
         fulfillment: 'shipped',
         tracking: '1Z999AA10123456784',
-        total: 847,
+        total: 747,
         items: 3,
         refunded: false,
+        source: 'website',
+        address: {
+            line1: '4421 Maple Ave',
+            line2: 'Apt 12B',
+            city: 'Austin',
+            state: 'TX',
+            zip: '78751',
+            country: 'USA',
+        },
+        lineItems: [
+            { name: 'Carne seca clássica (8 oz)', quantity: 2, unitPriceCents: 299 },
+            { name: 'Picanha strips (4 oz)', quantity: 1, unitPriceCents: 249 },
+        ],
+        promoCode: 'WELCOME10',
+        discountCents: 100,
     },
     {
         id: 'ORD-1081',
         customer: 'Jordan Lee',
+        email: 'jordan.lee@email.com',
         date: '2025-02-16T09:15',
         status: 'delivered',
         fulfillment: 'delivered',
@@ -69,21 +93,45 @@ const MOCK_ORDERS = [
         total: 1242,
         items: 5,
         refunded: false,
+        source: 'pos',
+        address: {
+            line1: '8800 Sunset Blvd',
+            city: 'Los Angeles',
+            state: 'CA',
+            zip: '90069',
+            country: 'USA',
+        },
+        lineItems: [
+            { name: 'Family bundle (mixed)', quantity: 2, unitPriceCents: 449 },
+            { name: 'Garlic & herb (8 oz)', quantity: 2, unitPriceCents: 172 },
+            { name: 'Gift box sleeve', quantity: 1, unitPriceCents: 0 },
+        ],
     },
     {
         id: 'ORD-1080',
         customer: 'Sam Chen',
+        email: 'sam.chen@email.com',
         date: '2025-02-16T09:15',
-        status: 'processing',
-        fulfillment: 'processing',
+        status: 'pending',
+        fulfillment: 'unfulfilled',
         tracking: '',
         total: 389,
         items: 1,
         refunded: false,
+        source: 'website',
+        address: {
+            line1: '19 Pearl St',
+            city: 'Denver',
+            state: 'CO',
+            zip: '80203',
+            country: 'USA',
+        },
+        lineItems: [{ name: 'Trial pack sampler', quantity: 1, unitPriceCents: 389 }],
     },
     {
         id: 'ORD-1079',
         customer: 'Morgan Taylor',
+        email: 'morgan.taylor@email.com',
         date: '2025-02-15T16:45',
         status: 'shipped',
         fulfillment: 'shipped',
@@ -91,10 +139,24 @@ const MOCK_ORDERS = [
         total: 621,
         items: 2,
         refunded: false,
+        source: 'pos',
+        address: {
+            line1: '200 W Lake St',
+            line2: 'Suite 400',
+            city: 'Chicago',
+            state: 'IL',
+            zip: '60606',
+            country: 'USA',
+        },
+        lineItems: [
+            { name: 'Premium reserve (12 oz)', quantity: 1, unitPriceCents: 499 },
+            { name: 'Spicy chile (4 oz)', quantity: 1, unitPriceCents: 122 },
+        ],
     },
     {
         id: 'ORD-1078',
         customer: 'Riley Adams',
+        email: 'riley.adams@email.com',
         date: '2025-02-15T16:45',
         status: 'pending',
         fulfillment: 'unfulfilled',
@@ -102,10 +164,20 @@ const MOCK_ORDERS = [
         total: 156,
         items: 1,
         refunded: false,
+        source: 'website',
+        address: {
+            line1: '55 Water St',
+            city: 'Brooklyn',
+            state: 'NY',
+            zip: '11201',
+            country: 'USA',
+        },
+        lineItems: [{ name: 'Snack size (2 oz)', quantity: 1, unitPriceCents: 156 }],
     },
     {
         id: 'ORD-1077',
         customer: 'Casey Kim',
+        email: 'casey.kim@email.com',
         date: '2025-02-14T11:20',
         status: 'delivered',
         fulfillment: 'delivered',
@@ -113,10 +185,23 @@ const MOCK_ORDERS = [
         total: 934,
         items: 4,
         refunded: false,
+        source: 'pos',
+        address: {
+            line1: '1 Ferry Building',
+            city: 'San Francisco',
+            state: 'CA',
+            zip: '94111',
+            country: 'USA',
+        },
+        lineItems: [
+            { name: 'Original recipe (8 oz)', quantity: 2, unitPriceCents: 299 },
+            { name: 'Teriyaki glaze (8 oz)', quantity: 2, unitPriceCents: 168 },
+        ],
     },
     {
         id: 'ORD-1076',
         customer: 'Drew Morgan',
+        email: 'drew.morgan@email.com',
         date: '2025-02-13T08:00',
         status: 'refunded',
         fulfillment: 'delivered',
@@ -124,10 +209,23 @@ const MOCK_ORDERS = [
         total: 428,
         items: 2,
         refunded: true,
+        source: 'website',
+        address: {
+            line1: '77 King St',
+            city: 'Charleston',
+            state: 'SC',
+            zip: '29401',
+            country: 'USA',
+        },
+        lineItems: [
+            { name: 'Smoked batch (8 oz)', quantity: 1, unitPriceCents: 279 },
+            { name: 'Traditional cut (8 oz)', quantity: 1, unitPriceCents: 149 },
+        ],
     },
     {
         id: 'ORD-1075',
         customer: 'Quinn Blake',
+        email: 'quinn.blake@email.com',
         date: '2025-02-12T19:30',
         status: 'refunded',
         fulfillment: 'shipped',
@@ -135,15 +233,27 @@ const MOCK_ORDERS = [
         total: 612,
         items: 3,
         refunded: true,
+        source: 'pos',
+        address: {
+            line1: '3400 Main St',
+            city: 'Houston',
+            state: 'TX',
+            zip: '77002',
+            country: 'USA',
+        },
+        lineItems: [
+            { name: 'Bulk pack (16 oz)', quantity: 1, unitPriceCents: 300 },
+            { name: 'Heat & eat pouch (6 oz)', quantity: 2, unitPriceCents: 156 },
+        ],
     },
 ];
 
 const STATUS_STYLES = {
     pending: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400',
-    processing: 'border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400',
     shipped: 'border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-400',
     delivered: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
     refunded: 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400',
+    voided: 'border-zinc-500/40 bg-zinc-500/10 text-zinc-400',
 };
 
 function escapeCsv(val) {
@@ -172,45 +282,297 @@ function formatDateTime(dateStr) {
     });
 }
 
+function formatAddress(addr) {
+    if (!addr || typeof addr !== 'object') return '—';
+    const line2 = addr.line2?.trim();
+    const cityLine = [addr.city, addr.state].filter(Boolean).join(', ');
+    const cityZip = [cityLine, addr.zip].filter(Boolean).join(' ');
+    const parts = [addr.line1?.trim(), line2 || null, cityZip.trim() || null, addr.country?.trim()].filter(Boolean);
+    return parts.length ? parts.join('\n') : '—';
+}
+
+function lineItemsQuantitySum(lineItems) {
+    return (lineItems ?? []).reduce((s, li) => s + (li.quantity ?? 0), 0);
+}
+
+function lineItemsSubtotalCents(lineItems) {
+    return (lineItems ?? []).reduce((s, li) => s + (li.quantity ?? 0) * (li.unitPriceCents ?? 0), 0);
+}
+
+function orderDiscountCents(order) {
+    const explicit = Math.max(0, Math.round(Number(order?.discountCents) || 0));
+    if (explicit > 0) return explicit;
+    if (!order?.lineItems?.length) return 0;
+    const inferred = lineItemsSubtotalCents(order.lineItems) - (Math.round(Number(order.total) || 0) || 0);
+    return inferred > 0 ? inferred : 0;
+}
+
+function orderPromoCode(order) {
+    return String(order?.promoCode ?? order?.couponCode ?? '').trim();
+}
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+function newCreateOrderLineKey() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return `line-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function normalizeProductsFetch(data) {
+    return Array.isArray(data) ? data : [];
+}
+
+function isProductOrderable(p) {
+    return String(p?.status ?? '').toLowerCase() === 'active';
+}
+
+function formatProductLineName(product) {
+    const name = String(product?.name ?? '').trim() || 'Product';
+    const flavor = String(product?.flavor ?? '').trim();
+    return flavor ? `${name} (${flavor})` : name;
+}
+
+function computeCreateOrderPreview(lines, products) {
+    const active = products.filter(isProductOrderable);
+    const byId = new Map(active.map((p) => [String(p.id), p]));
+    let totalCents = 0;
+    let unitCount = 0;
+    for (const line of lines) {
+        const p = byId.get(String(line.productId));
+        const qty = Math.max(0, parseInt(String(line.quantity), 10) || 0);
+        if (!p || qty <= 0) continue;
+        const unit = Math.round(Number(p.price_cents) || 0);
+        totalCents += unit * qty;
+        unitCount += qty;
+    }
+    return { totalCents, unitCount, hasValidLine: unitCount > 0 };
+}
+
 const FULFILLMENT_TO_STATUS = {
     unfulfilled: 'pending',
-    processing: 'processing',
     shipped: 'shipped',
     delivered: 'delivered',
 };
 
+/** Legacy rows may still have fulfillment/status "processing"; treat as unfulfilled / pending for UI. */
+function normalizeFulfillmentValue(f) {
+    return f === 'processing' ? 'unfulfilled' : (f ?? 'unfulfilled');
+}
+
+function fulfillmentLabel(f) {
+    const v = normalizeFulfillmentValue(f);
+    return FULFILLMENT_OPTIONS.find((o) => o.value === v)?.label ?? v ?? '—';
+}
+
+function orderStatusForFilter(o) {
+    if (o.status === 'processing') return 'pending';
+    return o.status;
+}
+
 function OrdersTable({
     orders,
+    allOrders = orders,
     hasActiveSearch,
     pagination,
     dateSortOrder,
     onDateSortToggle,
     searchQuery,
     setSearchQuery,
+    onUpdateOrder,
 }) {
     const [packingSlipOrder, setPackingSlipOrder] = React.useState(null);
-    const [fulfillmentState, setFulfillmentState] = React.useState({});
-    const [statusState, setStatusState] = React.useState({});
-    const [trackingState, setTrackingState] = React.useState({});
-    const [editingTrackingId, setEditingTrackingId] = React.useState(null);
+    const [detailOrderId, setDetailOrderId] = React.useState(null);
+    const [editOpen, setEditOpen] = React.useState(false);
+    const [editingOrder, setEditingOrder] = React.useState(null);
+    const [editForm, setEditForm] = React.useState({
+        customer: '',
+        email: '',
+        items: 1,
+        total: '',
+        fulfillment: 'unfulfilled',
+        tracking: '',
+        source: 'website',
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        zip: '',
+        country: '',
+    });
 
-    const getFulfillment = (order) => fulfillmentState[order.id] ?? order.fulfillment;
+    const detailOrder = React.useMemo(
+        () => (detailOrderId ? allOrders.find((o) => o.id === detailOrderId) ?? null : null),
+        [detailOrderId, allOrders],
+    );
+
+    React.useEffect(() => {
+        if (detailOrderId && !detailOrder) setDetailOrderId(null);
+    }, [detailOrderId, detailOrder]);
+
+    const detailLineSubtotal = detailOrder?.lineItems?.length ? lineItemsSubtotalCents(detailOrder.lineItems) : null;
+    const detailDiscountCents = detailOrder ? orderDiscountCents(detailOrder) : 0;
+    const detailPromoCode = detailOrder ? orderPromoCode(detailOrder) : '';
+    const detailExpectedAfterDiscount =
+        detailLineSubtotal != null ? detailLineSubtotal - detailDiscountCents : null;
+
     const getStatus = (order) => {
+        if (order.voided) return 'voided';
         if (order.refunded) return 'refunded';
-        return statusState[order.id] ?? order.status;
-    };
-    const getTracking = (order) => trackingState[order.id] ?? order.tracking ?? '';
-
-    const handleFulfillmentChange = (order, value) => {
-        setFulfillmentState((s) => ({ ...s, [order.id]: value }));
-        if (!order.refunded) {
-            setStatusState((s) => ({ ...s, [order.id]: FULFILLMENT_TO_STATUS[value] ?? value }));
-        }
+        if (order.status === 'processing') return 'pending';
+        return order.status;
     };
 
-    const showTrackingInput = (order) => {
-        const tracking = getTracking(order);
-        return !tracking || editingTrackingId === order.id;
+    const openEditModal = (order) => {
+        const a = order.address;
+        setEditingOrder(order);
+        setEditForm({
+            customer: order.customer ?? '',
+            email: order.email ?? '',
+            items: order.items ?? 1,
+            total: (order.total / 100).toFixed(2),
+            fulfillment: normalizeFulfillmentValue(order.fulfillment),
+            tracking: order.tracking ?? '',
+            source: order.source ?? 'website',
+            addressLine1: a?.line1 ?? '',
+            addressLine2: a?.line2 ?? '',
+            city: a?.city ?? '',
+            state: a?.state ?? '',
+            zip: a?.zip ?? '',
+            country: a?.country ?? '',
+        });
+        setEditOpen(true);
+    };
+
+    const handleRowBackgroundClick = (order, e) => {
+        if (e.target.closest('button,[role="menuitem"]')) return;
+        setDetailOrderId(order.id);
+    };
+
+    const handleSaveEdit = () => {
+        if (!editingOrder) return;
+        const raw = String(editForm.total ?? '').trim().replace(/[^0-9.]/g, '');
+        const total = Math.round(parseFloat(raw || 0) * 100) || 0;
+        const id = editingOrder.id;
+        onUpdateOrder(id, {
+            customer: (editForm.customer ?? '').trim() || 'Unknown',
+            email: (editForm.email ?? '').trim(),
+            items: Math.max(1, parseInt(String(editForm.items), 10) || 1),
+            total,
+            fulfillment: editForm.fulfillment ?? 'unfulfilled',
+            tracking: (editForm.tracking ?? '').trim(),
+            source: editForm.source === 'pos' ? 'pos' : 'website',
+            address: {
+                line1: (editForm.addressLine1 ?? '').trim(),
+                line2: (editForm.addressLine2 ?? '').trim(),
+                city: (editForm.city ?? '').trim(),
+                state: (editForm.state ?? '').trim(),
+                zip: (editForm.zip ?? '').trim(),
+                country: (editForm.country ?? '').trim(),
+            },
+            status: editingOrder.refunded
+                ? editingOrder.status
+                : editingOrder.voided
+                  ? editingOrder.status
+                : (FULFILLMENT_TO_STATUS[editForm.fulfillment ?? 'unfulfilled'] ?? 'pending'),
+        });
+        setEditOpen(false);
+        setEditingOrder(null);
+    };
+
+    const handleQuickFulfillmentUpdate = (order, nextFulfillment) => {
+        if (!order || order.refunded || order.voided) return;
+        onUpdateOrder(order.id, {
+            fulfillment: nextFulfillment,
+            status: FULFILLMENT_TO_STATUS[nextFulfillment] ?? order.status,
+        });
+    };
+
+    const handlePrintPackingSlip = (order) => {
+        if (!order) return;
+        const popup = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700');
+        if (!popup) return;
+
+        const lines = order.lineItems?.length
+            ? order.lineItems
+            : [{ name: `${order.items ?? 0} item(s)`, quantity: order.items ?? 0 }];
+        const lineRows = lines
+            .map(
+                (li) => `
+                    <tr>
+                        <td>${escapeHtml(li.name ?? 'Item')}</td>
+                        <td style="text-align:right;">${escapeHtml(li.quantity ?? 0)}</td>
+                    </tr>`,
+            )
+            .join('');
+        const addrHtml = escapeHtml(formatAddress(order.address)).replaceAll('\n', '<br />');
+        const logo = 'Carne Seca';
+        const html = `
+            <!doctype html>
+            <html>
+                <head>
+                    <meta charset="utf-8" />
+                    <title>Packing Slip ${escapeHtml(order.id)}</title>
+                    <style>
+                        body { font-family: Inter, Arial, sans-serif; padding: 24px; color: #111; }
+                        .header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #111; padding-bottom:12px; margin-bottom:16px; }
+                        .logo { font-size: 24px; font-weight: 700; letter-spacing: .4px; }
+                        .meta { font-size: 12px; line-height:1.5; text-align:right; }
+                        .section { margin-top: 14px; }
+                        .label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #555; margin-bottom: 6px; }
+                        .value { font-size: 14px; line-height: 1.45; }
+                        table { width:100%; border-collapse:collapse; margin-top:8px; }
+                        th, td { border-bottom:1px solid #ddd; padding:8px 6px; font-size:13px; }
+                        th { text-align:left; color:#444; font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+                        .foot { margin-top: 18px; font-size:11px; color:#666; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="logo">${escapeHtml(logo)}</div>
+                        <div class="meta">
+                            <div><strong>Order ID:</strong> ${escapeHtml(order.id)}</div>
+                            <div><strong>Date:</strong> ${escapeHtml(formatDateTime(order.date))}</div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="label">Customer</div>
+                        <div class="value">${escapeHtml(order.customer || '—')}</div>
+                    </div>
+                    <div class="section">
+                        <div class="label">Shipping Address</div>
+                        <div class="value">${addrHtml}</div>
+                    </div>
+                    <div class="section">
+                        <div class="label">Items to Pack</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th style="text-align:right;">Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody>${lineRows}</tbody>
+                        </table>
+                    </div>
+                    <div class="foot">Packing slip generated from Admin Orders</div>
+                </body>
+            </html>
+        `;
+
+        popup.document.open();
+        popup.document.write(html);
+        popup.document.close();
+        popup.focus();
+        popup.print();
     };
 
     return (
@@ -235,6 +597,8 @@ function OrdersTable({
                         <TableRow className="border-zinc-700/80 hover:bg-transparent">
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Order ID</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Customer</TableHead>
+                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Email</TableHead>
+                            <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Source</TableHead>
                             <TableHead
                                 className="text-zinc-400 h-8 px-3 text-[10px] cursor-pointer select-none hover:text-zinc-300 transition-colors"
                                 onClick={onDateSortToggle}
@@ -253,13 +617,13 @@ function OrdersTable({
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Fulfillment</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Tracking</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px] text-right">Total</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-2 text-[10px] w-12" />
+                            <TableHead className="text-zinc-400 h-8 px-2 text-[10px] text-right w-14">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {orders.length === 0 ? (
                             <TableRow className="border-zinc-700/80">
-                                <TableCell colSpan={9} className="text-zinc-400 py-4 text-center text-[11px]">
+                                <TableCell colSpan={11} className="text-zinc-400 py-4 text-center text-[11px]">
                                     {hasActiveSearch ? 'No orders match your search or filters' : 'No orders'}
                                 </TableCell>
                             </TableRow>
@@ -267,7 +631,16 @@ function OrdersTable({
                             orders.map((order) => (
                                 <TableRow
                                     key={order.id}
-                                    className="group border-zinc-700/80 transition-colors hover:!bg-zinc-700/50"
+                                    tabIndex={0}
+                                    title="View order details"
+                                    onClick={(e) => handleRowBackgroundClick(order, e)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            setDetailOrderId(order.id);
+                                        }
+                                    }}
+                                    className="group cursor-pointer border-zinc-700/80 transition-colors hover:!bg-zinc-700/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-500"
                                 >
                                     <TableCell className="text-zinc-200 px-3 py-1.5 font-mono text-[11px] font-medium group-hover:text-zinc-100">
                                         {order.id}
@@ -275,11 +648,20 @@ function OrdersTable({
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
                                         {order.customer}
                                     </TableCell>
+                                    <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] max-w-[180px] truncate group-hover:text-zinc-300">
+                                        {order.email?.trim() ? order.email : '—'}
+                                    </TableCell>
+                                    <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
+                                        {ORDER_SOURCES.find((s) => s.value === (order.source ?? 'website'))?.label ??
+                                            'Website'}
+                                    </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] tabular-nums group-hover:text-zinc-300">
                                         {formatDateTime(order.date)}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-center text-[11px] tabular-nums group-hover:text-zinc-300">
-                                        {order.items ?? 0}
+                                        {order.lineItems?.length
+                                            ? lineItemsQuantitySum(order.lineItems)
+                                            : (order.items ?? 0)}
                                     </TableCell>
                                     <TableCell className="px-3 py-1.5">
                                         <span
@@ -291,74 +673,80 @@ function OrdersTable({
                                             {getStatus(order)}
                                         </span>
                                     </TableCell>
-                                    <TableCell className="px-3 py-1.5">
-                                        <Select
-                                            value={getFulfillment(order)}
-                                            onValueChange={(v) => handleFulfillmentChange(order, v)}
-                                            disabled={order.refunded}
-                                        >
-                                            <SelectTrigger className="h-7 w-[120px] border-zinc-700 bg-zinc-950 text-zinc-100 text-[10px]">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {FULFILLMENT_OPTIONS.map((opt) => (
-                                                    <SelectItem key={opt.value} value={opt.value}>
-                                                        {opt.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                    <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] capitalize group-hover:text-zinc-300">
+                                        {fulfillmentLabel(order.fulfillment)}
                                     </TableCell>
-                                    <TableCell className="px-3 py-1.5">
-                                        {showTrackingInput(order) ? (
-                                            <Input
-                                                placeholder="Add tracking #"
-                                                value={getTracking(order)}
-                                                onChange={(e) =>
-                                                    setTrackingState((s) => ({
-                                                        ...s,
-                                                        [order.id]: e.target.value,
-                                                    }))
-                                                }
-                                                onBlur={() => setEditingTrackingId(null)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') setEditingTrackingId(null);
-                                                }}
-                                                className="h-7 w-[130px] border-zinc-700 bg-zinc-950 text-zinc-100 text-[10px]"
-                                                autoFocus={editingTrackingId === order.id}
-                                            />
-                                        ) : (
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="text-zinc-400 text-[11px] font-mono truncate max-w-[120px] group-hover:text-zinc-300">
-                                                    {getTracking(order)}
-                                                </span>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 shrink-0 text-zinc-500 hover:text-zinc-100 hover:bg-zinc-700/50"
-                                                    onClick={() => setEditingTrackingId(order.id)}
-                                                    disabled={order.refunded}
-                                                >
-                                                    <Pencil className="size-3" />
-                                                    <span className="sr-only">Edit tracking</span>
-                                                </Button>
-                                            </div>
-                                        )}
+                                    <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] font-mono max-w-[140px] truncate group-hover:text-zinc-300">
+                                        {order.tracking?.trim() ? order.tracking : '—'}
                                     </TableCell>
                                     <TableCell className="text-zinc-100 px-3 py-1.5 text-right text-[11px] font-medium tabular-nums group-hover:text-white">
                                         {formatCurrency(order.total)}
                                     </TableCell>
-                                    <TableCell className="px-2 py-1.5">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 text-zinc-400 hover:text-indigo-300 hover:bg-zinc-600/50"
-                                            onClick={() => setPackingSlipOrder(order)}
-                                            disabled={order.refunded}
-                                        >
-                                            <Printer className="size-3.5" />
-                                            <span className="sr-only">Print packing slip</span>
-                                        </Button>
+                                    <TableCell
+                                        className="px-2 py-1.5 text-right"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/50"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <MoreHorizontal className="size-4" />
+                                                    <span className="sr-only">Actions</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent
+                                                align="end"
+                                                className="min-w-[10rem] border-zinc-800 bg-zinc-900 text-zinc-100"
+                                            >
+                                                <DropdownMenuItem
+                                                    className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
+                                                    onClick={() => openEditModal(order)}
+                                                >
+                                                    <Pencil className="mr-2 size-3.5" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
+                                                    onClick={() =>
+                                                        onUpdateOrder(order.id, {
+                                                            refunded: true,
+                                                            status: 'refunded',
+                                                        })
+                                                    }
+                                                    disabled={order.refunded || order.voided}
+                                                >
+                                                    <RotateCcw className="mr-2 size-3.5" />
+                                                    {order.refunded ? 'Already refunded' : 'Mark refunded'}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
+                                                    onClick={() =>
+                                                        onUpdateOrder(order.id, {
+                                                            voided: true,
+                                                            status: 'voided',
+                                                            fulfillment: 'unfulfilled',
+                                                            tracking: '',
+                                                        })
+                                                    }
+                                                    disabled={order.voided || order.refunded}
+                                                >
+                                                    <CircleOff className="mr-2 size-3.5" />
+                                                    {order.voided ? 'Already voided' : 'Void order'}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
+                                                    onClick={() => setPackingSlipOrder(order)}
+                                                    disabled={order.refunded || order.voided}
+                                                >
+                                                    <Printer className="mr-2 size-3.5" />
+                                                    Print packing slip
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -369,7 +757,7 @@ function OrdersTable({
             </div>
 
             <Dialog open={!!packingSlipOrder} onOpenChange={(o) => !o && setPackingSlipOrder(null)}>
-                <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-md">
+                <DialogContent className="max-h-[min(90vh,720px)] overflow-y-auto border-zinc-800 bg-zinc-900 sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle>Print Packing Slip</DialogTitle>
                         <DialogDescription>
@@ -378,9 +766,57 @@ function OrdersTable({
                                 : ''}
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4 text-sm text-zinc-500">
-                        Packing slip preview would render here. (Mock)
-                    </div>
+                    {packingSlipOrder ? (
+                        <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4 text-sm">
+                            <div className="flex items-start justify-between border-b border-zinc-800 pb-3">
+                                <p className="text-zinc-100 text-lg font-semibold">Carne Seca</p>
+                                <div className="text-right text-xs text-zinc-400">
+                                    <p>
+                                        Order ID: <span className="font-mono text-zinc-300">{packingSlipOrder.id}</span>
+                                    </p>
+                                    <p>{formatDateTime(packingSlipOrder.date)}</p>
+                                </div>
+                            </div>
+                            <div className="mt-3 space-y-1">
+                                <p className="text-[10px] uppercase tracking-wider text-zinc-500">Customer</p>
+                                <p className="text-zinc-100">{packingSlipOrder.customer || '—'}</p>
+                            </div>
+                            <div className="mt-3 space-y-1">
+                                <p className="text-[10px] uppercase tracking-wider text-zinc-500">Shipping address</p>
+                                <p className="text-zinc-300 text-xs whitespace-pre-line">
+                                    {formatAddress(packingSlipOrder.address)}
+                                </p>
+                            </div>
+                            <div className="mt-4">
+                                <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1.5">Items to pack</p>
+                                <div className="rounded border border-zinc-800 overflow-hidden">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="border-zinc-800 hover:bg-transparent">
+                                                <TableHead className="h-8 px-3 text-[10px] text-zinc-500">Item</TableHead>
+                                                <TableHead className="h-8 px-3 text-[10px] text-zinc-500 text-right w-16">
+                                                    Qty
+                                                </TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {(packingSlipOrder.lineItems?.length
+                                                ? packingSlipOrder.lineItems
+                                                : [{ name: `${packingSlipOrder.items ?? 0} item(s)`, quantity: packingSlipOrder.items ?? 0 }]
+                                            ).map((li, idx) => (
+                                                <TableRow key={`${packingSlipOrder.id}-pack-li-${idx}`} className="border-zinc-800">
+                                                    <TableCell className="px-3 py-2 text-xs text-zinc-200">{li.name}</TableCell>
+                                                    <TableCell className="px-3 py-2 text-xs text-zinc-300 text-right tabular-nums">
+                                                        {li.quantity ?? 0}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </div>
+                        </div>
+                    ) : null}
                     <DialogFooter className="gap-4">
                         <Button
                             variant="outline"
@@ -390,7 +826,7 @@ function OrdersTable({
                             Cancel
                         </Button>
                         <Button
-                            onClick={() => setPackingSlipOrder(null)}
+                            onClick={() => handlePrintPackingSlip(packingSlipOrder)}
                             className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
                         >
                             <Printer className="mr-2 size-3.5" />
@@ -399,6 +835,422 @@ function OrdersTable({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <Dialog open={!!detailOrder} onOpenChange={(o) => !o && setDetailOrderId(null)}>
+                <DialogContent className="max-h-[min(90vh,720px)] overflow-y-auto border-zinc-800 bg-zinc-900 sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="text-zinc-100">{detailOrder?.id ?? 'Order'}</DialogTitle>
+                        <DialogDescription className="text-zinc-400 text-xs">
+                            {detailOrder
+                                ? `${formatDateTime(detailOrder.date)} · ${ORDER_SOURCES.find((s) => s.value === (detailOrder.source ?? 'website'))?.label ?? 'Website'}`
+                                : ''}
+                        </DialogDescription>
+                    </DialogHeader>
+                    {detailOrder && (
+                        <div className="space-y-5 text-sm">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span
+                                    className={cn(
+                                        'inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium capitalize',
+                                        STATUS_STYLES[getStatus(detailOrder)] || STATUS_STYLES.pending,
+                                    )}
+                                >
+                                    {getStatus(detailOrder)}
+                                </span>
+                                <span className="text-zinc-500 text-[11px]">
+                                    Fulfillment:{' '}
+                                    <span className="text-zinc-300">
+                                        {fulfillmentLabel(detailOrder.fulfillment)}
+                                    </span>
+                                </span>
+                                {detailOrder.tracking?.trim() ? (
+                                    <span className="text-zinc-500 text-[11px] font-mono">
+                                        Tracking:{' '}
+                                        <span className="text-zinc-300">{detailOrder.tracking}</span>
+                                    </span>
+                                ) : null}
+                                {!detailOrder.refunded && !detailOrder.voided ? (
+                                    <>
+                                        {detailOrder.fulfillment !== 'shipped' && detailOrder.fulfillment !== 'delivered' ? (
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                className="h-6 px-2 text-[10px] bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
+                                                onClick={() =>
+                                                    handleQuickFulfillmentUpdate(detailOrder, 'shipped')
+                                                }
+                                            >
+                                                Mark shipped
+                                            </Button>
+                                        ) : null}
+                                        {detailOrder.fulfillment === 'shipped' ? (
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                className="h-6 px-2 text-[10px] border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                                                onClick={() =>
+                                                    handleQuickFulfillmentUpdate(detailOrder, 'delivered')
+                                                }
+                                            >
+                                                Mark delivered
+                                            </Button>
+                                        ) : null}
+                                    </>
+                                ) : null}
+                            </div>
+
+                            <div>
+                                <h3 className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 mb-2">
+                                    Customer
+                                </h3>
+                                <p className="text-zinc-100 font-medium">{detailOrder.customer}</p>
+                                <p className="text-zinc-400 text-xs mt-0.5">{detailOrder.email || '—'}</p>
+                            </div>
+
+                            <div>
+                                <h3 className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 mb-2">
+                                    Shipping address
+                                </h3>
+                                <p className="text-zinc-300 text-xs whitespace-pre-line leading-relaxed">
+                                    {formatAddress(detailOrder.address)}
+                                </p>
+                            </div>
+
+                            <div>
+                                <h3 className="text-[10px] font-medium uppercase tracking-wider text-zinc-500 mb-2">
+                                    Line items
+                                </h3>
+                                {detailOrder.lineItems?.length ? (
+                                    <div className="rounded-md border border-zinc-800 overflow-hidden">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="border-zinc-800 hover:bg-transparent">
+                                                    <TableHead className="text-zinc-500 h-8 px-3 text-[10px]">
+                                                        Product
+                                                    </TableHead>
+                                                    <TableHead className="text-zinc-500 h-8 px-2 text-[10px] text-center w-14">
+                                                        Qty
+                                                    </TableHead>
+                                                    <TableHead className="text-zinc-500 h-8 px-2 text-[10px] text-right w-24">
+                                                        Price
+                                                    </TableHead>
+                                                    <TableHead className="text-zinc-500 h-8 px-3 text-[10px] text-right w-28">
+                                                        Line total
+                                                    </TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {detailOrder.lineItems.map((li, idx) => {
+                                                    const lineTotal =
+                                                        (li.quantity ?? 0) * (li.unitPriceCents ?? 0);
+                                                    return (
+                                                        <TableRow
+                                                            key={`${detailOrder.id}-li-${idx}`}
+                                                            className="border-zinc-800"
+                                                        >
+                                                            <TableCell className="text-zinc-200 px-3 py-2 text-xs">
+                                                                {li.name}
+                                                            </TableCell>
+                                                            <TableCell className="text-zinc-400 px-2 py-2 text-center text-xs tabular-nums">
+                                                                {li.quantity ?? 0}
+                                                            </TableCell>
+                                                            <TableCell className="text-zinc-400 px-2 py-2 text-right text-xs tabular-nums">
+                                                                {formatCurrency(li.unitPriceCents ?? 0)}
+                                                            </TableCell>
+                                                            <TableCell className="text-zinc-100 px-3 py-2 text-right text-xs font-medium tabular-nums">
+                                                                {formatCurrency(lineTotal)}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                ) : (
+                                    <p className="text-zinc-500 text-xs">
+                                        No line breakdown on file. Item count (summary):{' '}
+                                        {detailOrder.items ?? 0}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="border-t border-zinc-800 pt-4 space-y-1.5">
+                                {detailOrder.lineItems?.length ? (
+                                    <div className="flex justify-between text-xs text-zinc-500">
+                                        <span>Subtotal (lines)</span>
+                                        <span className="tabular-nums text-zinc-300">
+                                            {formatCurrency(lineItemsSubtotalCents(detailOrder.lineItems))}
+                                        </span>
+                                    </div>
+                                ) : null}
+                                {detailDiscountCents > 0 ? (
+                                    <div className="flex justify-between text-xs text-zinc-500">
+                                        <span>
+                                            Discount{detailPromoCode ? ` (${detailPromoCode})` : ''}
+                                        </span>
+                                        <span className="tabular-nums text-emerald-400">
+                                            -{formatCurrency(detailDiscountCents)}
+                                        </span>
+                                    </div>
+                                ) : null}
+                                <div className="flex justify-between items-baseline">
+                                    <span className="text-zinc-400 text-sm font-medium">Order total</span>
+                                    <span className="text-lg font-semibold text-zinc-100 tabular-nums">
+                                        {formatCurrency(detailOrder.total)}
+                                    </span>
+                                </div>
+                                {detailExpectedAfterDiscount != null && detailExpectedAfterDiscount !== detailOrder.total ? (
+                                    <p className="text-[10px] text-amber-500/90">
+                                        Line subtotal differs from order total (taxes, shipping, or manual adjustments may
+                                        apply).
+                                    </p>
+                                ) : null}
+                            </div>
+
+                            <DialogFooter className="gap-2 sm:justify-between sm:space-x-0">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setDetailOrderId(null)}
+                                    className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                                >
+                                    Close
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={() => {
+                                        openEditModal(detailOrder);
+                                        setDetailOrderId(null);
+                                    }}
+                                    className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
+                                >
+                                    <Pencil className="mr-2 size-3.5" />
+                                    Edit order
+                                </Button>
+                            </DialogFooter>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={editOpen}
+                onOpenChange={(open) => {
+                    setEditOpen(open);
+                    if (!open) setEditingOrder(null);
+                }}
+            >
+                <DialogContent className="max-h-[min(90vh,640px)] overflow-y-auto border-zinc-800 bg-zinc-900 sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Edit order</DialogTitle>
+                        <DialogDescription>
+                            {editingOrder ? `Update ${editingOrder.id}` : ''}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="edit-order-customer" className="text-xs text-zinc-400">
+                                Customer
+                            </Label>
+                            <Input
+                                id="edit-order-customer"
+                                value={editForm.customer ?? ''}
+                                onChange={(e) => setEditForm((f) => ({ ...f, customer: e.target.value }))}
+                                className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="edit-order-email" className="text-xs text-zinc-400">
+                                Email
+                            </Label>
+                            <Input
+                                id="edit-order-email"
+                                type="email"
+                                autoComplete="email"
+                                value={editForm.email ?? ''}
+                                onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                                className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs text-zinc-400">Source</Label>
+                            <Select
+                                value={editForm.source ?? 'website'}
+                                onValueChange={(v) => setEditForm((f) => ({ ...f, source: v }))}
+                            >
+                                <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ORDER_SOURCES.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                            {opt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/40 p-3">
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                                Shipping address
+                            </p>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="edit-addr-line1" className="text-xs text-zinc-400">
+                                    Address line 1
+                                </Label>
+                                <Input
+                                    id="edit-addr-line1"
+                                    value={editForm.addressLine1 ?? ''}
+                                    onChange={(e) => setEditForm((f) => ({ ...f, addressLine1: e.target.value }))}
+                                    className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="edit-addr-line2" className="text-xs text-zinc-400">
+                                    Address line 2
+                                </Label>
+                                <Input
+                                    id="edit-addr-line2"
+                                    value={editForm.addressLine2 ?? ''}
+                                    onChange={(e) => setEditForm((f) => ({ ...f, addressLine2: e.target.value }))}
+                                    className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="edit-addr-city" className="text-xs text-zinc-400">
+                                        City
+                                    </Label>
+                                    <Input
+                                        id="edit-addr-city"
+                                        value={editForm.city ?? ''}
+                                        onChange={(e) => setEditForm((f) => ({ ...f, city: e.target.value }))}
+                                        className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="edit-addr-state" className="text-xs text-zinc-400">
+                                        State
+                                    </Label>
+                                    <Input
+                                        id="edit-addr-state"
+                                        value={editForm.state ?? ''}
+                                        onChange={(e) => setEditForm((f) => ({ ...f, state: e.target.value }))}
+                                        className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="edit-addr-zip" className="text-xs text-zinc-400">
+                                        ZIP
+                                    </Label>
+                                    <Input
+                                        id="edit-addr-zip"
+                                        value={editForm.zip ?? ''}
+                                        onChange={(e) => setEditForm((f) => ({ ...f, zip: e.target.value }))}
+                                        className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="edit-addr-country" className="text-xs text-zinc-400">
+                                        Country
+                                    </Label>
+                                    <Input
+                                        id="edit-addr-country"
+                                        value={editForm.country ?? ''}
+                                        onChange={(e) => setEditForm((f) => ({ ...f, country: e.target.value }))}
+                                        className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="edit-order-items" className="text-xs text-zinc-400">
+                                    Items
+                                </Label>
+                                <Input
+                                    id="edit-order-items"
+                                    type="number"
+                                    min={1}
+                                    value={editForm.items ?? 1}
+                                    onChange={(e) =>
+                                        setEditForm((f) => ({
+                                            ...f,
+                                            items: parseInt(e.target.value, 10) || 1,
+                                        }))
+                                    }
+                                    className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="edit-order-total" className="text-xs text-zinc-400">
+                                    Total ($)
+                                </Label>
+                                <Input
+                                    id="edit-order-total"
+                                    value={editForm.total ?? ''}
+                                    onChange={(e) => setEditForm((f) => ({ ...f, total: e.target.value }))}
+                                    className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs text-zinc-400">Fulfillment</Label>
+                            <Select
+                                value={editForm.fulfillment ?? 'unfulfilled'}
+                                onValueChange={(v) => setEditForm((f) => ({ ...f, fulfillment: v }))}
+                                disabled={editingOrder?.refunded || editingOrder?.voided}
+                            >
+                                <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {FULFILLMENT_OPTIONS.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                            {opt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="edit-order-tracking" className="text-xs text-zinc-400">
+                                Tracking
+                            </Label>
+                            <Input
+                                id="edit-order-tracking"
+                                value={editForm.tracking ?? ''}
+                                onChange={(e) => setEditForm((f) => ({ ...f, tracking: e.target.value }))}
+                                className="h-9 border-zinc-700 bg-zinc-950/80 font-mono text-xs text-zinc-100"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter className="gap-3 pt-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                setEditOpen(false);
+                                setEditingOrder(null);
+                            }}
+                            className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleSaveEdit}
+                            className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
+                        >
+                            Save changes
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
         </>
     );
 }
@@ -408,74 +1260,32 @@ const PAGE_SIZE = 5;
 const STATUS_FILTER_OPTIONS = [
     { value: 'all', label: 'All' },
     { value: 'pending', label: 'Pending' },
-    { value: 'processing', label: 'Processing' },
     { value: 'shipped', label: 'Shipped' },
     { value: 'delivered', label: 'Delivered' },
     { value: 'refunded', label: 'Refunded' },
 ];
 
-const FULFILLMENT_FILTER_OPTIONS = [
-    { value: 'all', label: 'All' },
-    { value: 'unfulfilled', label: 'Unfulfilled' },
-    { value: 'processing', label: 'Processing' },
-    { value: 'shipped', label: 'Shipped' },
-    { value: 'delivered', label: 'Delivered' },
-];
-
-const DATE_FILTER_OPTIONS = [
-    { value: 'all', label: 'All dates' },
-    { value: 'today', label: 'Today' },
-    { value: 'yesterday', label: 'Yesterday' },
-    { value: 'this_week', label: 'This week' },
-    { value: 'last_7', label: 'Last 7 days' },
-    { value: 'this_month', label: 'This month' },
-];
-
-function getDateRangeLabel(value, dateFrom, dateTo) {
-    const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    if (value === 'custom' && dateFrom && dateTo) {
-        const from = new Date(dateFrom);
-        const to = new Date(dateTo);
-        if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
-            return `${fmt(from)} - ${fmt(to)}`;
-        }
-    }
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    if (value === 'all') return 'All dates';
-    if (value === 'today') return fmt(today);
-    if (value === 'yesterday') {
-        const y = new Date(today);
-        y.setDate(y.getDate() - 1);
-        return fmt(y);
-    }
-    if (value === 'this_week') {
-        const start = new Date(today);
-        start.setDate(start.getDate() - start.getDay());
-        return `${fmt(start)} - ${fmt(today)}`;
-    }
-    if (value === 'last_7') {
-        const start = new Date(today);
-        start.setDate(start.getDate() - 6);
-        return `${fmt(start)} - ${fmt(today)}`;
-    }
-    if (value === 'this_month') {
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        return `${fmt(start)} - ${fmt(today)}`;
-    }
-    return 'All dates';
-}
-
 function filterOrdersBySearch(orders, query) {
     if (!query.trim()) return orders;
     const q = query.trim().toLowerCase();
-    return orders.filter(
-        (o) =>
+    return orders.filter((o) => {
+        const sourceLabel =
+            ORDER_SOURCES.find((s) => s.value === (o.source ?? 'website'))?.label?.toLowerCase() ?? '';
+        const addrBlob = formatAddress(o.address).toLowerCase();
+        const lineNames = (o.lineItems ?? [])
+            .map((li) => (li.name ?? '').toLowerCase())
+            .join(' ');
+        return (
             o.id.toLowerCase().includes(q) ||
             o.customer.toLowerCase().includes(q) ||
+            (o.email && o.email.toLowerCase().includes(q)) ||
+            sourceLabel.includes(q) ||
+            addrBlob.includes(q) ||
+            lineNames.includes(q) ||
             o.date.includes(q) ||
-            (o.tracking && o.tracking.toLowerCase().includes(q)),
-    );
+            (o.tracking && o.tracking.toLowerCase().includes(q))
+        );
+    });
 }
 
 function getOrderDate(order) {
@@ -483,55 +1293,22 @@ function getOrderDate(order) {
     return isNaN(d.getTime()) ? null : d;
 }
 
-function applyOrderFilters(orders, statusFilter, fulfillmentFilter, dateFilter, dateFrom, dateTo) {
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayEnd = new Date(todayStart);
-    todayEnd.setDate(todayEnd.getDate() + 1);
-    const yesterdayStart = new Date(todayStart);
-    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-    const weekStart = new Date(todayStart);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const last7Start = new Date(todayStart);
-    last7Start.setDate(last7Start.getDate() - 6);
-
-    let rangeStart = null;
-    let rangeEnd = null;
-    if (dateFilter === 'custom' && dateFrom && dateTo) {
-        const from = new Date(dateFrom);
-        const to = new Date(dateTo);
-        if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
-            rangeStart = new Date(from.getFullYear(), from.getMonth(), from.getDate());
-            rangeEnd = new Date(to.getFullYear(), to.getMonth(), to.getDate() + 1);
-        }
-    } else if (dateFilter === 'today') {
-        rangeStart = todayStart;
-        rangeEnd = todayEnd;
-    } else if (dateFilter === 'yesterday') {
-        rangeStart = yesterdayStart;
-        rangeEnd = todayStart;
-    } else if (dateFilter === 'this_week') {
-        rangeStart = weekStart;
-        rangeEnd = todayEnd;
-    } else if (dateFilter === 'last_7') {
-        rangeStart = last7Start;
-        rangeEnd = todayEnd;
-    } else if (dateFilter === 'this_month') {
-        rangeStart = monthStart;
-        rangeEnd = todayEnd;
-    }
-
+function applyOrderFilters(orders, statusFilter, fulfillmentFilter, dateRange) {
     return orders.filter((o) => {
-        if (statusFilter !== 'all' && o.status !== statusFilter) return false;
-        if (fulfillmentFilter !== 'all' && o.fulfillment !== fulfillmentFilter) return false;
+        if (statusFilter !== 'all' && orderStatusForFilter(o) !== statusFilter) return false;
+        if (fulfillmentFilter !== 'all' && normalizeFulfillmentValue(o.fulfillment) !== fulfillmentFilter)
+            return false;
 
         const orderDate = getOrderDate(o);
         if (!orderDate) return true;
 
-        if (rangeStart && rangeEnd) {
+        if (dateRange?.from) {
+            const startOfDay = new Date(dateRange.from);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
+            endOfDay.setHours(23, 59, 59, 999);
             const t = orderDate.getTime();
-            if (t < rangeStart.getTime() || t >= rangeEnd.getTime()) return false;
+            if (t < startOfDay.getTime() || t > endOfDay.getTime()) return false;
         }
 
         return true;
@@ -583,33 +1360,79 @@ export default function OrdersPage() {
     const [searchQuery, setSearchQuery] = React.useState('');
     const [filterStatus, setFilterStatus] = React.useState('all');
     const [filterFulfillment, setFilterFulfillment] = React.useState('all');
-    const [filterDate, setFilterDate] = React.useState('all');
-    const [dateFrom, setDateFrom] = React.useState(() => {
-        const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
-    });
-    const [dateTo, setDateTo] = React.useState(() => {
-        const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    });
+    const [dateRange, setDateRange] = React.useState({ from: undefined, to: undefined });
     const [currentPage, setCurrentPage] = React.useState(1);
     const [dateSortOrder, setDateSortOrder] = React.useState('desc');
     const [createModalOpen, setCreateModalOpen] = React.useState(false);
     const [orders, setOrders] = React.useState(MOCK_ORDERS);
+    const [catalogProducts, setCatalogProducts] = React.useState([]);
+    const [catalogLoading, setCatalogLoading] = React.useState(false);
+    const [catalogError, setCatalogError] = React.useState(null);
+    const [createOrderLines, setCreateOrderLines] = React.useState(() => [
+        { key: newCreateOrderLineKey(), productId: '', quantity: 1 },
+    ]);
     const [newOrderForm, setNewOrderForm] = React.useState({
         customer: '',
-        items: 1,
-        total: '',
+        email: '',
         fulfillment: 'unfulfilled',
+        source: 'website',
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        zip: '',
+        country: '',
     });
 
-    const resetNewOrderForm = () =>
+    const resetNewOrderForm = () => {
         setNewOrderForm({
             customer: '',
-            items: 1,
-            total: '',
+            email: '',
             fulfillment: 'unfulfilled',
+            source: 'website',
+            addressLine1: '',
+            addressLine2: '',
+            city: '',
+            state: '',
+            zip: '',
+            country: '',
         });
+        setCreateOrderLines([{ key: newCreateOrderLineKey(), productId: '', quantity: 1 }]);
+    };
+
+    React.useEffect(() => {
+        if (!createModalOpen) return undefined;
+        let cancelled = false;
+        setCatalogLoading(true);
+        setCatalogError(null);
+        getProducts()
+            .then((data) => {
+                if (cancelled) return;
+                setCatalogProducts(normalizeProductsFetch(data));
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setCatalogError('Could not load catalog');
+                    setCatalogProducts([]);
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setCatalogLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [createModalOpen]);
+
+    const createPreview = React.useMemo(
+        () => computeCreateOrderPreview(createOrderLines, catalogProducts),
+        [createOrderLines, catalogProducts],
+    );
+
+    const orderableCatalog = React.useMemo(
+        () => [...catalogProducts].filter(isProductOrderable).sort((a, b) => String(a.name).localeCompare(String(b.name))),
+        [catalogProducts],
+    );
 
     const allOrders = orders;
 
@@ -620,35 +1443,92 @@ export default function OrdersPage() {
     };
 
     const handleCreateOrder = () => {
-        const raw = String(newOrderForm.total)
-            .trim()
-            .replace(/[^0-9.]/g, '');
-        const total = Math.round(parseFloat(raw || 0) * 100) || 0;
-        const status = FULFILLMENT_TO_STATUS[newOrderForm.fulfillment] ?? 'pending';
+        const byId = new Map(orderableCatalog.map((p) => [String(p.id), p]));
+        const merged = new Map();
+        for (const line of createOrderLines) {
+            const p = byId.get(String(line.productId));
+            const qty = Math.max(0, parseInt(String(line.quantity), 10) || 0);
+            if (!p || qty <= 0) continue;
+            const id = String(p.id);
+            const unitPriceCents = Math.round(Number(p.price_cents) || 0);
+            const prev = merged.get(id);
+            if (prev) prev.quantity += qty;
+            else merged.set(id, { product: p, quantity: qty, unitPriceCents });
+        }
+        const lineItems = [...merged.values()].map(({ product, quantity, unitPriceCents }) => ({
+            name: formatProductLineName(product),
+            quantity,
+            unitPriceCents,
+        }));
+        if (!lineItems.length) return;
+
+        const total = lineItems.reduce((s, li) => s + li.quantity * li.unitPriceCents, 0);
+        const items = lineItems.reduce((s, li) => s + li.quantity, 0);
+        const fulfillment = newOrderForm.fulfillment ?? 'unfulfilled';
+        const status = FULFILLMENT_TO_STATUS[fulfillment] ?? 'pending';
+        const line2 = (newOrderForm.addressLine2 ?? '').trim();
+        const address = {
+            line1: (newOrderForm.addressLine1 ?? '').trim(),
+            ...(line2 ? { line2 } : {}),
+            city: (newOrderForm.city ?? '').trim(),
+            state: (newOrderForm.state ?? '').trim(),
+            zip: (newOrderForm.zip ?? '').trim(),
+            country: (newOrderForm.country ?? '').trim(),
+        };
         setOrders((prev) => [
             {
                 id: getNextOrderId(),
-                customer: newOrderForm.customer.trim() || 'Unknown',
+                customer: (newOrderForm.customer ?? '').trim() || 'Unknown',
+                email: (newOrderForm.email ?? '').trim(),
                 date: new Date().toISOString().slice(0, 16),
                 status,
-                fulfillment: newOrderForm.fulfillment,
+                fulfillment,
                 tracking: '',
                 total,
-                items: Math.max(1, newOrderForm.items),
+                items,
                 refunded: false,
+                source: newOrderForm.source === 'pos' ? 'pos' : 'website',
+                address,
+                lineItems,
             },
             ...prev,
         ]);
         setCreateModalOpen(false);
         resetNewOrderForm();
     };
-    const pendingOrders = MOCK_ORDERS.filter((o) => !o.refunded && ['pending', 'processing'].includes(o.status));
-    const refundedOrders = MOCK_ORDERS.filter((o) => o.refunded);
+
+    const updateCreateLine = (key, patch) => {
+        setCreateOrderLines((rows) => rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+    };
+
+    const addCreateOrderLine = () => {
+        setCreateOrderLines((rows) => [...rows, { key: newCreateOrderLineKey(), productId: '', quantity: 1 }]);
+    };
+
+    const removeCreateOrderLine = (key) => {
+        setCreateOrderLines((rows) => {
+            const next = rows.filter((r) => r.key !== key);
+            return next.length ? next : [{ key: newCreateOrderLineKey(), productId: '', quantity: 1 }];
+        });
+    };
+
+    const handleUpdateOrder = React.useCallback((id, updates) => {
+        setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, ...updates } : o)));
+    }, []);
+
+    const pendingOrders = React.useMemo(
+        () =>
+            allOrders.filter(
+                (o) => !o.refunded && (o.status === 'pending' || o.status === 'processing'),
+            ),
+        [allOrders],
+    );
+    const refundedOrders = React.useMemo(() => allOrders.filter((o) => o.refunded), [allOrders]);
 
     const filteredOrders = React.useMemo(() => {
         const bySearch = filterOrdersBySearch(allOrders, searchQuery);
-        return applyOrderFilters(bySearch, filterStatus, filterFulfillment, filterDate, dateFrom, dateTo);
-    }, [allOrders, searchQuery, filterStatus, filterFulfillment, filterDate, dateFrom, dateTo]);
+        return applyOrderFilters(bySearch, filterStatus, filterFulfillment, dateRange);
+    }, [allOrders, searchQuery, filterStatus, filterFulfillment, dateRange]);
 
     const sortedOrders = React.useMemo(() => {
         return [...filteredOrders].sort((a, b) => {
@@ -664,7 +1544,7 @@ export default function OrdersPage() {
 
     React.useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, filterStatus, filterFulfillment, filterDate, dateFrom, dateTo]);
+    }, [searchQuery, filterStatus, filterFulfillment, dateRange]);
 
     const ordersForTab = sortedOrders;
     const totalPages = Math.max(1, Math.ceil(ordersForTab.length / PAGE_SIZE));
@@ -675,6 +1555,8 @@ export default function OrdersPage() {
         const headers = [
             'Order ID',
             'Customer',
+            'Email',
+            'Source',
             'Date',
             'Items',
             'Status',
@@ -687,6 +1569,8 @@ export default function OrdersPage() {
             [
                 o.id,
                 o.customer,
+                o.email ?? '',
+                ORDER_SOURCES.find((s) => s.value === (o.source ?? 'website'))?.label ?? 'Website',
                 formatDateTime(o.date),
                 o.items ?? 0,
                 o.status,
@@ -752,67 +1636,8 @@ export default function OrdersPage() {
                 <div>
                     <h1 className="text-zinc-100 text-xl font-semibold tracking-tight">Order Command</h1>
                     <p className="text-zinc-500 mt-1 text-sm">Manage fulfillment and tracking</p>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="outline"
-                                className="mt-2 h-9 gap-2 border-zinc-700/80 bg-zinc-900/80 pl-2.5 pr-2 text-zinc-100 hover:bg-zinc-800 hover:text-zinc-100 hover:border-zinc-600 text-xs font-normal"
-                            >
-                                <Calendar className="size-4 text-zinc-500" />
-                                <span>{getDateRangeLabel(filterDate, dateFrom, dateTo)}</span>
-                                <ChevronDown className="size-4 text-zinc-500" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            align="start"
-                            className="min-w-[200px] border-zinc-800 bg-zinc-900 text-zinc-100 p-2"
-                        >
-                            {DATE_FILTER_OPTIONS.map((opt) => (
-                                <DropdownMenuItem
-                                    key={opt.value}
-                                    onClick={() => setFilterDate(opt.value)}
-                                    className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
-                                >
-                                    {opt.label}
-                                </DropdownMenuItem>
-                            ))}
-                            <DropdownMenuSeparator className="my-2 bg-zinc-700" />
-                            <div className="space-y-2 px-2 py-1">
-                                <p className="text-[10px] font-medium text-zinc-400">Custom range</p>
-                                <div className="grid gap-2">
-                                    <Input
-                                        type="date"
-                                        value={dateFrom}
-                                        onChange={(e) => {
-                                            setDateFrom(e.target.value);
-                                            setFilterDate('custom');
-                                        }}
-                                        className="h-8 border-zinc-700 bg-zinc-900/80 text-xs text-zinc-100"
-                                    />
-                                    <Input
-                                        type="date"
-                                        value={dateTo}
-                                        onChange={(e) => {
-                                            setDateTo(e.target.value);
-                                            setFilterDate('custom');
-                                        }}
-                                        className="h-8 border-zinc-700 bg-zinc-900/80 text-xs text-zinc-100"
-                                    />
-                                </div>
-                            </div>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-9 gap-1.5 border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 hover:border-zinc-600 text-xs"
-                        onClick={handleExportCsv}
-                    >
-                        <Download className="size-3.5" />
-                        Export CSV
-                    </Button>
                     <Button
                         size="sm"
                         className="h-9 gap-1.5 bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 text-xs shrink-0"
@@ -824,7 +1649,12 @@ export default function OrdersPage() {
                 </div>
             </div>
 
-            <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Overview</span>
+                    <DateRangePicker date={dateRange} onDateChange={setDateRange} />
+                </div>
+                <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
                 {orderMetrics.map((m) => {
                     const Icon = m.icon;
                     const accentCls =
@@ -857,61 +1687,75 @@ export default function OrdersPage() {
                         </div>
                     );
                 })}
+                </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-                <div className="flex flex-wrap items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
-                    {STATUS_FILTER_OPTIONS.map((opt) => (
-                        <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => setFilterStatus(opt.value)}
-                            className={cn(
-                                'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
-                                filterStatus === opt.value
-                                    ? 'bg-zinc-700 text-zinc-100'
-                                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
-                            )}
-                        >
-                            {opt.label}
-                        </button>
-                    ))}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-1 flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
+                        {STATUS_FILTER_OPTIONS.map((opt) => (
+                            <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => setFilterStatus(opt.value)}
+                                className={cn(
+                                    'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                                    filterStatus === opt.value
+                                        ? 'bg-zinc-700 text-zinc-100'
+                                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
+                                )}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
+                        {[
+                            { value: 'all', label: 'All' },
+                            { value: 'unfulfilled', label: 'Unfulfilled' },
+                        ].map((opt) => (
+                            <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => setFilterFulfillment(opt.value)}
+                                className={cn(
+                                    'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                                    filterFulfillment === opt.value
+                                        ? 'bg-zinc-700 text-zinc-100'
+                                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
+                                )}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
-                <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
-                    {[
-                        { value: 'all', label: 'All' },
-                        { value: 'unfulfilled', label: 'Unfulfilled' },
-                    ].map((opt) => (
-                        <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => setFilterFulfillment(opt.value)}
-                            className={cn(
-                                'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
-                                filterFulfillment === opt.value
-                                    ? 'bg-zinc-700 text-zinc-100'
-                                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
-                            )}
-                        >
-                            {opt.label}
-                        </button>
-                    ))}
-                </div>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-2 border-zinc-700 bg-zinc-900/80 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                    onClick={handleExportCsv}
+                >
+                    <Download className="size-4" />
+                    Export CSV
+                </Button>
             </div>
 
             <div className="mt-4">
                 <OrdersTable
                     orders={paginatedOrders}
+                    allOrders={sortedOrders}
                     hasActiveSearch={
                         !!searchQuery.trim() ||
                         filterStatus !== 'all' ||
                         filterFulfillment !== 'all' ||
-                        filterDate !== 'all'
+                        !!dateRange?.from
                     }
                     dateSortOrder={dateSortOrder}
                     onDateSortToggle={toggleDateSort}
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
+                    onUpdateOrder={handleUpdateOrder}
                     pagination={
                         <PaginationBar
                             total={filteredOrders.length}
@@ -930,7 +1774,7 @@ export default function OrdersPage() {
                     if (!open) resetNewOrderForm();
                 }}
             >
-                <DialogContent className="border-zinc-800 bg-zinc-900 sm:max-w-sm">
+                <DialogContent className="max-h-[min(90vh,720px)] overflow-y-auto border-zinc-800 bg-zinc-900 sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle>Create Order</DialogTitle>
                         <DialogDescription>Add a manual order.</DialogDescription>
@@ -949,44 +1793,233 @@ export default function OrdersPage() {
                             <Input
                                 id="order-customer"
                                 placeholder="Name"
-                                value={newOrderForm.customer}
+                                value={newOrderForm.customer ?? ''}
                                 onChange={(e) => setNewOrderForm((f) => ({ ...f, customer: e.target.value }))}
                                 className="h-9 border-zinc-700 bg-zinc-950/80"
                             />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="order-email" className="text-xs text-zinc-400">
+                                Email
+                            </Label>
+                            <Input
+                                id="order-email"
+                                type="email"
+                                autoComplete="email"
+                                placeholder="customer@example.com"
+                                value={newOrderForm.email ?? ''}
+                                onChange={(e) => setNewOrderForm((f) => ({ ...f, email: e.target.value }))}
+                                className="h-9 border-zinc-700 bg-zinc-950/80"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs text-zinc-400">Source</Label>
+                            <Select
+                                value={newOrderForm.source ?? 'website'}
+                                onValueChange={(v) => setNewOrderForm((f) => ({ ...f, source: v }))}
+                            >
+                                <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ORDER_SOURCES.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                            {opt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/40 p-3">
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                                Shipping address
+                            </p>
                             <div className="space-y-1.5">
-                                <Label htmlFor="order-items" className="text-xs text-zinc-400">
-                                    Items
+                                <Label htmlFor="new-addr-line1" className="text-xs text-zinc-400">
+                                    Address line 1
                                 </Label>
                                 <Input
-                                    id="order-items"
-                                    type="number"
-                                    min={1}
-                                    value={newOrderForm.items}
-                                    onChange={(e) =>
-                                        setNewOrderForm((f) => ({ ...f, items: parseInt(e.target.value, 10) || 1 }))
-                                    }
+                                    id="new-addr-line1"
+                                    value={newOrderForm.addressLine1 ?? ''}
+                                    onChange={(e) => setNewOrderForm((f) => ({ ...f, addressLine1: e.target.value }))}
                                     className="h-9 border-zinc-700 bg-zinc-950/80"
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <Label htmlFor="order-total" className="text-xs text-zinc-400">
-                                    Total ($)
+                                <Label htmlFor="new-addr-line2" className="text-xs text-zinc-400">
+                                    Address line 2
                                 </Label>
                                 <Input
-                                    id="order-total"
-                                    placeholder="0.00"
-                                    value={newOrderForm.total}
-                                    onChange={(e) => setNewOrderForm((f) => ({ ...f, total: e.target.value }))}
+                                    id="new-addr-line2"
+                                    value={newOrderForm.addressLine2 ?? ''}
+                                    onChange={(e) => setNewOrderForm((f) => ({ ...f, addressLine2: e.target.value }))}
                                     className="h-9 border-zinc-700 bg-zinc-950/80"
                                 />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="new-addr-city" className="text-xs text-zinc-400">
+                                        City
+                                    </Label>
+                                    <Input
+                                        id="new-addr-city"
+                                        value={newOrderForm.city ?? ''}
+                                        onChange={(e) => setNewOrderForm((f) => ({ ...f, city: e.target.value }))}
+                                        className="h-9 border-zinc-700 bg-zinc-950/80"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="new-addr-state" className="text-xs text-zinc-400">
+                                        State
+                                    </Label>
+                                    <Input
+                                        id="new-addr-state"
+                                        value={newOrderForm.state ?? ''}
+                                        onChange={(e) => setNewOrderForm((f) => ({ ...f, state: e.target.value }))}
+                                        className="h-9 border-zinc-700 bg-zinc-950/80"
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="new-addr-zip" className="text-xs text-zinc-400">
+                                        ZIP
+                                    </Label>
+                                    <Input
+                                        id="new-addr-zip"
+                                        value={newOrderForm.zip ?? ''}
+                                        onChange={(e) => setNewOrderForm((f) => ({ ...f, zip: e.target.value }))}
+                                        className="h-9 border-zinc-700 bg-zinc-950/80"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="new-addr-country" className="text-xs text-zinc-400">
+                                        Country
+                                    </Label>
+                                    <Input
+                                        id="new-addr-country"
+                                        value={newOrderForm.country ?? ''}
+                                        onChange={(e) => setNewOrderForm((f) => ({ ...f, country: e.target.value }))}
+                                        className="h-9 border-zinc-700 bg-zinc-950/80"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/40 p-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                                    Line items
+                                </p>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 gap-1 border-zinc-700 bg-zinc-900/80 px-2 text-[10px] text-zinc-300"
+                                    onClick={addCreateOrderLine}
+                                    disabled={catalogLoading || !!catalogError}
+                                >
+                                    <Plus className="size-3" />
+                                    Add line
+                                </Button>
+                            </div>
+                            {catalogLoading ? (
+                                <p className="text-zinc-500 text-xs py-2">Loading catalog…</p>
+                            ) : catalogError ? (
+                                <p className="text-amber-400/90 text-xs py-2">{catalogError}</p>
+                            ) : orderableCatalog.length === 0 ? (
+                                <p className="text-zinc-500 text-xs py-2">
+                                    No active products in catalog. Add or activate products under Catalog first.
+                                </p>
+                            ) : (
+                                <ul className="space-y-2">
+                                    {createOrderLines.map((line) => (
+                                        <li
+                                            key={line.key}
+                                            className="flex flex-wrap items-end gap-2 rounded-md border border-zinc-800/80 bg-zinc-950/50 p-2"
+                                        >
+                                            <div className="min-w-0 flex-1 space-y-1">
+                                                <Label className="text-[10px] text-zinc-500">Product</Label>
+                                                <Select
+                                                    value={line.productId ? String(line.productId) : '__none__'}
+                                                    onValueChange={(v) =>
+                                                        updateCreateLine(line.key, {
+                                                            productId: v === '__none__' ? '' : v,
+                                                        })
+                                                    }
+                                                >
+                                                    <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80 text-left text-xs">
+                                                        <SelectValue placeholder="Select product" />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="max-h-[min(280px,50vh)]">
+                                                        <SelectItem value="__none__" className="text-xs text-zinc-500">
+                                                            Select product
+                                                        </SelectItem>
+                                                        {orderableCatalog.map((p) => (
+                                                            <SelectItem
+                                                                key={p.id}
+                                                                value={String(p.id)}
+                                                                className="text-xs"
+                                                            >
+                                                                <span className="flex flex-col gap-0.5 text-left">
+                                                                    <span>{formatProductLineName(p)}</span>
+                                                                    <span className="text-zinc-500 font-mono text-[10px] tabular-nums">
+                                                                        {formatCurrency(
+                                                                            Math.round(Number(p.price_cents) || 0),
+                                                                        )}
+                                                                        {p.sku ? ` · ${p.sku}` : ''}
+                                                                    </span>
+                                                                </span>
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="w-20 space-y-1">
+                                                <Label htmlFor={`qty-${line.key}`} className="text-[10px] text-zinc-500">
+                                                    Qty
+                                                </Label>
+                                                <Input
+                                                    id={`qty-${line.key}`}
+                                                    type="number"
+                                                    min={1}
+                                                    value={line.quantity ?? 1}
+                                                    onChange={(e) =>
+                                                        updateCreateLine(line.key, {
+                                                            quantity: Math.max(1, parseInt(e.target.value, 10) || 1),
+                                                        })
+                                                    }
+                                                    className="h-9 border-zinc-700 bg-zinc-950/80 text-xs tabular-nums"
+                                                />
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-9 w-9 shrink-0 text-zinc-500 hover:text-red-400"
+                                                onClick={() => removeCreateOrderLine(line.key)}
+                                                aria-label="Remove line"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </Button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                            <div className="flex flex-wrap items-baseline justify-between gap-2 border-t border-zinc-800 pt-2">
+                                <span className="text-zinc-500 text-xs">
+                                    {createPreview.unitCount > 0
+                                        ? `${createPreview.unitCount} unit${createPreview.unitCount === 1 ? '' : 's'}`
+                                        : 'No items yet'}
+                                </span>
+                                <span className="text-zinc-100 text-sm font-medium tabular-nums">
+                                    Total {formatCurrency(createPreview.totalCents)}
+                                </span>
                             </div>
                         </div>
                         <div className="space-y-1.5">
                             <Label className="text-xs text-zinc-400">Fulfillment</Label>
                             <Select
-                                value={newOrderForm.fulfillment}
+                                value={newOrderForm.fulfillment ?? 'unfulfilled'}
                                 onValueChange={(v) => setNewOrderForm((f) => ({ ...f, fulfillment: v }))}
                             >
                                 <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
@@ -1010,7 +2043,16 @@ export default function OrdersPage() {
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit" className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30">
+                            <Button
+                                type="submit"
+                                disabled={
+                                    catalogLoading ||
+                                    !!catalogError ||
+                                    !createPreview.hasValidLine ||
+                                    orderableCatalog.length === 0
+                                }
+                                className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 disabled:opacity-50"
+                            >
                                 Create Order
                             </Button>
                         </DialogFooter>
