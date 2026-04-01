@@ -8,7 +8,7 @@ const isAdminRoute = createRouteMatcher(['/admin/:path*']);
 
 // Only run this middleware on these routes (avoids touching every request).
 export const config = {
-    matcher: ['/', '/products/:path*', '/shop/:path*', '/cart', '/checkout', '/admin/:path*'],
+    matcher: ['/', '/products/:path*', '/shop/:path*', '/cart', '/checkout', '/admin', '/admin/:path*'],
 };
 
 const recentRequests = new Map();
