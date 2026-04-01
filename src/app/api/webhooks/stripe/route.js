@@ -2,7 +2,9 @@ import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
+import { Resend } from 'resend';
 
+const resend = new Resend(process.env.RESEND_API_KEY);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -50,6 +52,17 @@ export async function POST(req) {
                 console.error('Fulfillment Error:', fulfillError);
                 return new Response('Internal Error', { status: 500 });
             }
+            await resend.emails.send({
+                from: 'onboarding@resend.dev',
+                to: session.customer_details?.email,
+                subject: 'Thank you fir your purchase!',
+                subject: 'Your Casa Plasencio order is confirmed',
+                html: `
+                        <h2>Thank you for your order!</h2>
+                        <p>Your payment of <strong>$${(session.amount_total / 100).toFixed(2)}</strong> was received.</p>
+                        <p>We'll email you when your order has shipped.</p>
+                    `,
+            });
 
             // THIS CLEARS THE "7" IN YOUR HUD
             revalidatePath('/', 'layout');
