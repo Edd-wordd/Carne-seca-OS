@@ -25,6 +25,8 @@ import {
     PieChart,
     Handshake,
     Activity,
+    BookUser,
+    Megaphone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
 import { Input } from '@/components/ui/input';
@@ -58,6 +60,14 @@ const navSections = [
             { href: '/admin/expenses', label: 'Expenses', icon: ScrollText },
             { href: '/admin/payouts', label: 'Promoters / Payouts', icon: Wallet },
             { href: '/admin/pnl', label: 'P&L Summary', icon: PieChart },
+        ],
+    },
+    {
+        title: 'Customers',
+        icon: BookUser,
+        items: [
+            { href: '/admin/customers', label: 'Directory', icon: BookUser },
+            { href: '/admin/campaigns', label: 'Campaigns', icon: Megaphone },
         ],
     },
     {

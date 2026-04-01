@@ -17,6 +17,8 @@ const PATH_LABELS = {
     supplies: 'Supplies',
     partners: 'Partners',
     catalog: 'Catalog',
+    customers: 'Customers',
+    campaigns: 'Campaigns',
     settings: 'Settings',
 };
 
