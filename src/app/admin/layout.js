@@ -23,6 +23,7 @@ import {
     User,
     LogOut,
     Wallet,
+    PieChart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
 import { Input } from '@/components/ui/input';
@@ -55,6 +56,7 @@ const navSections = [
             { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
             { href: '/admin/expenses', label: 'Expenses', icon: ScrollText },
             { href: '/admin/payouts', label: 'Promoters / Payouts', icon: Wallet },
+            { href: '/admin/pnl', label: 'P&L Summary', icon: PieChart },
         ],
     },
     {
