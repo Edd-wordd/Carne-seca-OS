@@ -14,6 +14,8 @@ const PATH_LABELS = {
     reports: 'PostHog',
     social: 'Social',
     leads: 'Leads',
+    'lead-generator': 'Lead Generator',
+    'target-list': 'Target List',
     supplies: 'Supplies',
     partners: 'Partners',
     catalog: 'Catalog',
@@ -35,7 +37,10 @@ function getBreadcrumbItems(pathname) {
     for (let i = 0; i < segments.length; i++) {
         href += '/' + segments[i];
         const segment = segments[i];
-        const label = PATH_LABELS[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+        let label = PATH_LABELS[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+        if (href === '/admin/leads' && i === segments.length - 1 && pathname === '/admin/leads') {
+            label = 'Pipeline';
+        }
         items.push({ href, label, isLast: i === segments.length - 1 });
     }
     if (items.length === 1 && items[0].href === '/admin') {

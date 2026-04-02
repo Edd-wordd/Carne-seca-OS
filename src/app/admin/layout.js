@@ -18,6 +18,8 @@ import {
     DollarSign,
     Share2,
     UserPlus,
+    Kanban,
+    MapPinned,
     Flame,
     User,
     LogOut,
@@ -98,7 +100,11 @@ const navSections = [
     {
         title: 'Leads',
         icon: UserPlus,
-        items: [{ href: '/admin/leads', label: 'Leads', icon: UserPlus }],
+        items: [
+            { href: '/admin/leads', label: 'Pipeline', icon: Kanban },
+            { href: '/admin/leads/lead-generator', label: 'Lead Generator', icon: UserPlus },
+            { href: '/admin/leads/target-list', label: 'Target List', icon: MapPinned },
+        ],
     },
     {
         title: 'Operations',
