@@ -17,6 +17,9 @@ import {
     BarChart2,
     DollarSign,
     Share2,
+    CalendarRange,
+    FileStack,
+    ChartSpline,
     UserPlus,
     Kanban,
     MapPinned,
@@ -95,7 +98,11 @@ const navSections = [
     {
         title: 'Socials',
         icon: Share2,
-        items: [{ href: '/admin/social', label: 'Social', icon: Share2 }],
+        items: [
+            { href: '/admin/social/content-calendar', label: 'Content Calendar', icon: CalendarRange },
+            { href: '/admin/social/post-manager', label: 'Post Manager', icon: FileStack },
+            { href: '/admin/social/analytics', label: 'Analytics', icon: ChartSpline },
+        ],
     },
     {
         title: 'Leads',

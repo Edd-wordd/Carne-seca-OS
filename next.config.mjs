@@ -8,7 +8,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
     reactCompiler: true,
     async redirects() {
-        return [{ source: '/admin/markets-events', destination: '/admin/events', permanent: true }];
+        return [
+            { source: '/admin/markets-events', destination: '/admin/events', permanent: true },
+            { source: '/admin/social', destination: '/admin/social/post-manager', permanent: false },
+        ];
     },
     webpack: (config) => {
         config.resolve.modules = [
