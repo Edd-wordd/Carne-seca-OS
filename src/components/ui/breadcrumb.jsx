@@ -30,6 +30,7 @@ const PATH_LABELS = {
     roi: 'ROI',
     'inventory-used': 'Inventory Used',
     settings: 'Settings',
+    'user-management': 'User Management',
     documents: 'Documents',
     contracts: 'Contracts',
     'permits-compliance': 'Permits & Compliance',

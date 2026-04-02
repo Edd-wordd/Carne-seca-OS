@@ -139,6 +139,12 @@ const navSections = [
     },
 ];
 
+/** Bottom Admin popout only — does not use the section hover drawer */
+const ADMIN_POPOUT_ITEMS = [
+    { href: '/admin/settings', label: 'Settings', icon: Settings },
+    { href: '/admin/user-management', label: 'User Management', icon: Users2 },
+];
+
 function pathnameMatchesNavHref(pathname, href) {
     if (pathname === href) return true;
     if (href === '/admin') return false;
@@ -163,6 +169,10 @@ export default function AdminLayout({ children }) {
     const sectionContainingCurrentPage = navSections.find((s) =>
         s.items.some(({ href }) => pathnameMatchesNavHref(pathname, href)),
     )?.title;
+
+    const isAdminSettingsRoute =
+        pathnameMatchesNavHref(pathname, '/admin/settings') ||
+        pathnameMatchesNavHref(pathname, '/admin/user-management');
     const effectiveSection = hoveredSection ?? sectionContainingCurrentPage ?? navSections[0]?.title;
     const showItemsDrawer = isHovering && effectiveSection && !isUserPopoutOpen;
 
@@ -229,10 +239,7 @@ export default function AdminLayout({ children }) {
                                     );
                                 })}
                             </nav>
-                            <div
-                                className="border-t border-zinc-800/80 pt-3"
-                                onMouseEnter={() => setHoveredSection('Admin')}
-                            >
+                            <div className="border-t border-zinc-800/80 pt-3">
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <div
@@ -250,7 +257,7 @@ export default function AdminLayout({ children }) {
                                             }}
                                             className={cn(
                                                 'flex flex-col items-center justify-center gap-1 rounded-lg px-1 py-2 text-zinc-400 transition-colors cursor-pointer',
-                                                (hoveredSection === 'Admin' || isUserPopoutOpen) &&
+                                                (isUserPopoutOpen || isAdminSettingsRoute) &&
                                                     'bg-zinc-700/70 text-zinc-100',
                                             )}
                                         >
@@ -277,53 +284,29 @@ export default function AdminLayout({ children }) {
                                     <span className="text-zinc-200 text-sm font-medium">{effectiveSection}</span>
                                 </div>
                                 <nav className="flex flex-1 flex-col gap-0.5 p-2 overflow-y-auto">
-                                    {effectiveSection === 'Admin' ? (
-                                        <>
-                                            <Link
-                                                href="/admin/settings"
-                                                className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-700/70 hover:text-zinc-100"
-                                            >
-                                                <Settings className="size-3.5 shrink-0" />
-                                                Settings
-                                            </Link>
-                                            <button
-                                                type="button"
-                                                onClick={async () => {
-                                                    await signOut();
-                                                    router.push('/');
-                                                }}
-                                                className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-700/70 hover:text-red-400"
-                                            >
-                                                <LogOut className="size-3.5 shrink-0" />
-                                                Sign out
-                                            </button>
-                                        </>
-                                    ) : (
-                                        navSections
-                                            .find((s) => s.title === effectiveSection)
-                                            ?.items.map(({ href, label, icon: Icon }) => {
-                                                const sectionItems =
-                                                    navSections.find((s) => s.title === effectiveSection)?.items ??
-                                                    [];
-                                                const isActive =
-                                                    getActiveNavHrefForSection(sectionItems, pathname) === href;
-                                                return (
-                                                    <Link
-                                                        key={href}
-                                                        href={href}
-                                                        className={cn(
-                                                            'flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors',
-                                                            isActive
-                                                                ? 'bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30'
-                                                                : 'text-zinc-400 hover:bg-zinc-700/70 hover:text-zinc-100',
-                                                        )}
-                                                    >
-                                                        <Icon className="size-3.5 shrink-0" />
-                                                        {label}
-                                                    </Link>
-                                                );
-                                            })
-                                    )}
+                                    {navSections
+                                        .find((s) => s.title === effectiveSection)
+                                        ?.items.map(({ href, label, icon: Icon }) => {
+                                            const sectionItems =
+                                                navSections.find((s) => s.title === effectiveSection)?.items ?? [];
+                                            const isActive =
+                                                getActiveNavHrefForSection(sectionItems, pathname) === href;
+                                            return (
+                                                <Link
+                                                    key={href}
+                                                    href={href}
+                                                    className={cn(
+                                                        'flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors',
+                                                        isActive
+                                                            ? 'bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30'
+                                                            : 'text-zinc-400 hover:bg-zinc-700/70 hover:text-zinc-100',
+                                                    )}
+                                                >
+                                                    <Icon className="size-3.5 shrink-0" />
+                                                    {label}
+                                                </Link>
+                                            );
+                                        })}
                                 </nav>
                             </div>
                         )}
@@ -339,13 +322,27 @@ export default function AdminLayout({ children }) {
                                     <p className="text-[10px] text-zinc-500">Carne Seca</p>
                                 </div>
                                 <div className="flex flex-col gap-0.5 p-2">
-                                    <Link
-                                        href="/admin/settings"
-                                        className="flex items-center gap-2 rounded-md px-3 py-2 text-xs text-zinc-400 transition-colors hover:bg-zinc-700/70 hover:text-zinc-100"
-                                    >
-                                        <Settings className="size-4 shrink-0" />
-                                        Settings
-                                    </Link>
+                                    {ADMIN_POPOUT_ITEMS.map(({ href, label, icon: Icon }) => {
+                                        const isActive =
+                                            getActiveNavHrefForSection(ADMIN_POPOUT_ITEMS, pathname) === href;
+                                        return (
+                                            <Link
+                                                key={href}
+                                                href={href}
+                                                onClick={() => setIsUserPopoutOpen(false)}
+                                                className={cn(
+                                                    'flex items-center gap-2 rounded-md px-3 py-2 text-xs transition-colors',
+                                                    isActive
+                                                        ? 'bg-indigo-500/15 text-indigo-300'
+                                                        : 'text-zinc-400 hover:bg-zinc-700/70 hover:text-zinc-100',
+                                                )}
+                                            >
+                                                <Icon className="size-4 shrink-0" />
+                                                {label}
+                                            </Link>
+                                        );
+                                    })}
+                                    <div className="my-1 border-t border-zinc-800" />
                                     <button
                                         type="button"
                                         onClick={async () => {
