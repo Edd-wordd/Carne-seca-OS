@@ -37,6 +37,10 @@ import {
     ClipboardList,
     TrendingUp,
     Boxes,
+    Files,
+    FileSignature,
+    ShieldCheck,
+    Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
 import { Input } from '@/components/ui/input';
@@ -84,6 +88,15 @@ const navSections = [
         title: 'Partners',
         icon: Handshake,
         items: [{ href: '/admin/partners', label: 'Partners', icon: Users2 }],
+    },
+    {
+        title: 'Documents',
+        icon: Files,
+        items: [
+            { href: '/admin/documents/contracts', label: 'Contracts', icon: FileSignature },
+            { href: '/admin/documents/permits-compliance', label: 'Permits & Compliance', icon: ShieldCheck },
+            { href: '/admin/documents/business-docs', label: 'Business Docs', icon: Building2 },
+        ],
     },
     {
         title: 'Events',

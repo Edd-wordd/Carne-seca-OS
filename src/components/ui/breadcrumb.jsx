@@ -30,6 +30,10 @@ const PATH_LABELS = {
     roi: 'ROI',
     'inventory-used': 'Inventory Used',
     settings: 'Settings',
+    documents: 'Documents',
+    contracts: 'Contracts',
+    'permits-compliance': 'Permits & Compliance',
+    'business-docs': 'Business Docs',
 };
 
 function getBreadcrumbItems(pathname) {

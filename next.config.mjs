@@ -11,6 +11,7 @@ const nextConfig = {
         return [
             { source: '/admin/markets-events', destination: '/admin/events', permanent: true },
             { source: '/admin/social', destination: '/admin/social/post-manager', permanent: false },
+            { source: '/admin/documents', destination: '/admin/documents/contracts', permanent: false },
         ];
     },
     webpack: (config) => {
