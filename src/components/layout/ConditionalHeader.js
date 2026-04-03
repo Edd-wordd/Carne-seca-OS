@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { usePathname } from "next/navigation";
+import { usePathname } from 'next/navigation';
 
 /**
  * Wraps children and optionally shows the store header.
@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
  */
 export default function ConditionalHeader({ storeHeader, children }) {
     const pathname = usePathname();
-    const isAdmin = pathname?.startsWith("/admin");
+    const isAdmin = pathname?.startsWith('/admin');
 
     return (
         <>
