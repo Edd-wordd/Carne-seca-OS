@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, TicketPercent, CheckCircle2, Hash } from 'lucide-react';
+import { Search, TicketPercent, CheckCircle2, Hash, CircleDollarSign, Download } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
+import { exportCouponsToCsv } from '@/lib/utils/exportCoupons';
 
 const MOCK_COUPONS = [
     {
@@ -16,6 +17,7 @@ const MOCK_COUPONS = [
         value: 10,
         maxRedemptions: 500,
         redemptions: 184,
+        redeemedValueCents: 83_120, // total discount given across redemptions (mock)
         expiresAt: '2026-12-31',
         active: true,
         note: 'New customers · one per email',
@@ -27,6 +29,7 @@ const MOCK_COUPONS = [
         valueCents: 500,
         maxRedemptions: null,
         redemptions: 42,
+        redeemedValueCents: 21_000, // $5 × 42
         expiresAt: '2026-06-01',
         active: true,
         note: '$5 off orders $35+',
@@ -38,6 +41,7 @@ const MOCK_COUPONS = [
         value: 20,
         maxRedemptions: 100,
         redemptions: 100,
+        redeemedValueCents: 450_000,
         expiresAt: '2026-01-15',
         active: false,
         note: 'Depleted',
@@ -49,11 +53,14 @@ const MOCK_COUPONS = [
         value: null,
         maxRedemptions: 200,
         redemptions: 67,
+        redeemedValueCents: 53_600, // est. shipping saved (mock)
         expiresAt: null,
         active: true,
         note: 'Domestic only',
     },
 ];
+
+const moneyUsd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 function formatDiscount(c) {
     if (c.type === 'percent') return `${c.value}% off`;
@@ -85,27 +92,18 @@ export default function CouponsPage() {
 
     const activeCount = MOCK_COUPONS.filter((c) => c.active).length;
     const totalRedemptions = MOCK_COUPONS.reduce((s, c) => s + c.redemptions, 0);
+    const totalRedemptionValueCents = MOCK_COUPONS.reduce((s, c) => s + (c.redeemedValueCents ?? 0), 0);
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-zinc-100 text-xl font-semibold tracking-tight">Coupons</h1>
-                    <p className="text-zinc-500 mt-1 text-sm">
-                        Promo codes for checkout — mock UI only (wire to Stripe / DB later).
-                    </p>
-                </div>
-                <Button
-                    size="sm"
-                    disabled
-                    className="h-9 gap-1.5 bg-indigo-500/20 text-indigo-300 opacity-60"
-                >
-                    <Plus className="size-3.5" />
-                    Create coupon
-                </Button>
+            <div>
+                <h1 className="text-zinc-100 text-xl font-semibold tracking-tight">Coupons</h1>
+                <p className="text-zinc-500 mt-1 text-sm">
+                    Promo codes for checkout — mock UI only (wire to Stripe / DB later).
+                </p>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <Card className="border-zinc-800 bg-zinc-900/70">
                     <CardContent className="flex items-start justify-between p-4">
                         <div>
@@ -137,6 +135,33 @@ export default function CouponsPage() {
                         <Hash className="mt-0.5 size-4 text-zinc-500" />
                     </CardContent>
                 </Card>
+                <Card className="border-zinc-800 bg-zinc-900/70">
+                    <CardContent className="flex items-start justify-between p-4">
+                        <div>
+                            <p className="text-[10px] uppercase tracking-wider text-zinc-500">
+                                Total redemption value
+                            </p>
+                            <p className="mt-1 text-base font-semibold tabular-nums text-amber-400/95">
+                                {moneyUsd.format(totalRedemptionValueCents / 100)}
+                            </p>
+                            <p className="mt-0.5 text-[10px] text-zinc-600">Discount given (mock)</p>
+                        </div>
+                        <CircleDollarSign className="mt-0.5 size-4 text-amber-400/80" />
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="flex justify-end">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-2 border-zinc-700 bg-zinc-900/80 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                    onClick={() => exportCouponsToCsv(filtered)}
+                >
+                    <Download className="size-3.5" />
+                    Export CSV
+                </Button>
             </div>
 
             <Card className="border-zinc-800 bg-zinc-900/70">
