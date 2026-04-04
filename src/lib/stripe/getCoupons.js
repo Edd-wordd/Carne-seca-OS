@@ -6,9 +6,6 @@ export async function getCoupons() {
     const promotionalCodesList = await stripe.promotionCodes.list({ expand: ['data.promotion.coupon'] });
 
     const coupons = (promotionalCodesList.data ?? []).map((promo) => {
-        console.log(promotionalCodesList.data[0]);
-        console.log(promo.coupon);
-        console.log(promo.promotion?.coupon);
         return {
             id: promo.id,
             code: promo.code,
@@ -28,7 +25,7 @@ export async function getCoupons() {
             },
             expires: promo?.expires_at ? new Date(promo.expires_at * 1000).toISOString() : null,
             status: promo.active ? 'active' : 'inactive',
-            metadata: promo.metadata ?? {},
+            metadata: { ...promo.promotion?.coupon?.metadata, ...promo.metadata },
         };
     });
     return coupons;
