@@ -93,7 +93,6 @@ export function CouponsTable({ coupons, query, onQueryChange, filter, onFilterCh
                                         <span className="font-mono text-[11px] font-medium text-zinc-200">
                                             {c.code}
                                         </span>
-                                        {c.id ? <p className="text-[10px] text-zinc-600">{c.id}</p> : null}
                                     </TableCell>
                                     <TableCell className="px-3 py-2 text-[11px] text-zinc-300">
                                         {formatDiscount(c)}
