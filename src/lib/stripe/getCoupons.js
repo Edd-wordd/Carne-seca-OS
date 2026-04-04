@@ -3,16 +3,24 @@ import Stripe from 'stripe';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function getCoupons() {
-    const promotionalCodesList = await stripe.promotionCodes.list();
+    const promotionalCodesList = await stripe.promotionCodes.list({ expand: ['data.promotion.coupon'] });
 
     const coupons = (promotionalCodesList.data ?? []).map((promo) => {
+        console.log(promotionalCodesList.data[0]);
+        console.log(promo.coupon);
+        console.log(promo.promotion?.coupon);
         return {
+            id: promo.id,
             code: promo.code,
             discount:
-                promo.coupon?.percent_off != null
-                    ? { type: 'percent', value: promo.coupon.percent_off }
-                    : promo.coupon?.amount_off != null
-                      ? { type: 'fixed', value: promo.coupon.amount_off, currency: promo.coupon.currency }
+                promo.promotion?.coupon?.percent_off != null
+                    ? { type: 'percent', value: promo.promotion.coupon.percent_off }
+                    : promo.promotion?.coupon?.amount_off != null
+                      ? {
+                            type: 'fixed',
+                            value: promo.promotion.coupon.amount_off,
+                            currency: promo.promotion.coupon.currency,
+                        }
                       : null,
             uses: {
                 max: promo.max_redemptions,

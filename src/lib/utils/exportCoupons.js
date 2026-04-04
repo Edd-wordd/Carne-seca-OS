@@ -1,13 +1,20 @@
 import { escapeCsv } from '@/lib/utils/helpers';
 
 function discountLabel(c) {
-    if (c.type === 'percent') return `${c.value}% off`;
-    if (c.type === 'fixed')
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-            (c.valueCents ?? 0) / 100,
-        );
-    if (c.type === 'free_shipping') return 'Free shipping';
+    const d = c.discount;
+    if (!d) return '—';
+    if (d.type === 'percent') return `${d.value}% off`;
+    if (d.type === 'fixed') {
+        const currency = d.currency ?? 'USD';
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format((d.value ?? 0) / 100);
+    }
     return '—';
+}
+
+function couponNote(c) {
+    if (c.metadata?.note) return c.metadata.note;
+    const values = Object.values(c.metadata ?? {}).filter((v) => v != null && String(v).trim() !== '');
+    return values.length ? values.join(' · ') : '';
 }
 
 export function exportCouponsToCsv(coupons) {
@@ -25,20 +32,19 @@ export function exportCouponsToCsv(coupons) {
     ];
 
     const rows = coupons.map((c) => {
-        const redeemedUsd = ((c.redeemedValueCents ?? 0) / 100).toFixed(2);
-        const maxRedemptions =
-            c.maxRedemptions != null ? String(c.maxRedemptions) : '';
+        const maxRedemptions = c.uses?.max != null ? String(c.uses.max) : '';
+        const expires = c.expires ? c.expires.slice(0, 10) : '';
         return [
             c.id ?? '',
             c.code ?? '',
-            c.type ?? '',
+            c.discount?.type ?? '',
             discountLabel(c),
-            String(c.redemptions ?? 0),
+            String(c.uses?.redeemed ?? 0),
             maxRedemptions,
-            redeemedUsd,
-            c.expiresAt ?? '',
-            c.active ? 'Active' : 'Inactive',
-            c.note ?? '',
+            '0.00',
+            expires,
+            c.status === 'active' ? 'Active' : 'Inactive',
+            couponNote(c),
         ]
             .map(escapeCsv)
             .join(',');
