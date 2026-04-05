@@ -63,7 +63,7 @@ const navSections = [
         icon: BarChart2,
         items: [
             { href: '/admin', label: 'Overview', icon: LayoutDashboard },
-            { href: '/admin/reports', label: 'PostHog', icon: Activity },
+            { href: '/admin/analytics/posthog', label: 'PostHog', icon: Activity },
         ],
     },
     {

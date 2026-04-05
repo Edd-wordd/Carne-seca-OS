@@ -16,7 +16,7 @@ const PATH_LABELS = {
     production: 'Production',
     orders: 'Orders',
     inventory: 'Inventory',
-    reports: 'PostHog',
+    posthog: 'PostHog',
     social: 'Social',
     'content-calendar': 'Content Calendar',
     'post-manager': 'Post Manager',
