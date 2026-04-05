@@ -24,7 +24,6 @@ export async function POST(req) {
     // Define session AFTER event is verified
     const session = event.data.object;
     const guestId = session.metadata?.guest_id;
-    const db_coupon_id = session.metadata?.db_coupon_id;
 
     switch (event.type) {
         case 'checkout.session.completed':
@@ -45,17 +44,32 @@ export async function POST(req) {
                 p_stripe_session_id: session.id,
                 p_customer_email: session.customer_details?.email,
                 p_amount_total: session.amount_total,
-                p_coupon_id: db_coupon_id || null,
+                p_amount_discount: session.total_details?.amount_discount ?? 0,
+                p_customer_name: session.customer_details?.name,
+                p_source: 'website',
             });
-
             if (fulfillError) {
                 console.error('Fulfillment Error:', fulfillError);
                 return new Response('Internal Error', { status: 500 });
             }
+
+            const customerEmail = session.customer_details?.email ?? null;
+            const customerName = session.customer_details?.name ?? null;
+
+            if (customerEmail) {
+                await supabaseAdmin.from('customers').upsert(
+                    {
+                        email: customerEmail,
+                        full_name: customerName,
+                        last_order_at: new Date().toISOString(),
+                    },
+                    { onConflict: 'email' },
+                );
+            }
+
             await resend.emails.send({
                 from: 'onboarding@resend.dev',
                 to: session.customer_details?.email,
-                subject: 'Thank you fir your purchase!',
                 subject: 'Your Casa Plasencio order is confirmed',
                 html: `
                         <h2>Thank you for your order!</h2>
