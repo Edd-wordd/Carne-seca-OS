@@ -40,7 +40,7 @@ import {
     CircleOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
-import { getProducts } from '@/lib/supabase/queries/getProducts';
+import { getProducts } from '@/lib/supabase/queries/catalog/getProducts';
 
 const FULFILLMENT_OPTIONS = [
     { value: 'unfulfilled', label: 'Unfulfilled' },

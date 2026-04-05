@@ -1,5 +1,5 @@
 import { InventoryTable } from './_components/InventoryTable';
-import { getProductionInventory } from '@/lib/supabase/queries/getProductionInventory';
+import { getProductionInventory } from '@/lib/supabase/queries/inventory/getProductionInventory';
 
 function normalizeInventoryItem(row) {
     if (!row) return null;

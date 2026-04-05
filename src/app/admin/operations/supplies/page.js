@@ -1,6 +1,6 @@
-import { getSupplies } from '@/lib/supabase/queries/getSupplies';
-import { getSupplyPurchases } from '@/lib/supabase/queries/getSupplyPurchases';
-import { getSuppliers } from '@/lib/supabase/queries/getSuppliers';
+import { getSupplies } from '@/lib/supabase/queries/supplies/getSupplies';
+import { getSupplyPurchases } from '@/lib/supabase/queries/supplies/getSupplyPurchases';
+import { getSuppliers } from '@/lib/supabase/queries/supplies/getSuppliers';
 import SuppliesClient from './_components/SuppliesClient';
 
 function normalizeSupply(row) {

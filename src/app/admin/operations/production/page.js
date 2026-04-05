@@ -22,9 +22,9 @@ import {
 } from '@/lib/utils/helpers.js';
 import { Skeleton } from '@/components/ui/skeleton';
 import { exportBatchesToCsv } from '@/lib/utils/exportProductionBatches.js';
-import { getSuppliers } from '@/lib/supabase/queries/getSuppliers.js';
-import { getBatches } from '@/lib/supabase/queries/getBatches.js';
-import { getProducts } from '@/lib/supabase/queries/getProducts.js';
+import { getSuppliers } from '@/lib/supabase/queries/supplies/getSuppliers';
+import { getBatches } from '@/lib/supabase/queries/production/getBatches';
+import { getProducts } from '@/lib/supabase/queries/catalog/getProducts';
 import CreateBatchDialog from './_components/CreateBatchDialog.jsx';
 import EditBatchDialog from './_components/EditBatchDialog.jsx';
 import DamagedBatchDialog from './_components/DamagedBatchDialog.jsx';

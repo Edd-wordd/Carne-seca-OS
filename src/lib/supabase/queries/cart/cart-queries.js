@@ -1,4 +1,4 @@
-import { createClient } from '../server';
+import { createClient } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic'; // Add this at the top of the file
 import { cookies } from 'next/headers';
 import { withSentryAction } from '@/lib/sentry/with-sentry-action';

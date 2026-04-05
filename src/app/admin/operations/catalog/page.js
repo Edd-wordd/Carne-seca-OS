@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Download } from 'lucide-react';
 import { exportCatalogToCsv } from '@/lib/utils/exportCatalog';
 import { cn } from '@/lib/utils/helpers';
-import { getProducts } from '@/lib/supabase/queries/getProducts';
+import { getProducts } from '@/lib/supabase/queries/catalog/getProducts';
 import { addProduct } from '@/app/actions/catalog/addProduct';
 import { updateProduct } from '@/app/actions/catalog/updateProduct';
 import { deleteProduct } from '@/app/actions/catalog/deleteProduct';
