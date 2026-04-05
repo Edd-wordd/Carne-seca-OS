@@ -13,6 +13,8 @@ const nextConfig = {
             { source: '/admin/expenses', destination: '/admin/finance/expenses', permanent: true },
             { source: '/admin/payouts', destination: '/admin/finance/payouts', permanent: true },
             { source: '/admin/pnl', destination: '/admin/finance/pnl', permanent: true },
+            { source: '/admin/customers', destination: '/admin/customers/directory', permanent: true },
+            { source: '/admin/campaigns', destination: '/admin/customers/campaigns', permanent: true },
             { source: '/admin/markets-events', destination: '/admin/events', permanent: true },
             { source: '/admin/social', destination: '/admin/social/post-manager', permanent: false },
             { source: '/admin/documents', destination: '/admin/documents/contracts', permanent: false },

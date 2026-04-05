@@ -27,6 +27,7 @@ const PATH_LABELS = {
     partners: 'Partners',
     catalog: 'Catalog',
     customers: 'Customers',
+    directory: 'Directory',
     campaigns: 'Campaigns',
     coupons: 'Coupons',
     events: 'Events',

@@ -80,8 +80,8 @@ const navSections = [
         title: 'Customers',
         icon: BookUser,
         items: [
-            { href: '/admin/customers', label: 'Directory', icon: BookUser },
-            { href: '/admin/campaigns', label: 'Campaigns', icon: Megaphone },
+            { href: '/admin/customers/directory', label: 'Directory', icon: BookUser },
+            { href: '/admin/customers/campaigns', label: 'Campaigns', icon: Megaphone },
         ],
     },
     {
