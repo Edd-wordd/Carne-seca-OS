@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { DollarSign, Package, Users, ShoppingCart, Zap, Search, AlertTriangle, AlertCircle, Info } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
-import OrdersMap from '../../components/OrdersMap';
+import OrdersMap from './_components/OrdersMap';
 
 const OVERVIEW_METRICS = [
     { label: 'Net Profit', value: '$8,420', sublabel: 'Revenue − Production', icon: DollarSign, accent: 'emerald' },
