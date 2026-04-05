@@ -130,11 +130,11 @@ const navSections = [
         title: 'Operations',
         icon: Box,
         items: [
-            { href: '/admin/production', label: 'Production', icon: Flame },
-            { href: '/admin/inventory', label: 'Inventory', icon: Box },
-            { href: '/admin/supplies', label: 'Supplies', icon: Wrench },
-            { href: '/admin/catalog', label: 'Catalog', icon: Package },
-            { href: '/admin/coupons', label: 'Coupons', icon: TicketPercent },
+            { href: '/admin/operations/production', label: 'Production', icon: Flame },
+            { href: '/admin/operations/inventory', label: 'Inventory', icon: Box },
+            { href: '/admin/operations/supplies', label: 'Supplies', icon: Wrench },
+            { href: '/admin/operations/catalog', label: 'Catalog', icon: Package },
+            { href: '/admin/operations/coupons', label: 'Coupons', icon: TicketPercent },
         ],
     },
 ];

@@ -12,6 +12,7 @@ const PATH_LABELS = {
     payouts: 'Promoters / Payouts',
     pnl: 'P&L Summary',
     overview: 'Overview',
+    operations: 'Operations',
     production: 'Production',
     orders: 'Orders',
     inventory: 'Inventory',

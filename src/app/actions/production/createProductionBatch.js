@@ -46,7 +46,7 @@ async function createProductionBatchHandler(prevState, formData) {
 
         if (error) return { success: false, message: error.message };
 
-        revalidatePath('/admin/production');
+        revalidatePath('/admin/operations/production');
         return { success: true, message: `Batch ${batchNumber} created successfully!` };
     } catch (error) {
         return { success: false, message: error?.message ?? 'unknown error' };

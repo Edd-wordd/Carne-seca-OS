@@ -11,10 +11,10 @@ import { addProduct } from '@/app/actions/catalog/addProduct';
 import { updateProduct } from '@/app/actions/catalog/updateProduct';
 import { deleteProduct } from '@/app/actions/catalog/deleteProduct';
 import { toast } from 'sonner';
-import CatalogKpis from '@/app/admin/catalog/_components/CatalogKpis';
-import CatalogTable from '@/app/admin/catalog/_components/CatalogTable';
-import CatalogProductDialog from '@/app/admin/catalog/_components/CatalogProductDialog';
-import CatalogDeleteDialog from '@/app/admin/catalog/_components/CatalogDeleteDialog';
+import CatalogKpis from './_components/CatalogKpis';
+import CatalogTable from './_components/CatalogTable';
+import CatalogProductDialog from './_components/CatalogProductDialog';
+import CatalogDeleteDialog from './_components/CatalogDeleteDialog';
 
 const CATALOG_PAGE_SIZE = 15;
 

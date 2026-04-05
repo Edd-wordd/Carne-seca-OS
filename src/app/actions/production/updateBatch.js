@@ -19,7 +19,7 @@ async function updateBatchHandler(production_id, raw_weight, cost_per_pound) {
                 success: false,
                 message: error.message,
             };
-        revalidatePath('/admin/production');
+        revalidatePath('/admin/operations/production');
         return { success: true, message: `${data}updated row!` };
     } catch (error) {
         return { success: false, message: error?.message ?? 'unknown error' };

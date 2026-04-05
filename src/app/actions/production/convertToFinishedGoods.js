@@ -16,7 +16,7 @@ async function convertToFinishedGoodsHandler(productId, flavorSplits) {
             console.error('RPC Error:', error.message);
             return { success: false, message: error.message };
         }
-        revalidatePath('/admin/production');
+        revalidatePath('/admin/operations/production');
         return { success: true, message: 'Goods converted successfully' };
     } catch (error) {
         return { success: false, message: error.message };

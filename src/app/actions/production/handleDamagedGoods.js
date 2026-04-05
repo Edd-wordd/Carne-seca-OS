@@ -16,7 +16,7 @@ async function handleDamagedGoodsHandler(production_id, amount_lost, reason) {
             console.error('RPC Error:', error.message);
             return { success: false, message: error.message };
         }
-        revalidatePath('/admin/production');
+        revalidatePath('/admin/operations/production');
         return { success: true, message: 'Batch inventory updated successfully' };
     } catch (error) {
         return { success: false, message: error?.message ?? 'unknown error' };
