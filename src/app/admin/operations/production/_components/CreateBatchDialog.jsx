@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
-import { cn, formatCurrency } from '@/lib/utils/helpers';
+import { cn } from '@/lib/utils/helpers';
 import { createProductionBatch } from '@/app/actions/production/createProductionBatch';
 import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
 import { usePosthogCapture } from '@/lib/posthog/use-posthog-capture';
@@ -24,7 +24,6 @@ export default function CreateBatchDialog({ suppliers = [], onSuccess }) {
     const [state, formAction] = React.useActionState(createProductionBatch, null);
     const [newSupplier, setNewSupplier] = React.useState('');
     const [newRawWeight, setNewRawWeight] = React.useState('');
-    const [newCost, setNewCost] = React.useState('');
     const [newSupplierName, setNewSupplierName] = React.useState('');
     const [newSupplierAddress, setNewSupplierAddress] = React.useState('');
     const [newSupplierPhone, setNewSupplierPhone] = React.useState('');
@@ -74,20 +73,18 @@ export default function CreateBatchDialog({ suppliers = [], onSuccess }) {
             (!newSupplierEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newSupplierEmail)) &&
             (!newSupplierPhone || !/[a-zA-Z]/.test(newSupplierPhone)));
 
-    const costPerPound = newCost && parseFloat(newCost) >= 0 ? parseFloat(newCost) : 0;
     const supplierName = isNewSupplier
         ? newSupplierName
         : (suppliers.find((s) => s.supplier_id === newSupplier)?.name ?? newSupplier);
     const confirmSummary =
         newSupplier && newRawWeight
-            ? `Confirming: ${parseFloat(newRawWeight).toFixed(1)} lbs from ${supplierName} at ${formatCurrency(costPerPound)}/lb. `
+            ? `Confirming: ${parseFloat(newRawWeight).toFixed(1)} lbs from ${supplierName}.`
             : '';
 
     React.useEffect(() => {
         if (state?.success) {
             capture('batchCreated', {
                 raw_weight: newRawWeight,
-                cost_per_pound: newCost,
                 is_new_supplier: isNewSupplier,
                 supplier: supplierName,
             });
@@ -95,7 +92,6 @@ export default function CreateBatchDialog({ suppliers = [], onSuccess }) {
             setConfirmBatchOpen(false);
             setNewSupplier('');
             setNewRawWeight('');
-            setNewCost('');
             setNewSupplierName('');
             setNewSupplierAddress('');
             setNewSupplierPhone('');
@@ -247,35 +243,18 @@ export default function CreateBatchDialog({ suppliers = [], onSuccess }) {
                                     </div>
                                 </div>
                             )}
-                            <div className="grid grid-cols-2 gap-5">
-                                <div className="space-y-2.5">
-                                    <label className="text-sm font-medium text-zinc-300">Raw Weight (lbs)</label>
-                                    <Input
-                                        name="rawWeight"
-                                        type="number"
-                                        step="0.1"
-                                        min="0.1"
-                                        placeholder="e.g. 45.5"
-                                        value={newRawWeight}
-                                        onChange={(e) => setNewRawWeight(e.target.value)}
-                                        className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
-                                    />
-                                </div>
-                                <div className="space-y-2.5">
-                                    <label className="text-sm font-medium text-zinc-300">Cost Per Pound</label>
-                                    <div className="flex h-10 items-center rounded-md border border-zinc-700 bg-zinc-900/80">
-                                        <span className="pl-3 text-sm text-zinc-400">$</span>
-                                        <Input
-                                            name="costPerPound"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            value={newCost}
-                                            onChange={(e) => setNewCost(e.target.value)}
-                                            className="h-full flex-1 border-0 bg-transparent pr-3 text-zinc-100 placeholder:text-zinc-500 focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
-                                        />
-                                    </div>
-                                </div>
+                            <div className="space-y-2.5">
+                                <label className="text-sm font-medium text-zinc-300">Raw Weight (lbs)</label>
+                                <Input
+                                    name="rawWeight"
+                                    type="number"
+                                    step="0.1"
+                                    min="0.1"
+                                    placeholder="e.g. 45.5"
+                                    value={newRawWeight}
+                                    onChange={(e) => setNewRawWeight(e.target.value)}
+                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                                />
                             </div>
                         </div>
                         <DialogFooter>
