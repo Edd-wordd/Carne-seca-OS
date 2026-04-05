@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { withSentryAction } from '@/lib/sentry/with-sentry-action';
+import { withAuth } from '@/lib/clerk/with-auth';
 
 async function handleDamagedGoodsHandler(production_id, amount_lost, reason) {
     const supabase = await createClient();
@@ -23,4 +24,4 @@ async function handleDamagedGoodsHandler(production_id, amount_lost, reason) {
     }
 }
 
-export const handleDamagedGoods = withSentryAction('handleDamagedGoods', handleDamagedGoodsHandler);
+export const handleDamagedGoods = withSentryAction('handleDamagedGoods', withAuth(handleDamagedGoodsHandler));
