@@ -9,6 +9,10 @@ const nextConfig = {
     reactCompiler: true,
     async redirects() {
         return [
+            { source: '/admin/orders', destination: '/admin/finance/orders', permanent: true },
+            { source: '/admin/expenses', destination: '/admin/finance/expenses', permanent: true },
+            { source: '/admin/payouts', destination: '/admin/finance/payouts', permanent: true },
+            { source: '/admin/pnl', destination: '/admin/finance/pnl', permanent: true },
             { source: '/admin/markets-events', destination: '/admin/events', permanent: true },
             { source: '/admin/social', destination: '/admin/social/post-manager', permanent: false },
             { source: '/admin/documents', destination: '/admin/documents/contracts', permanent: false },

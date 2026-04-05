@@ -70,10 +70,10 @@ const navSections = [
         title: 'Finance',
         icon: DollarSign,
         items: [
-            { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
-            { href: '/admin/expenses', label: 'Expenses', icon: ScrollText },
-            { href: '/admin/payouts', label: 'Promoters / Payouts', icon: Wallet },
-            { href: '/admin/pnl', label: 'P&L Summary', icon: PieChart },
+            { href: '/admin/finance/orders', label: 'Orders', icon: ShoppingBag },
+            { href: '/admin/finance/expenses', label: 'Expenses', icon: ScrollText },
+            { href: '/admin/finance/payouts', label: 'Promoters / Payouts', icon: Wallet },
+            { href: '/admin/finance/pnl', label: 'P&L Summary', icon: PieChart },
         ],
     },
     {

@@ -7,6 +7,10 @@ import { cn } from '@/lib/utils/helpers';
 
 const PATH_LABELS = {
     admin: 'Admin',
+    finance: 'Finance',
+    expenses: 'Expenses',
+    payouts: 'Promoters / Payouts',
+    pnl: 'P&L Summary',
     overview: 'Overview',
     production: 'Production',
     orders: 'Orders',
