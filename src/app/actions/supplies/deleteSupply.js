@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { withSentryAction } from '@/lib/sentry/with-sentry-action';
+import { withAuth } from '@/lib/clerk/with-auth';
 
 function isForeignKeyViolation(error) {
     if (!error) return false;
@@ -47,4 +48,4 @@ async function deleteSupplyHandler(supplyId) {
     }
 }
 
-export const deleteSupply = withSentryAction('deleteSupply', deleteSupplyHandler);
+export const deleteSupply = withSentryAction('deleteSupply', withAuth(deleteSupplyHandler));

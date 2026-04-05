@@ -7,7 +7,7 @@ import { withSentryAction } from '@/lib/sentry/with-sentry-action';
 async function handleDamagedGoodsHandler(production_id, amount_lost, reason) {
     const supabase = await createClient();
     try {
-        const { data, error } = await supabase.rpc('handle_damaged_goods', {
+        const { error } = await supabase.rpc('handle_damaged_goods', {
             p_production_id: production_id,
             p_amount_lost: amount_lost,
             p_reason: reason,
@@ -19,7 +19,7 @@ async function handleDamagedGoodsHandler(production_id, amount_lost, reason) {
         revalidatePath('/admin/production');
         return { success: true, message: 'Batch inventory updated successfully' };
     } catch (error) {
-        if (error) return { success: false, message: error.message };
+        return { success: false, message: error?.message ?? 'unknown error' };
     }
 }
 

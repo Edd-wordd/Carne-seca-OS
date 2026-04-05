@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { withSentryAction } from '@/lib/sentry/with-sentry-action';
+import { withAuth } from '@/lib/clerk/with-auth';
 
 async function updateProductHandler({
     productID,
@@ -38,8 +39,8 @@ async function updateProductHandler({
         if (error) return { success: false, message: error.message };
         return { success: true };
     } catch (error) {
-        if (error) return { success: false, message: error?.message ?? 'unknown error' };
+        return { success: false, message: error?.message ?? 'unknown error' };
     }
 }
 
-export const updateProduct = withSentryAction('updateProduct', updateProductHandler);
+export const updateProduct = withSentryAction('updateProduct', withAuth(updateProductHandler));

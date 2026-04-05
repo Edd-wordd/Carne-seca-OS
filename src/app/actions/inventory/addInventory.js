@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { withSentryAction } from '@/lib/sentry/with-sentry-action';
 import { generateSku } from '@/lib/utils/generateSku';
+import { withAuth } from '@/lib/clerk/with-auth';
 
 async function addInventoryHandler({ name, stock, lowThreshold, consignment, costToAcquire, sellPrice }) {
     const supabase = await createClient();
@@ -41,4 +42,4 @@ async function addInventoryHandler({ name, stock, lowThreshold, consignment, cos
     }
 }
 
-export const addInventory = withSentryAction('addInventory', addInventoryHandler);
+export const addInventory = withSentryAction('addInventory', withAuth(addInventoryHandler));

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { withSentryAction } from '@/lib/sentry/with-sentry-action';
+import { withAuth } from '@/lib/clerk/with-auth';
 
 async function deleteProductHandler(productId) {
     const supabase = await createClient();
@@ -16,4 +17,4 @@ async function deleteProductHandler(productId) {
     }
 }
 
-export const deleteProduct = withSentryAction('deleteProduct', deleteProductHandler);
+export const deleteProduct = withSentryAction('deleteProduct', withAuth(deleteProductHandler));

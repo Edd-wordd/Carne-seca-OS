@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { withSentryAction } from '@/lib/sentry/with-sentry-action';
 import { generateSku } from '@/lib/utils/generateSku';
+import { withAuth } from '@/lib/clerk/with-auth';
 
 async function addProductHandler({
     imageURL,
@@ -46,4 +47,4 @@ async function addProductHandler({
     }
 }
 
-export const addProduct = withSentryAction('addProduct', addProductHandler);
+export const addProduct = withSentryAction('addProduct', withAuth(addProductHandler));

@@ -57,7 +57,7 @@ export async function POST(req) {
             const customerName = session.customer_details?.name ?? null;
 
             if (customerEmail) {
-                await supabaseAdmin.from('customers').upsert(
+                const { error: upsertError } = await supabaseAdmin.from('customers').upsert(
                     {
                         email: customerEmail,
                         full_name: customerName,
@@ -65,18 +65,27 @@ export async function POST(req) {
                     },
                     { onConflict: 'email' },
                 );
+                if (upsertError) {
+                    console.error('Customer upsert error:', upsertError);
+                    return new Response('Internal Error', { status: 500 });
+                }
             }
 
-            await resend.emails.send({
-                from: 'onboarding@resend.dev',
-                to: session.customer_details?.email,
-                subject: 'Your Casa Plasencio order is confirmed',
-                html: `
+            try {
+                await resend.emails.send({
+                    from: 'onboarding@resend.dev',
+                    to: session.customer_details?.email,
+                    subject: 'Your Casa Plasencio order is confirmed',
+                    html: `
                         <h2>Thank you for your order!</h2>
                         <p>Your payment of <strong>$${(session.amount_total / 100).toFixed(2)}</strong> was received.</p>
                         <p>We'll email you when your order has shipped.</p>
                     `,
-            });
+                });
+            } catch (emailError) {
+                console.error('Failed to send order confirmation email:', emailError);
+                // Optionally respond or handle further, but don't block main flow
+            }
 
             // THIS CLEARS THE "7" IN YOUR HUD
             revalidatePath('/', 'layout');
