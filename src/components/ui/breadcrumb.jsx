@@ -59,7 +59,7 @@ function getBreadcrumbItems(pathname) {
     }
     if (items.length === 1 && items[0].href === '/admin') {
         items[0].label = 'Admin';
-        items.push({ href: '/admin', label: 'Overview', isLast: true });
+        items.push({ href: '/admin/analytics/overview', label: 'Overview', isLast: true });
         items[0].isLast = false;
     }
     return items;

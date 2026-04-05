@@ -62,7 +62,7 @@ const navSections = [
         title: 'Analytics',
         icon: BarChart2,
         items: [
-            { href: '/admin', label: 'Overview', icon: LayoutDashboard },
+            { href: '/admin/analytics/overview', label: 'Overview', icon: LayoutDashboard },
             { href: '/admin/analytics/posthog', label: 'PostHog', icon: Activity },
         ],
     },
@@ -147,7 +147,6 @@ const ADMIN_POPOUT_ITEMS = [
 
 function pathnameMatchesNavHref(pathname, href) {
     if (pathname === href) return true;
-    if (href === '/admin') return false;
     return pathname.startsWith(`${href}/`);
 }
 
