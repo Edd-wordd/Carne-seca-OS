@@ -17,10 +17,60 @@ import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
 import { usePosthogCapture } from '@/lib/posthog/use-posthog-capture';
 
 export default function DeleteBatchDialog({ open, onOpenChange, batchToDelete, onSuccess }) {
+    const [isPending, setIsPending] = React.useState(false);
+    const [errorMessage, setErrorMessage] = React.useState('');
     const [deleteToastVisible, setDeleteToastVisible] = React.useState(false);
     const [deleteToastMessage, setDeleteToastMessage] = React.useState('');
     const { captureError } = useSentryCapture('DeleteBatchDialog');
     const capture = usePosthogCapture('DeleteBatchDialog');
+
+    // Reset error when dialog opens/closes
+    React.useEffect(() => {
+        if (!open) setErrorMessage('');
+    }, [open]);
+
+    const totalCost =
+        batchToDelete?.total_cost ??
+        (batchToDelete?.initial_weight != null && batchToDelete?.cost_per_pound != null
+            ? batchToDelete.initial_weight * batchToDelete.cost_per_pound
+            : null);
+
+    const handleDelete = async () => {
+        if (!batchToDelete || isPending) return;
+        const batchNumber = batchToDelete.batch_number;
+        const id = batchToDelete.production_id ?? batchToDelete.id;
+
+        setIsPending(true);
+        setErrorMessage('');
+
+        try {
+            const result = await deleteBatch(id);
+
+            if (result?.success === false) {
+                setErrorMessage(result.message ?? 'Failed to delete batch.');
+                setIsPending(false);
+                return;
+            }
+
+            capture('batchDeleted', {
+                batchNumber,
+                supplier: batchToDelete.suppliers?.name ?? batchToDelete.supplier_name ?? '—',
+                raw_weight: batchToDelete.raw_weight?.toFixed(1),
+                total_cost: totalCost,
+            });
+
+            onOpenChange(false);
+            onSuccess?.();
+            setDeleteToastMessage(`Batch ${batchNumber} deleted successfully`);
+            setDeleteToastVisible(true);
+            setTimeout(() => setDeleteToastVisible(false), 4000);
+        } catch (err) {
+            captureError(err);
+            setErrorMessage('Something went wrong. Please try again.');
+        } finally {
+            setIsPending(false);
+        }
+    };
 
     return (
         <>
@@ -61,18 +111,23 @@ export default function DeleteBatchDialog({ open, onOpenChange, batchToDelete, o
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-zinc-400">Raw Weight</span>
-                                    <span className="text-zinc-200">{batchToDelete.raw_weight?.toFixed(1)} lbs</span>
+                                    <span className="text-zinc-200">
+                                        {batchToDelete.raw_weight?.toFixed(1) ?? '—'} lbs
+                                    </span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-zinc-400">Total Cost</span>
                                     <span className="text-zinc-200">
-                                        {formatCurrency(
-                                            batchToDelete.total_cost ??
-                                                batchToDelete.initial_weight * batchToDelete.cost_per_pound,
-                                        )}
+                                        {totalCost != null ? formatCurrency(totalCost) : '—'}
                                     </span>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {errorMessage && (
+                        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                            {errorMessage}
                         </div>
                     )}
 
@@ -80,40 +135,19 @@ export default function DeleteBatchDialog({ open, onOpenChange, batchToDelete, o
                         <Button
                             variant="outline"
                             onClick={() => onOpenChange(false)}
+                            disabled={isPending}
                             className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
                         >
                             Cancel
                         </Button>
                         <Button
                             variant="destructive"
-                            disabled={!batchToDelete}
-                            onClick={async () => {
-                                if (!batchToDelete) return;
-                                const batchNumber = batchToDelete.batch_number;
-                                const id = batchToDelete.production_id ?? batchToDelete.id;
-                                onOpenChange(false);
-                                try {
-                                    await deleteBatch(id);
-                                    capture('batchDeleted', {
-                                        batchNumber: batchNumber,
-                                        supplier: batchToDelete.suppliers?.name ?? batchToDelete.supplier_name ?? '—',
-                                        raw_weight: batchToDelete.raw_weight?.toFixed(1),
-                                        total_cost:
-                                            batchToDelete.total_cost ??
-                                            batchToDelete.initial_weight * batchToDelete.cost_per_pound,
-                                    });
-                                    onSuccess?.();
-                                    setDeleteToastMessage(`Batch ${batchNumber} deleted successfully`);
-                                    setDeleteToastVisible(true);
-                                    setTimeout(() => setDeleteToastVisible(false), 4000);
-                                } catch (err) {
-                                    captureError(err);
-                                }
-                            }}
+                            disabled={!batchToDelete || isPending}
+                            onClick={handleDelete}
                             className="bg-red-600 text-white hover:bg-red-500 disabled:opacity-50"
                         >
                             <Trash2 className="size-4 mr-1.5" />
-                            Delete Batch
+                            {isPending ? 'Deleting...' : 'Delete Batch'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

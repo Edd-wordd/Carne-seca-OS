@@ -16,7 +16,6 @@ import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
 
 export default function EditBatchDialog({ open, onOpenChange, batchToEdit, onSuccess }) {
     const [editRawWeight, setEditRawWeight] = React.useState('');
-    const [editCostPerPound, setEditCostPerPound] = React.useState('');
     const [editToastVisible, setEditToastVisible] = React.useState(false);
     const [editToastMessage, setEditToastMessage] = React.useState('');
     const { captureError, captureMessage } = useSentryCapture('EditBatchDialog');
@@ -24,7 +23,6 @@ export default function EditBatchDialog({ open, onOpenChange, batchToEdit, onSuc
     React.useEffect(() => {
         if (batchToEdit) {
             setEditRawWeight(String(batchToEdit.raw_weight ?? ''));
-            setEditCostPerPound(String(batchToEdit.cost_per_pound ?? ''));
         }
     }, [batchToEdit]);
 
@@ -54,32 +52,16 @@ export default function EditBatchDialog({ open, onOpenChange, batchToEdit, onSuc
                                 <p className="font-mono text-sm text-zinc-200">{batchToEdit.batch_number}</p>
                                 <p className="text-xs text-zinc-400">{batchToEdit.suppliers?.name ?? '—'}</p>
                             </div>
-                            <div className="grid grid-cols-2 gap-5">
-                                <div className="space-y-2.5">
-                                    <label className="text-sm font-medium text-zinc-300">Raw Weight (lbs)</label>
-                                    <Input
-                                        type="number"
-                                        step="0.1"
-                                        min="0.1"
-                                        value={editRawWeight}
-                                        onChange={(e) => setEditRawWeight(e.target.value)}
-                                        className="border-zinc-700 bg-zinc-900/80 text-zinc-100 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
-                                    />
-                                </div>
-                                <div className="space-y-2.5">
-                                    <label className="text-sm font-medium text-zinc-300">Cost Per Pound</label>
-                                    <div className="flex h-10 items-center rounded-md border border-zinc-700 bg-zinc-900/80">
-                                        <span className="pl-3 text-sm text-zinc-400">$</span>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            value={editCostPerPound}
-                                            onChange={(e) => setEditCostPerPound(e.target.value)}
-                                            className="h-full flex-1 border-0 bg-transparent pr-3 text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
-                                        />
-                                    </div>
-                                </div>
+                            <div className="space-y-2.5">
+                                <label className="text-sm font-medium text-zinc-300">Raw Weight (lbs)</label>
+                                <Input
+                                    type="number"
+                                    step="0.1"
+                                    min="0.1"
+                                    value={editRawWeight}
+                                    onChange={(e) => setEditRawWeight(e.target.value)}
+                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                                />
                             </div>
                             <DialogFooter>
                                 <Button
@@ -96,7 +78,6 @@ export default function EditBatchDialog({ open, onOpenChange, batchToEdit, onSuc
                                             const result = await updateBatch(
                                                 batchToEdit.production_id,
                                                 parseFloat(editRawWeight),
-                                                parseFloat(editCostPerPound),
                                             );
                                             if (result.success) {
                                                 onOpenChange(false);
