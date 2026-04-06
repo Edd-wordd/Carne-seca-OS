@@ -2,19 +2,9 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { adjustStock } from '@/app/actions/inventory/adjustStock';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-} from '@/components/ui/dialog';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -36,127 +26,32 @@ import {
 import { InventoryKPIs } from './InventoryKPIs';
 import { cn } from '@/lib/utils/helpers';
 import { exportInventoryToCsv } from '@/lib/utils/exportInventory';
-import { addInventory } from '@/app/actions/inventory/addInventory';
-import { updatedInventory } from '@/app/actions/inventory/updateInventory';
+import AdjustStockDialog from './AdjustStockDialog.jsx';
+import AddInventoryDialog from './AddInventoryDialog.jsx';
+import EditInventoryDialog from './EditInventoryDialog.jsx';
 
 const INVENTORY_PAGE_SIZE = 15;
 
 export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
     const router = useRouter();
-    const mountedRef = React.useRef(true);
-    React.useEffect(
-        () => () => {
-            mountedRef.current = false;
-        },
-        [],
-    );
     const [inventory, setInventory] = React.useState(initialInventory);
     const [search, setSearch] = React.useState('');
     const [statusFilter, setStatusFilter] = React.useState('all');
     const [adjustModalOpen, setAdjustModalOpen] = React.useState(false);
     const [addModalOpen, setAddModalOpen] = React.useState(false);
     const [adjustProductId, setAdjustProductId] = React.useState('');
-    const [adjustType, setAdjustType] = React.useState('add');
-    const [adjustQuantity, setAdjustQuantity] = React.useState('');
-    const [adjustNotes, setAdjustNotes] = React.useState('');
-    const [newName, setNewName] = React.useState('');
-    const [newStock, setNewStock] = React.useState('');
-    const [newLowThreshold, setNewLowThreshold] = React.useState('');
-    const [newCostPerBag, setNewCostPerBag] = React.useState('');
-    const [newSellPrice, setNewSellPrice] = React.useState('');
-    const [newConsignment, setNewConsignment] = React.useState('0');
-    const [adjustReason, setAdjustReason] = React.useState('');
     const [editModalOpen, setEditModalOpen] = React.useState(false);
     const [editingProduct, setEditingProduct] = React.useState(null);
-    const [editForm, setEditForm] = React.useState({ lowThreshold: '' });
     const [inventoryPage, setInventoryPage] = React.useState(1);
     React.useEffect(() => {
         setInventory(initialInventory);
     }, [initialInventory]);
 
-    const handleAdjustStock = async () => {
-        const qty = parseInt(adjustQuantity, 10) || 0;
-        if (!adjustProductId || qty <= 0) return;
-        if (adjustType === 'remove' && !adjustReason) return;
-
-        const result = await adjustStock({
-            productId: adjustProductId,
-            adjustType,
-            quantity: qty,
-            reason: adjustReason,
-            notes: adjustNotes,
-        });
-
-        if (!mountedRef.current) return;
-        if (result.success) {
-            setAdjustModalOpen(false);
-            setAdjustProductId('');
-            setAdjustQuantity('');
-            setAdjustNotes('');
-            setAdjustReason('');
-            router.refresh();
-        } else {
-            alert(result.error);
-        }
-    };
-
     const handleExportCsv = () => exportInventoryToCsv(filtered);
 
     const openEditModal = (product) => {
         setEditingProduct(product);
-        setEditForm({ lowThreshold: String(product.lowThreshold ?? '') });
         setEditModalOpen(true);
-    };
-
-    const handleUpdateInventory = async (e) => {
-        e.preventDefault();
-        if (!editingProduct) return;
-        const lowThresholdVal = parseInt(editForm.lowThreshold, 10);
-        const lowThreshold = Number.isNaN(lowThresholdVal) ? (editingProduct.lowThreshold ?? 10) : lowThresholdVal;
-
-        const result = await updatedInventory({
-            productId: editingProduct.id,
-            lowThreshold: lowThreshold,
-        });
-        if (result.success) {
-            setEditModalOpen(false);
-            setEditingProduct(null);
-            router.refresh();
-        } else {
-            alert(result.message ?? 'Failed to update inventory.');
-        }
-    };
-
-    const handleAddInventory = async () => {
-        const stock = parseInt(newStock, 10) || 0;
-        const lowThreshold = parseInt(newLowThreshold, 10) || 10;
-        const costPerBag = parseFloat(String(newCostPerBag).replace(/[^0-9.]/g, '')) || 0;
-        const sellPrice = parseFloat(String(newSellPrice).replace(/[^0-9.]/g, '')) || 0;
-        if (!newName.trim()) return;
-        const consignment = parseInt(newConsignment, 10) || 0;
-
-        const result = await addInventory({
-            name: newName.trim(),
-            stock,
-            lowThreshold,
-            consignment,
-            costToAcquire: costPerBag,
-            sellPrice,
-        });
-
-        if (!mountedRef.current) return;
-        if (result.success) {
-            setAddModalOpen(false);
-            setNewName('');
-            setNewStock('');
-            setNewLowThreshold('');
-            setNewCostPerBag('');
-            setNewSellPrice('');
-            setNewConsignment('0');
-            router.refresh();
-        } else {
-            alert(result.error ?? 'Failed to add inventory.');
-        }
     };
 
     const filtered = React.useMemo(() => {
@@ -394,262 +289,40 @@ export function InventoryTable({ initialInventory = [], adjustmentsLog = [] }) {
                 )}
             </div>
 
-            <Dialog
+            <AdjustStockDialog
                 open={adjustModalOpen}
                 onOpenChange={(open) => {
                     queueMicrotask(() => {
                         setAdjustModalOpen(open);
                         if (!open) {
                             setAdjustProductId('');
-                            setAdjustType('add');
-                            setAdjustQuantity('');
-                            setAdjustNotes('');
-                            setAdjustReason('');
                         }
                     });
                 }}
-            >
-                <DialogContent className="border-zinc-800 bg-zinc-900 text-zinc-100 sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Adjust Stock</DialogTitle>
-                        <DialogDescription>
-                            {adjustProductId
-                                ? `Add or remove stock for ${inventory.find((p) => p.id === adjustProductId)?.name ?? 'this product'}.`
-                                : 'Add or remove stock for a product.'}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-2">
-                        {adjustProductId && (
-                            <div className="rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2">
-                                <p className="text-[10px] text-zinc-500">Product</p>
-                                <p className="text-sm font-medium text-zinc-200">
-                                    {inventory.find((p) => p.id === adjustProductId)?.sku} —{' '}
-                                    {inventory.find((p) => p.id === adjustProductId)?.name} (stock:{' '}
-                                    {inventory.find((p) => p.id === adjustProductId)?.stock})
-                                </p>
-                            </div>
-                        )}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Type</label>
-                                <Select
-                                    value={adjustType}
-                                    onValueChange={(v) => {
-                                        setAdjustType(v);
-                                        if (v === 'add') setAdjustReason('');
-                                    }}
-                                >
-                                    <SelectTrigger className="border-zinc-700 bg-zinc-900/80 text-zinc-100">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="add">Add</SelectItem>
-                                        <SelectItem value="remove">Remove</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Quantity</label>
-                                <Input
-                                    type="number"
-                                    min={1}
-                                    placeholder="0"
-                                    value={adjustQuantity}
-                                    onChange={(e) => setAdjustQuantity(e.target.value)}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100"
-                                />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-300">
-                                Reason {adjustType === 'remove' ? '(records loss)' : '(for removals)'}
-                            </label>
-                            <Select
-                                value={adjustReason}
-                                onValueChange={setAdjustReason}
-                                disabled={adjustType === 'add'}
-                            >
-                                <SelectTrigger className="border-zinc-700 bg-zinc-900/80 text-zinc-100">
-                                    <SelectValue placeholder="Select reason" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="spoiled">Spoiled</SelectItem>
-                                    <SelectItem value="donated">Donated</SelectItem>
-                                    <SelectItem value="given_away">Given Away</SelectItem>
-                                    <SelectItem value="lost">Lost</SelectItem>
-                                    <SelectItem value="correction">Correction</SelectItem>
-                                    <SelectItem value="guest_satisfaction">Guest Satisfaction</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-300">Notes (optional)</label>
-                            <Input
-                                placeholder="e.g. Restock from supplier"
-                                value={adjustNotes}
-                                onChange={(e) => setAdjustNotes(e.target.value)}
-                                className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => setAdjustModalOpen(false)}
-                            className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={handleAdjustStock}
-                            disabled={
-                                !adjustQuantity ||
-                                parseInt(adjustQuantity, 10) <= 0 ||
-                                (adjustType === 'remove' && !adjustReason)
-                            }
-                            className="bg-indigo-600 text-white hover:bg-indigo-500"
-                        >
-                            Apply
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                productId={adjustProductId}
+                inventory={inventory}
+                onSuccess={() => router.refresh()}
+            />
 
-            <Dialog open={addModalOpen} onOpenChange={(open) => queueMicrotask(() => setAddModalOpen(open))}>
-                <DialogContent className="border-zinc-800 bg-zinc-900 text-zinc-100 sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Add Inventory</DialogTitle>
-                        <DialogDescription>Add a new product to inventory.</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-2">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-300">Product name</label>
-                            <Input
-                                placeholder="Product name"
-                                value={newName}
-                                onChange={(e) => setNewName(e.target.value)}
-                                className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
-                            />
-                            <p className="text-xs text-zinc-500">SKU will be generated automatically.</p>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Stock</label>
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    placeholder="0"
-                                    value={newStock}
-                                    onChange={(e) => setNewStock(e.target.value)}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Low threshold</label>
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    placeholder="10"
-                                    value={newLowThreshold}
-                                    onChange={(e) => setNewLowThreshold(e.target.value)}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Consignment</label>
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    placeholder="0"
-                                    value={newConsignment}
-                                    onChange={(e) => setNewConsignment(e.target.value)}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100"
-                                />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Cost to aquire ($)</label>
-                                <Input
-                                    placeholder="e.g. 5.50"
-                                    value={newCostPerBag}
-                                    onChange={(e) => setNewCostPerBag(e.target.value)}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">Sell price ($)</label>
-                                <Input
-                                    placeholder="e.g. 14.99"
-                                    value={newSellPrice}
-                                    onChange={(e) => setNewSellPrice(e.target.value)}
-                                    className="border-zinc-700 bg-zinc-900/80 text-zinc-100 placeholder:text-zinc-500"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => setAddModalOpen(false)}
-                            className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={handleAddInventory}
-                            disabled={!newName.trim()}
-                            className="bg-indigo-600 text-white hover:bg-indigo-500"
-                        >
-                            Add
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <AddInventoryDialog
+                open={addModalOpen}
+                onOpenChange={(open) => queueMicrotask(() => setAddModalOpen(open))}
+                onSuccess={() => router.refresh()}
+            />
 
-            <Dialog
+            <EditInventoryDialog
                 open={editModalOpen}
                 onOpenChange={(open) => {
-                    if (!open)
+                    if (!open) {
                         queueMicrotask(() => {
                             setEditModalOpen(false);
                             setEditingProduct(null);
                         });
+                    }
                 }}
-            >
-                <DialogContent className="border-zinc-800 bg-zinc-900 text-zinc-100 sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Edit Inventory</DialogTitle>
-                        <DialogDescription>Update {editingProduct?.name ?? 'product'} details.</DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleUpdateInventory} className="grid gap-4 py-2">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-300">Low threshold</label>
-                            <Input
-                                type="number"
-                                min={0}
-                                placeholder="10"
-                                value={editForm.lowThreshold}
-                                onChange={(e) => setEditForm((f) => ({ ...f, lowThreshold: e.target.value }))}
-                                className="border-zinc-700 bg-zinc-900/80 text-zinc-100"
-                            />
-                        </div>
-                        <DialogFooter>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setEditModalOpen(false)}
-                                className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                            >
-                                Cancel
-                            </Button>
-                            <Button type="submit" className="bg-indigo-600 text-white hover:bg-indigo-500">
-                                Save
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                product={editingProduct}
+                onSuccess={() => router.refresh()}
+            />
         </div>
     );
 }
