@@ -23,14 +23,22 @@ async function createProductionBatchHandler(prevState, formData) {
             address = formData.get('newSupplierAddress')?.toString().trim() || null;
             phone = formData.get('newSupplierPhone')?.toString().trim() || null;
             email = formData.get('newSupplierEmail')?.toString().trim() || null;
+
             if (!name) return { success: false, message: 'Please enter the new supplier name.' };
+            if (name && name.length > 100)
+                return { success: false, message: 'Supplier name cannot exceed 100 characters.' };
+            if (email && email.length > 255) return { success: false, message: 'Supplier email is too long.' };
+            if (phone && phone.length > 30) return { success: false, message: 'Supplier phone is too long.' };
+            if (address && address.length > 300) return { success: false, message: 'Supplier address is too long.' };
+
             supplierId = null;
         } else if (!supplierId) {
             return { success: false, message: 'Please select a supplier.' };
         }
 
         if (!rawWeight || rawWeight <= 0) return { success: false, message: 'Raw weight must be greater than 0.' };
-
+        if (!Number.isFinite(rawWeight)) return { success: false, message: 'Raw weight must be a valid number.' };
+        if (rawWeight > 200) return { success: false, message: 'Raw weight cannot exceed 200 lbs.' };
         const { data: batchNumber, error } = await supabase.rpc('create_production_batch', {
             p_supplier_id: supplierId,
             p_raw_weight: rawWeight,
