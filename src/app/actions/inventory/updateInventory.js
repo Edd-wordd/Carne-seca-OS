@@ -5,11 +5,17 @@ import { withSentryAction } from '@/lib/sentry/with-sentry-action';
 import { withAuth } from '@/lib/clerk/with-auth';
 
 async function updateInventoryHandler({ productId, lowThreshold }) {
+    if (!productId) return { success: false, message: 'Product ID is required' };
+    const threshold = Number(lowThreshold);
+    if (!Number.isFinite(threshold) || threshold < 0 || threshold > 10000) {
+        return { success: false, message: 'Low threshold must be between 0 and 10,000' };
+    }
+
     const supabase = await createClient();
     try {
         const { error } = await supabase
             .from('production_inventory')
-            .update({ low_threshold: lowThreshold })
+            .update({ low_threshold: threshold })
             .eq('product_id', productId);
 
         if (error) return { success: false, message: error.message };

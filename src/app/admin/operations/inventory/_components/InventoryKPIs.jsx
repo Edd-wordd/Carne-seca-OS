@@ -6,9 +6,7 @@ const CARD_BASE = 'flex min-w-0 flex-col gap-1.5 rounded border border-zinc-700/
 
 export function InventoryKPIs({ inventory = [], adjustmentsLog = [] }) {
     const totalValue = inventory.reduce((s, p) => s + p.value, 0);
-    const totalBags = inventory
-        .filter((p) => p.category === 'carne_seca')
-        .reduce((s, p) => s + p.stock, 0);
+    const totalBags = inventory.filter((p) => p.category === 'carne_seca').reduce((s, p) => s + p.stock, 0);
     const totalCostToMake = inventory.reduce((s, p) => {
         const costPerBag = p.costPerBag ?? 0;
         return s + p.stock * costPerBag;
@@ -23,10 +21,10 @@ export function InventoryKPIs({ inventory = [], adjustmentsLog = [] }) {
 
     const spoilageTotal = adjustmentsLog
         .filter((r) => r.reason === 'spoiled')
-        .reduce((s, r) => s + (Number(r.total_loss_cost) ?? 0), 0);
+        .reduce((s, r) => s + (Number(r.total_loss_cost) || 0), 0);
     const otherLossTotal = adjustmentsLog
         .filter((r) => r.reason !== 'spoiled')
-        .reduce((s, r) => s + (Number(r.total_loss_cost) ?? 0), 0);
+        .reduce((s, r) => s + (Number(r.total_loss_cost) || 0), 0);
     const totalLosses = spoilageTotal + otherLossTotal;
 
     return (
@@ -80,12 +78,28 @@ export function InventoryKPIs({ inventory = [], adjustmentsLog = [] }) {
                     </div>
                     <div className="space-y-0.5">
                         <p className="text-xs tabular-nums">
-                            <span className="text-red-400/90">Spoilage ${spoilageTotal.toLocaleString()}</span>
+                            <span className="text-red-400/90">
+                                Spoilage $
+                                {spoilageTotal.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })}
+                            </span>
                             {' · '}
-                            <span className="text-orange-400/90">Other Losses ${otherLossTotal.toLocaleString()}</span>
+                            <span className="text-orange-400/90">
+                                Other Losses $
+                                {otherLossTotal.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })}
+                            </span>
                         </p>
                         <p className="text-zinc-500 text-[10px] tabular-nums">
-                            Total lost: ${totalLosses.toLocaleString()}
+                            Total lost: $
+                            {totalLosses.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                            })}
                         </p>
                     </div>
                 </div>
