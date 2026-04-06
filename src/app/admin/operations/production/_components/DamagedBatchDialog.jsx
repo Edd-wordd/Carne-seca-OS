@@ -21,6 +21,7 @@ export default function DamagedBatchDialog({ open, onOpenChange, batchToDamage, 
     const [damagedType, setDamagedType] = React.useState('full');
     const [damagedWeight, setDamagedWeight] = React.useState('');
     const [damagedReason, setDamagedReason] = React.useState('');
+    const [errorMessage, setErrorMessage] = React.useState('');
     const [damagedToastVisible, setDamagedToastVisible] = React.useState(false);
     const [damagedToastMessage, setDamagedToastMessage] = React.useState('');
     const [isPending, startTransition] = useTransition();
@@ -32,8 +33,13 @@ export default function DamagedBatchDialog({ open, onOpenChange, batchToDamage, 
             setDamagedType('full');
             setDamagedWeight('');
             setDamagedReason('');
+            setErrorMessage('');
         }
     }, [batchToDamage]);
+
+    React.useEffect(() => {
+        if (!open) setErrorMessage('');
+    }, [open]);
 
     const onConfirm = () => {
         if (!batchToDamage) return;
@@ -42,20 +48,21 @@ export default function DamagedBatchDialog({ open, onOpenChange, batchToDamage, 
         const weight = damagedType === 'full' ? batchToDamage.raw_weight : parseFloat(damagedWeight);
         const isPartial = damagedType === 'partial';
         const productionId = batchToDamage.production_id;
+        const trimmedReason = damagedReason.trim();
 
         startTransition(async () => {
             try {
-                const result = await handleDamagedGoods(productionId, weight, damagedReason);
+                const result = await handleDamagedGoods(productionId, weight, trimmedReason);
 
                 if (result.success) {
                     onOpenChange(false);
                     onSuccess?.();
                     capture('batchDamaged', {
-                        batchNumber: batchNumber,
-                        weight: weight,
-                        isPartial: isPartial,
-                        productionId: productionId,
-                        damagedReason: damagedReason,
+                        batchNumber,
+                        weight,
+                        isPartial,
+                        productionId,
+                        damagedReason: trimmedReason,
                         supplier: batchToDamage.suppliers?.name ?? '—',
                     });
                     const toastMsg = isPartial
@@ -65,10 +72,13 @@ export default function DamagedBatchDialog({ open, onOpenChange, batchToDamage, 
                     setDamagedToastVisible(true);
                     setTimeout(() => setDamagedToastVisible(false), 4000);
                 } else {
-                    captureMessage(result.message);
+                    const msg = result.message ?? 'Failed to mark batch as damaged.';
+                    captureMessage(msg);
+                    setErrorMessage(msg);
                 }
             } catch (err) {
                 captureError(err);
+                setErrorMessage('Something went wrong. Please try again.');
             }
         });
     };
@@ -159,10 +169,18 @@ export default function DamagedBatchDialog({ open, onOpenChange, batchToDamage, 
                                     className="flex w-full rounded-md border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 outline-none focus:border-zinc-600 focus:ring-1 focus:ring-zinc-500 resize-none"
                                 />
                             </div>
+
+                            {errorMessage && (
+                                <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                                    {errorMessage}
+                                </div>
+                            )}
+
                             <DialogFooter>
                                 <Button
                                     variant="outline"
                                     onClick={() => onOpenChange(false)}
+                                    disabled={isPending}
                                     className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
                                 >
                                     Cancel

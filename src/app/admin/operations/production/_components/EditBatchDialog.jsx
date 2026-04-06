@@ -16,6 +16,8 @@ import { useSentryCapture } from '@/lib/sentry/use-sentry-capture';
 
 export default function EditBatchDialog({ open, onOpenChange, batchToEdit, onSuccess }) {
     const [editRawWeight, setEditRawWeight] = React.useState('');
+    const [isPending, setIsPending] = React.useState(false);
+    const [errorMessage, setErrorMessage] = React.useState('');
     const [editToastVisible, setEditToastVisible] = React.useState(false);
     const [editToastMessage, setEditToastMessage] = React.useState('');
     const { captureError, captureMessage } = useSentryCapture('EditBatchDialog');
@@ -23,8 +25,45 @@ export default function EditBatchDialog({ open, onOpenChange, batchToEdit, onSuc
     React.useEffect(() => {
         if (batchToEdit) {
             setEditRawWeight(String(batchToEdit.raw_weight ?? ''));
+            setErrorMessage('');
         }
     }, [batchToEdit]);
+
+    React.useEffect(() => {
+        if (!open) setErrorMessage('');
+    }, [open]);
+
+    const handleSave = async () => {
+        if (!batchToEdit || isPending) return;
+        const weight = parseFloat(editRawWeight);
+        if (!weight || weight <= 0) {
+            setErrorMessage('Raw weight must be greater than 0.');
+            return;
+        }
+
+        setIsPending(true);
+        setErrorMessage('');
+
+        try {
+            const result = await updateBatch(batchToEdit.production_id, weight);
+            if (result.success) {
+                onOpenChange(false);
+                onSuccess?.();
+                setEditToastMessage(`Batch ${batchToEdit.batch_number} updated successfully`);
+                setEditToastVisible(true);
+                setTimeout(() => setEditToastVisible(false), 4000);
+            } else {
+                const msg = result.message ?? 'Failed to update batch.';
+                captureMessage(msg);
+                setErrorMessage(msg);
+            }
+        } catch (err) {
+            captureError(err);
+            setErrorMessage('Something went wrong. Please try again.');
+        } finally {
+            setIsPending(false);
+        }
+    };
 
     return (
         <>
@@ -63,38 +102,28 @@ export default function EditBatchDialog({ open, onOpenChange, batchToEdit, onSuc
                                     className="border-zinc-700 bg-zinc-900/80 text-zinc-100 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
                                 />
                             </div>
+
+                            {errorMessage && (
+                                <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                                    {errorMessage}
+                                </div>
+                            )}
+
                             <DialogFooter>
                                 <Button
                                     variant="outline"
                                     onClick={() => onOpenChange(false)}
+                                    disabled={isPending}
                                     className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
                                 >
                                     Close
                                 </Button>
                                 <Button
-                                    onClick={async () => {
-                                        const batchNumber = batchToEdit.batch_number;
-                                        try {
-                                            const result = await updateBatch(
-                                                batchToEdit.production_id,
-                                                parseFloat(editRawWeight),
-                                            );
-                                            if (result.success) {
-                                                onOpenChange(false);
-                                                onSuccess?.();
-                                                setEditToastMessage(`Batch ${batchNumber} updated successfully`);
-                                                setEditToastVisible(true);
-                                                setTimeout(() => setEditToastVisible(false), 4000);
-                                            } else {
-                                                captureMessage(result.message);
-                                            }
-                                        } catch (err) {
-                                            captureError(err);
-                                        }
-                                    }}
-                                    className="bg-indigo-600 text-white hover:bg-indigo-500"
+                                    onClick={handleSave}
+                                    disabled={isPending || !editRawWeight}
+                                    className="bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50"
                                 >
-                                    Save Changes
+                                    {isPending ? 'Saving...' : 'Save Changes'}
                                 </Button>
                             </DialogFooter>
                         </div>
