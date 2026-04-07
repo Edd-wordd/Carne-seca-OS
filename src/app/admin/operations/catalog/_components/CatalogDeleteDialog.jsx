@@ -30,8 +30,8 @@ export default function CatalogDeleteDialog({
                 <DialogHeader>
                     <DialogTitle>Delete Product</DialogTitle>
                     <DialogDescription>
-                        Are you sure you want to delete &quot;{deleteTarget?.name ?? 'this product'}&quot;? This action
-                        cannot be undone.
+                        Are you sure you want to delete &quot;{deleteTarget?.name ?? 'this product'}&quot;? The product
+                        will be hidden and can be restored if needed.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2 pt-4">

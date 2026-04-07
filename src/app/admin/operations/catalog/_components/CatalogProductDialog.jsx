@@ -24,6 +24,8 @@ export default function CatalogProductDialog({
     setForm,
     productCategories,
     handleSubmitProduct,
+    isSubmitting,
+    formError,
 }) {
     return (
         <Dialog
@@ -194,7 +196,10 @@ export default function CatalogProductDialog({
                         </div>
                         <div className="space-y-1.5">
                             <Label className="text-xs text-zinc-300">Status</Label>
-                            <Select value={form.status ?? 'active'} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
+                            <Select
+                                value={form.status ?? 'active'}
+                                onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}
+                            >
                                 <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80 text-white">
                                     <SelectValue />
                                 </SelectTrigger>
@@ -210,18 +215,26 @@ export default function CatalogProductDialog({
                         </div>
                     </div>
 
-                    <DialogFooter className="gap-4 pt-4">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setOpen(false)}
-                            className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                        >
-                            Cancel
-                        </Button>
-                        <Button type="submit" className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30">
-                            {editingId ? 'Save Changes' : 'Add Product'}
-                        </Button>
+                    <DialogFooter className="flex-col gap-3 pt-4">
+                        {formError && <p className="text-center text-xs text-red-400">{formError}</p>}
+                        <div className="flex justify-end gap-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setOpen(false)}
+                                disabled={isSubmitting}
+                                className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
+                            >
+                                {isSubmitting ? 'Saving...' : editingId ? 'Save Changes' : 'Add Product'}
+                            </Button>
+                        </div>
                     </DialogFooter>
                 </form>
             </DialogContent>
