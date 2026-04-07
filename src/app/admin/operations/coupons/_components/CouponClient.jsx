@@ -20,21 +20,15 @@ export function CouponClient({ initialCoupons }) {
             if (filter === 'inactive' && c.status !== 'inactive') return false;
             if (!q) return true;
             const metaMatch =
-                c.metadata &&
-                Object.values(c.metadata).some(
-                    (v) => v != null && String(v).toLowerCase().includes(q),
-                );
+                c.metadata && Object.values(c.metadata).some((v) => v != null && String(v).toLowerCase().includes(q));
             return (
-                (c.code && c.code.toLowerCase().includes(q)) ||
-                (c.id && c.id.toLowerCase().includes(q)) ||
-                metaMatch
+                (c.code && c.code.toLowerCase().includes(q)) || (c.id && c.id.toLowerCase().includes(q)) || metaMatch
             );
         });
     }, [initialCoupons, filter, query]);
 
     const activeCount = initialCoupons.filter((c) => c.status === 'active').length;
-    const totalRedemptions = initialCoupons.reduce((sum, c) => sum + (c.uses.redeemed ?? 0), 0);
-
+    const totalRedemptions = initialCoupons.reduce((sum, c) => sum + (c.uses?.redeemed ?? 0), 0);
     const totalRedemptionValueCents = 0;
 
     return (
