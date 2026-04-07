@@ -41,9 +41,6 @@ async function deleteSupplyHandler(supplyId) {
 
         return { success: false, message: error?.message ?? 'Failed to delete supply' };
     } catch (error) {
-        if (isForeignKeyViolation(error)) {
-            return softHideSupply(supabase, supplyId);
-        }
         return { success: false, message: error?.message ?? 'Unknown error' };
     }
 }

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { withSentryAction } from '@/lib/sentry/with-sentry-action';
+import { withAuth } from '@/lib/clerk/with-auth';
 
 async function getSuppliesHandler() {
     const supabase = await createClient();
@@ -9,7 +10,7 @@ async function getSuppliesHandler() {
     try {
         const { data, error } = await supabase.rpc('get_supplies');
 
-        if (error) return { succes: false, message: error.message };
+        if (error) return { success: false, message: error.message };
 
         return data;
     } catch (error) {
@@ -17,4 +18,4 @@ async function getSuppliesHandler() {
     }
 }
 
-export const getSupplies = withSentryAction('getSupplies', getSuppliesHandler);
+export const getSupplies = withSentryAction('getSupplies', withAuth(getSuppliesHandler));

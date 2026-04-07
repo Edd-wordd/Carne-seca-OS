@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { withSentryAction } from '@/lib/sentry/with-sentry-action';
+import { withAuth } from '@/lib/clerk/with-auth';
 
 async function getSupplyPurchasesHandler() {
     const supabase = await createClient();
@@ -15,4 +16,4 @@ async function getSupplyPurchasesHandler() {
     }
 }
 
-export const getSupplyPurchases = withSentryAction('getSupplyPurchases', getSupplyPurchasesHandler);
+export const getSupplyPurchases = withSentryAction('getSupplyPurchases', withAuth(getSupplyPurchasesHandler));
