@@ -32,10 +32,6 @@ const PAYMENT_METHODS = [
     { value: 'other', label: 'Other' },
 ];
 
-function asSuppliesArray(prev) {
-    return Array.isArray(prev) ? prev : [];
-}
-
 function purchaseHistoryHasDate(h) {
     return h?.date != null && String(h.date).trim() !== '';
 }
@@ -76,7 +72,7 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
     };
 
     const handleUpdateSupply = React.useCallback((updated, original) => {
-        setSupplies((prev) => asSuppliesArray(prev).map((s) => (String(s.id) === String(original.id) ? updated : s)));
+        setSupplies((prev) => prev.map((s) => (String(s.id) === String(original.id) ? updated : s)));
         setPurchaseHistory((prev) =>
             prev.map((h) =>
                 h.supplyId != null && String(h.supplyId) === String(original.id)
@@ -300,7 +296,7 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
                 onOpenChange={setAddModalOpen}
                 categories={SUPPLY_CATEGORIES}
                 onAddSupply={(supply) => {
-                    setSupplies((prev) => [supply, ...asSuppliesArray(prev)]);
+                    setSupplies((prev) => [supply, ...prev]);
                     setPurchaseHistory((prev) => [...prev]);
                 }}
             />
@@ -323,9 +319,7 @@ export default function SuppliesClient({ initialSupplies = [], initialPurchaseHi
                     if (!next) setSupplyToDelete(null);
                 }}
                 supply={supplyToDelete}
-                onDeleted={(supplyId) =>
-                    setSupplies((prev) => asSuppliesArray(prev).filter((s) => String(s.id) !== supplyId))
-                }
+                onDeleted={(supplyId) => setSupplies((prev) => prev.filter((s) => String(s.id) !== supplyId))}
             />
         </div>
     );
