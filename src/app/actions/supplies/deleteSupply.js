@@ -27,6 +27,7 @@ async function softHideSupply(supabase, supplyId) {
 
 async function deleteSupplyHandler(supplyId) {
     const supabase = await createClient();
+    if (!supplyId) return { success: false, message: 'Supply ID is required' };
 
     try {
         const { error } = await supabase.from('supplies').delete().eq('id', supplyId);

@@ -51,17 +51,22 @@ function normalizePurchase(row) {
 }
 
 export default async function SuppliesPage() {
-    const [suppliesData, purchasesData, suppliersData] = await Promise.all([
+    const [suppliesResult, purchasesResult, suppliersResult] = await Promise.all([
         getSupplies(),
         getSupplyPurchases(),
         getSuppliers(),
     ]);
-    const rawSupplies = Array.isArray(suppliesData) ? suppliesData : [];
-    const rawPurchases = Array.isArray(purchasesData) ? purchasesData : [];
-    const rawSuppliersList = Array.isArray(suppliersData) ? suppliersData : [];
+
+    // Each query now returns { success, data } — destructure before normalizing
+    // If the query failed, fall back to empty array so the page still renders
+    const rawSupplies = suppliesResult?.success ? (suppliesResult.data ?? []) : [];
+    const rawPurchases = purchasesResult?.success ? (purchasesResult.data ?? []) : [];
+    const rawSuppliersList = suppliersResult?.success ? (suppliersResult.data ?? []) : [];
+
     const supplies = rawSupplies.map(normalizeSupply).filter(Boolean);
     const purchases = rawPurchases.map(normalizePurchase).filter(Boolean);
     const suppliers = rawSuppliersList.map(normalizeSupplier).filter(Boolean);
+
     return (
         <SuppliesClient initialSupplies={supplies} initialPurchaseHistory={purchases} initialSuppliers={suppliers} />
     );

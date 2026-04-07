@@ -108,10 +108,12 @@ export default function AddSupplyDialog({ open, onOpenChange, categories = [], o
                 toast.error('Supply was created but the response was empty');
                 return;
             }
-
             onAddSupply?.(supply);
             toast.success('Supply added');
             handleDialogOpenChange(false);
+        } catch (err) {
+            // Without this, a thrown exception resets the spinner silently
+            toast.error(err?.message ?? 'Failed to add supply');
         } finally {
             setIsSubmitting(false);
         }
