@@ -17,6 +17,15 @@ async function updateProductHandler({
     category,
     status,
 }) {
+    if (!productID) return { success: false, error: 'Product ID required' };
+
+    const price = Number(priceDollars);
+    const cost = Number(costPerBag);
+
+    if (!productName?.trim()) return { success: false, error: 'Product name required' };
+    if (!Number.isFinite(price) || price <= 0) return { success: false, error: 'Invalid price' };
+    if (!Number.isFinite(cost) || cost <= 0) return { success: false, error: 'Invalid cost' };
+
     const supabase = await createClient();
 
     try {
@@ -24,22 +33,24 @@ async function updateProductHandler({
             .from('products')
             .update({
                 image_url: imageURL,
-                name: productName,
+                name: productName.trim(),
                 flavor,
                 description,
-                cost_per_bag: costPerBag,
-                price_cents: Math.round(Number(priceDollars) * 100),
+                cost_per_bag: cost,
+                price_cents: Math.round(price * 100),
                 size_grams: size ? Math.round(Number(size) * 28.3495) : null,
                 launch_date: launchDate,
                 category,
                 status,
             })
-            .eq('id', productID);
+            .eq('id', productID)
+            .select('id')
+            .single();
 
-        if (error) return { success: false, message: error.message };
+        if (error || !data) return { success: false, error: error?.message ?? 'Product not found' };
         return { success: true };
     } catch (error) {
-        return { success: false, message: error?.message ?? 'unknown error' };
+        return { success: false, error: error?.message ?? 'Unknown error' };
     }
 }
 
