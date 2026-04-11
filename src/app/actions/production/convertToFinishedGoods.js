@@ -9,7 +9,7 @@ async function convertToFinishedGoodsHandler(productId, flavorSplits) {
     const supabase = await createClient();
     try {
         // Input validation
-        if (!productId) return { success: false, message: 'Batch ID is required.' };
+        if (!productId) return { success: false, message: 'Product ID is required.' };
         if (!Array.isArray(flavorSplits) || flavorSplits.length === 0) {
             return { success: false, message: 'At least one flavor split is required.' };
         }

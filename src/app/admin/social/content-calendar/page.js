@@ -130,11 +130,7 @@ export default function SocialContentCalendarPage() {
                         </p>
                     </div>
                 </div>
-                <Button
-                    size="sm"
-                    disabled
-                    className="h-9 shrink-0 gap-1.5 bg-indigo-500/20 text-indigo-300 opacity-60"
-                >
+                <Button size="sm" disabled className="h-9 shrink-0 gap-1.5 bg-indigo-500/20 text-indigo-300 opacity-60">
                     <Plus className="size-3.5" />
                     Add slot
                 </Button>
@@ -204,7 +200,9 @@ export default function SocialContentCalendarPage() {
                             <TableRow className="border-zinc-800 hover:bg-transparent">
                                 <TableHead className="h-8 px-4 text-[10px] text-zinc-500">When</TableHead>
                                 <TableHead className="h-8 px-3 text-[10px] text-zinc-500">Channels</TableHead>
-                                <TableHead className="h-8 px-3 text-[10px] text-zinc-500">What&apos;s going out</TableHead>
+                                <TableHead className="h-8 px-3 text-[10px] text-zinc-500">
+                                    What&apos;s going out
+                                </TableHead>
                                 <TableHead className="h-8 px-3 text-[10px] text-zinc-500">Format</TableHead>
                                 <TableHead className="h-8 px-4 text-[10px] text-zinc-500">Status</TableHead>
                             </TableRow>
