@@ -11,6 +11,19 @@ async function updateOrderHandler({ orderId, customer, email, source, address, f
         if (!orderId) return { success: false, message: 'Order ID is required' };
         if (!customer) return { success: false, message: 'Customer name is required' };
         if (!email) return { success: false, message: 'Customer needs to have an email' };
+        if (customer.length > 100) return { success: false, message: 'Customer name is too long' };
+        if (email.length > 254) return { success: false, message: 'Email is too long' };
+        if (tracking && tracking.length > 100) return { success: false, message: 'Tracking number is too long' };
+
+        const VALID_FULFILLMENT = ['unfulfilled', 'shipped', 'delivered'];
+        if (fulfillment && !VALID_FULFILLMENT.includes(fulfillment)) {
+            return { success: false, message: 'Invalid fulfillment status' };
+        }
+
+        const VALID_SOURCES = ['website', 'pos'];
+        if (source && !VALID_SOURCES.includes(source)) {
+            return { success: false, message: 'Invalid source' };
+        }
 
         const { error } = await supabase
             .from('orders')
