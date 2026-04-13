@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { withSentryAction } from '@/lib/sentry/with-sentry-action';
+import { withAuth } from '@/lib/clerk/with-auth';
 
 async function getBatchesHandler() {
     const supabase = await createClient();
@@ -34,4 +35,4 @@ async function getBatchesHandler() {
     }
 }
 
-export const getBatches = withSentryAction('getBatches', getBatchesHandler);
+export const getBatches = withSentryAction('getBatches', withAuth(getBatchesHandler));

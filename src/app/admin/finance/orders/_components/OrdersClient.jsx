@@ -5,25 +5,18 @@ import { Button } from '@/components/ui/button';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { ChevronLeft, ChevronRight, Download, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
+import { exportOrdersToCsv } from '@/lib/utils/exportOrders';
 import { OrderKpiCards } from './OrderKpiCards';
 import { CreateOrderDialog } from './CreateOrderDialog';
 import { getProducts } from '@/lib/supabase/queries/catalog/getProducts';
 import {
     OrdersTable,
     ORDER_SOURCES,
-    formatCurrency,
-    formatDateTime,
     formatAddress,
     FULFILLMENT_TO_STATUS,
     normalizeFulfillmentValue,
     orderStatusForFilter,
 } from './OrdersTable';
-
-function escapeCsv(val) {
-    const s = String(val ?? '');
-    if (s.includes(',') || s.includes('"') || s.includes('\n')) return `"${s.replace(/"/g, '""')}"`;
-    return s;
-}
 
 function newCreateOrderLineKey() {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -352,46 +345,7 @@ export function OrdersClient({ initialOrders = [] }) {
     const safePage = Math.min(currentPage, totalPages);
     const paginatedOrders = ordersForTab.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-    const handleExportCsv = () => {
-        const headers = [
-            'Order ID',
-            'Customer',
-            'Email',
-            'Source',
-            'Date',
-            'Items',
-            'Status',
-            'Fulfillment',
-            'Tracking',
-            'Total',
-            'Refunded',
-        ];
-        const rows = sortedOrders.map((o) =>
-            [
-                o.id,
-                o.customer,
-                o.email ?? '',
-                ORDER_SOURCES.find((s) => s.value === (o.source ?? 'website'))?.label ?? 'Website',
-                formatDateTime(o.date),
-                o.items ?? 0,
-                o.status,
-                o.fulfillment,
-                o.tracking ?? '',
-                formatCurrency(o.total),
-                o.refunded ? 'Yes' : 'No',
-            ]
-                .map(escapeCsv)
-                .join(','),
-        );
-        const csv = [headers.map(escapeCsv).join(','), ...rows].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-    };
+    const handleExportCsv = () => exportOrdersToCsv(sortedOrders);
 
     return (
         <div className="space-y-4">
