@@ -37,7 +37,6 @@ import {
     Plus,
     MoreHorizontal,
     Trash2,
-    CircleOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
 import { getProducts } from '@/lib/supabase/queries/catalog/getProducts';
@@ -253,7 +252,6 @@ const STATUS_STYLES = {
     shipped: 'border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-400',
     delivered: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
     refunded: 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400',
-    voided: 'border-zinc-500/40 bg-zinc-500/10 text-zinc-400',
 };
 
 function escapeCsv(val) {
@@ -425,7 +423,6 @@ function OrdersTable({
         detailLineSubtotal != null ? detailLineSubtotal - detailDiscountCents : null;
 
     const getStatus = (order) => {
-        if (order.voided) return 'voided';
         if (order.refunded) return 'refunded';
         if (order.status === 'processing') return 'pending';
         return order.status;
@@ -480,8 +477,6 @@ function OrdersTable({
             },
             status: editingOrder.refunded
                 ? editingOrder.status
-                : editingOrder.voided
-                  ? editingOrder.status
                 : (FULFILLMENT_TO_STATUS[editForm.fulfillment ?? 'unfulfilled'] ?? 'pending'),
         });
         setEditOpen(false);
@@ -489,7 +484,7 @@ function OrdersTable({
     };
 
     const handleQuickFulfillmentUpdate = (order, nextFulfillment) => {
-        if (!order || order.refunded || order.voided) return;
+        if (!order || order.refunded) return;
         onUpdateOrder(order.id, {
             fulfillment: nextFulfillment,
             status: FULFILLMENT_TO_STATUS[nextFulfillment] ?? order.status,
@@ -717,30 +712,15 @@ function OrdersTable({
                                                             status: 'refunded',
                                                         })
                                                     }
-                                                    disabled={order.refunded || order.voided}
+                                                    disabled={order.refunded}
                                                 >
                                                     <RotateCcw className="mr-2 size-3.5" />
                                                     {order.refunded ? 'Already refunded' : 'Mark refunded'}
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
-                                                    onClick={() =>
-                                                        onUpdateOrder(order.id, {
-                                                            voided: true,
-                                                            status: 'voided',
-                                                            fulfillment: 'unfulfilled',
-                                                            tracking: '',
-                                                        })
-                                                    }
-                                                    disabled={order.voided || order.refunded}
-                                                >
-                                                    <CircleOff className="mr-2 size-3.5" />
-                                                    {order.voided ? 'Already voided' : 'Void order'}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
                                                     onClick={() => setPackingSlipOrder(order)}
-                                                    disabled={order.refunded || order.voided}
+                                                    disabled={order.refunded}
                                                 >
                                                     <Printer className="mr-2 size-3.5" />
                                                     Print packing slip
@@ -869,7 +849,7 @@ function OrdersTable({
                                         <span className="text-zinc-300">{detailOrder.tracking}</span>
                                     </span>
                                 ) : null}
-                                {!detailOrder.refunded && !detailOrder.voided ? (
+                                {!detailOrder.refunded ? (
                                     <>
                                         {detailOrder.fulfillment !== 'shipped' && detailOrder.fulfillment !== 'delivered' ? (
                                             <Button
@@ -1202,7 +1182,7 @@ function OrdersTable({
                             <Select
                                 value={editForm.fulfillment ?? 'unfulfilled'}
                                 onValueChange={(v) => setEditForm((f) => ({ ...f, fulfillment: v }))}
-                                disabled={editingOrder?.refunded || editingOrder?.voided}
+                                disabled={editingOrder?.refunded}
                             >
                                 <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100">
                                     <SelectValue />
