@@ -14,8 +14,16 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FULFILLMENT_OPTIONS, ORDER_SOURCES, formatCurrency } from './OrdersTable';
 
-function lineItemsQuantitySum(lineItems) {
-    return (lineItems ?? []).reduce((s, li) => s + (li.quantity ?? 0), 0);
+function orderDisplayId(order) {
+    if (!order) return '';
+    if (order.order_number != null && order.order_number !== '') return String(order.order_number);
+    const id = order.id;
+    if (id == null) return '';
+    return String(id).slice(0, 8);
+}
+
+function orderItemsQuantitySum(order_items) {
+    return (order_items ?? []).reduce((s, li) => s + (li.quantity ?? 0), 0);
 }
 
 export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onOpenChange, onSave, onCancel }) {
@@ -24,7 +32,9 @@ export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onO
             <DialogContent className="max-h-[min(90vh,640px)] overflow-y-auto border-zinc-800 bg-zinc-900 sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Edit order</DialogTitle>
-                    <DialogDescription>{editingOrder ? `Update ${editingOrder.id}` : ''}</DialogDescription>
+                    <DialogDescription>
+                        {editingOrder ? `Update order ${orderDisplayId(editingOrder)}` : ''}
+                    </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                     <div className="space-y-1.5">
@@ -146,15 +156,15 @@ export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onO
                         <div>
                             <p className="text-xs text-zinc-500">Items</p>
                             <p className="mt-0.5 text-sm font-medium tabular-nums text-zinc-200">
-                                {editingOrder?.lineItems?.length
-                                    ? lineItemsQuantitySum(editingOrder.lineItems)
+                                {editingOrder?.order_items?.length
+                                    ? orderItemsQuantitySum(editingOrder.order_items)
                                     : (editingOrder?.items ?? 0)}
                             </p>
                         </div>
                         <div>
                             <p className="text-xs text-zinc-500">Total</p>
                             <p className="mt-0.5 text-sm font-medium tabular-nums text-zinc-200">
-                                {formatCurrency(editingOrder?.total ?? 0)}
+                                {formatCurrency(editingOrder?.amount_total ?? 0)}
                             </p>
                         </div>
                     </div>

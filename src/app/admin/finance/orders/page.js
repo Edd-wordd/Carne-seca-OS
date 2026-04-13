@@ -1,200 +1,86 @@
 import { OrdersClient } from './_components/OrdersClient';
+import { getOrders } from '@/lib/supabase/queries/orders/getOrders';
 
-/** Mock orders (lineItems unitPriceCents × quantity should match total where noted). */
-const MOCK_ORDERS = [
-    {
-        id: 'ORD-1082',
-        customer: 'Alex Rivera',
-        email: 'alex.rivera@email.com',
-        date: '2025-02-17T14:32',
-        status: 'shipped',
-        fulfillment: 'shipped',
-        tracking: '1Z999AA10123456784',
-        total: 747,
-        items: 3,
-        refunded: false,
-        source: 'website',
-        address: {
-            line1: '4421 Maple Ave',
-            line2: 'Apt 12B',
-            city: 'Austin',
-            state: 'TX',
-            zip: '78751',
-            country: 'USA',
-        },
-        lineItems: [
-            { name: 'Carne seca clássica (8 oz)', quantity: 2, unitPriceCents: 299 },
-            { name: 'Picanha strips (4 oz)', quantity: 1, unitPriceCents: 249 },
-        ],
-        promoCode: 'WELCOME10',
-        discountCents: 100,
-    },
-    {
-        id: 'ORD-1081',
-        customer: 'Jordan Lee',
-        email: 'jordan.lee@email.com',
-        date: '2025-02-16T09:15',
-        status: 'delivered',
-        fulfillment: 'delivered',
-        tracking: '1Z999AA10123456783',
-        total: 1242,
-        items: 5,
-        refunded: false,
-        source: 'pos',
-        address: {
-            line1: '8800 Sunset Blvd',
-            city: 'Los Angeles',
-            state: 'CA',
-            zip: '90069',
-            country: 'USA',
-        },
-        lineItems: [
-            { name: 'Family bundle (mixed)', quantity: 2, unitPriceCents: 449 },
-            { name: 'Garlic & herb (8 oz)', quantity: 2, unitPriceCents: 172 },
-            { name: 'Gift box sleeve', quantity: 1, unitPriceCents: 0 },
-        ],
-    },
-    {
-        id: 'ORD-1080',
-        customer: 'Sam Chen',
-        email: 'sam.chen@email.com',
-        date: '2025-02-16T09:15',
-        status: 'pending',
-        fulfillment: 'unfulfilled',
-        tracking: '',
-        total: 389,
-        items: 1,
-        refunded: false,
-        source: 'website',
-        address: {
-            line1: '19 Pearl St',
-            city: 'Denver',
-            state: 'CO',
-            zip: '80203',
-            country: 'USA',
-        },
-        lineItems: [{ name: 'Trial pack sampler', quantity: 1, unitPriceCents: 389 }],
-    },
-    {
-        id: 'ORD-1079',
-        customer: 'Morgan Taylor',
-        email: 'morgan.taylor@email.com',
-        date: '2025-02-15T16:45',
-        status: 'shipped',
-        fulfillment: 'shipped',
-        tracking: '1Z999AA10123456782',
-        total: 621,
-        items: 2,
-        refunded: false,
-        source: 'pos',
-        address: {
-            line1: '200 W Lake St',
-            line2: 'Suite 400',
-            city: 'Chicago',
-            state: 'IL',
-            zip: '60606',
-            country: 'USA',
-        },
-        lineItems: [
-            { name: 'Premium reserve (12 oz)', quantity: 1, unitPriceCents: 499 },
-            { name: 'Spicy chile (4 oz)', quantity: 1, unitPriceCents: 122 },
-        ],
-    },
-    {
-        id: 'ORD-1078',
-        customer: 'Riley Adams',
-        email: 'riley.adams@email.com',
-        date: '2025-02-15T16:45',
-        status: 'pending',
-        fulfillment: 'unfulfilled',
-        tracking: '',
-        total: 156,
-        items: 1,
-        refunded: false,
-        source: 'website',
-        address: {
-            line1: '55 Water St',
-            city: 'Brooklyn',
-            state: 'NY',
-            zip: '11201',
-            country: 'USA',
-        },
-        lineItems: [{ name: 'Snack size (2 oz)', quantity: 1, unitPriceCents: 156 }],
-    },
-    {
-        id: 'ORD-1077',
-        customer: 'Casey Kim',
-        email: 'casey.kim@email.com',
-        date: '2025-02-14T11:20',
-        status: 'delivered',
-        fulfillment: 'delivered',
-        tracking: '1Z999AA10123456781',
-        total: 934,
-        items: 4,
-        refunded: false,
-        source: 'pos',
-        address: {
-            line1: '1 Ferry Building',
-            city: 'San Francisco',
-            state: 'CA',
-            zip: '94111',
-            country: 'USA',
-        },
-        lineItems: [
-            { name: 'Original recipe (8 oz)', quantity: 2, unitPriceCents: 299 },
-            { name: 'Teriyaki glaze (8 oz)', quantity: 2, unitPriceCents: 168 },
-        ],
-    },
-    {
-        id: 'ORD-1076',
-        customer: 'Drew Morgan',
-        email: 'drew.morgan@email.com',
-        date: '2025-02-13T08:00',
-        status: 'refunded',
-        fulfillment: 'delivered',
-        tracking: '',
-        total: 428,
-        items: 2,
-        refunded: true,
-        source: 'website',
-        address: {
-            line1: '77 King St',
-            city: 'Charleston',
-            state: 'SC',
-            zip: '29401',
-            country: 'USA',
-        },
-        lineItems: [
-            { name: 'Smoked batch (8 oz)', quantity: 1, unitPriceCents: 279 },
-            { name: 'Traditional cut (8 oz)', quantity: 1, unitPriceCents: 149 },
-        ],
-    },
-    {
-        id: 'ORD-1075',
-        customer: 'Quinn Blake',
-        email: 'quinn.blake@email.com',
-        date: '2025-02-12T19:30',
-        status: 'refunded',
-        fulfillment: 'shipped',
-        tracking: '',
-        total: 612,
-        items: 3,
-        refunded: true,
-        source: 'pos',
-        address: {
-            line1: '3400 Main St',
-            city: 'Houston',
-            state: 'TX',
-            zip: '77002',
-            country: 'USA',
-        },
-        lineItems: [
-            { name: 'Bulk pack (16 oz)', quantity: 1, unitPriceCents: 300 },
-            { name: 'Heat & eat pouch (6 oz)', quantity: 2, unitPriceCents: 156 },
-        ],
-    },
-];
+function normalizeFulfillmentStatus(f) {
+    return f === 'processing' ? 'unfulfilled' : (f ?? 'unfulfilled');
+}
 
-export default function OrdersPage() {
-    return <OrdersClient initialOrders={MOCK_ORDERS} />;
+function normalizeShippingAddress(raw) {
+    if (!raw || typeof raw !== 'object') {
+        return { line1: '', line2: '', city: '', state: '', zip: '', country: '' };
+    }
+    return {
+        line1: String(raw.line1 ?? raw.address_line1 ?? '').trim(),
+        line2: String(raw.line2 ?? raw.address_line2 ?? '').trim(),
+        city: String(raw.city ?? '').trim(),
+        state: String(raw.state ?? '').trim(),
+        zip: String(raw.zip ?? raw.postal_code ?? '').trim(),
+        country: String(raw.country ?? '').trim(),
+    };
+}
+
+function tryParseJson(s) {
+    try {
+        return JSON.parse(s);
+    } catch {
+        return null;
+    }
+}
+
+/** Supabase `orders` + nested `order_items` (also accepts legacy mock field names). */
+function normalizeOrderFromDb(row) {
+    if (!row) return null;
+
+    const orderItemsRaw = row.order_items ?? row.lineItems ?? [];
+    const order_items = (Array.isArray(orderItemsRaw) ? orderItemsRaw : []).map((li) => ({
+        id: li.id,
+        product_id: li.product_id,
+        quantity: li.quantity ?? 0,
+        price_at_purchase: Math.round(Number(li.price_at_purchase ?? li.unitPriceCents ?? 0)),
+        product_name: String(li.product_name ?? li.name ?? 'Item').trim() || 'Item',
+    }));
+
+    const itemsFromLines = order_items.reduce((s, li) => s + (li.quantity ?? 0), 0);
+    const rawAddr = row.shipping_address ?? row.address;
+    const shipping_address = normalizeShippingAddress(
+        rawAddr && typeof rawAddr === 'string' ? tryParseJson(rawAddr) : rawAddr,
+    );
+
+    const status = row.status ?? 'pending';
+    const sLower = String(status).toLowerCase();
+
+    const id = row.id;
+    const order_number =
+        row.order_number != null && row.order_number !== '' ? String(row.order_number) : null;
+
+    return {
+        id,
+        order_number,
+        customer_name: String(row.customer_name ?? row.customer ?? '').trim(),
+        customer_email: String(row.customer_email ?? row.email ?? '').trim(),
+        created_at: row.created_at ?? row.date ?? '',
+        fulfillment_status: normalizeFulfillmentStatus(row.fulfillment_status ?? row.fulfillment),
+        tracking_number: String(row.tracking_number ?? row.tracking ?? '').trim(),
+        amount_total: Math.round(Number(row.amount_total ?? row.total ?? 0)),
+        shipping_address,
+        order_items,
+        status,
+        source: row.source === 'pos' ? 'pos' : 'website',
+        refunded: row.refunded === true || sLower === 'refunded',
+        items: Number(row.items) || itemsFromLines,
+        stripe_payment_intent_id: row.stripe_payment_intent_id ?? null,
+        amount_discount: Math.round(Number(row.amount_discount ?? row.discountCents ?? 0)),
+        promo_code: String(row.promo_code ?? row.promoCode ?? '').trim(),
+    };
+}
+
+function normalizeOrders(data) {
+    if (!Array.isArray(data)) return [];
+    return data.map((row) => normalizeOrderFromDb(row)).filter(Boolean);
+}
+
+export default async function OrdersPage() {
+    const result = await getOrders();
+    const initialOrders = normalizeOrders(result?.data);
+    return <OrdersClient initialOrders={initialOrders} />;
 }

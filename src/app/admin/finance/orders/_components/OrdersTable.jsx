@@ -68,13 +68,18 @@ export function normalizeFulfillmentValue(f) {
 }
 
 export function orderStatusForFilter(o) {
-    if (o.status === 'processing') return 'pending';
-    return o.status;
+    const s = o.status;
+    if (s === 'processing') return 'pending';
+    if (s === 'paid') return 'pending';
+    return s;
 }
 
-/** UI-only placeholder until orders store a real Stripe payment intent id (e.g. pi_…). */
-function placeholderStripePaymentDashboardUrl(orderId) {
-    const suffix = String(orderId).replace(/[^a-zA-Z0-9]/g, '_');
+function stripePaymentDashboardUrl(order) {
+    const pi = order?.stripe_payment_intent_id;
+    if (pi && String(pi).startsWith('pi_')) {
+        return `https://dashboard.stripe.com/test/payments/${pi}`;
+    }
+    const suffix = String(order?.id ?? '').replace(/[^a-zA-Z0-9]/g, '_');
     return `https://dashboard.stripe.com/test/payments/pi_PLACEHOLDER_${suffix}`;
 }
 
@@ -85,8 +90,8 @@ const STATUS_STYLES = {
     refunded: 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400',
 };
 
-function lineItemsQuantitySum(lineItems) {
-    return (lineItems ?? []).reduce((s, li) => s + (li.quantity ?? 0), 0);
+function orderItemsQuantitySum(order_items) {
+    return (order_items ?? []).reduce((s, li) => s + (li.quantity ?? 0), 0);
 }
 
 function fulfillmentLabel(f) {
@@ -135,18 +140,18 @@ export function OrdersTable({
 
     const getStatus = (order) => {
         if (order.refunded) return 'refunded';
-        if (order.status === 'processing') return 'pending';
+        if (order.status === 'processing' || order.status === 'paid') return 'pending';
         return order.status;
     };
 
     const openEditModal = (order) => {
-        const a = order.address;
+        const a = order.shipping_address;
         setEditingOrder(order);
         setEditForm({
-            customer: order.customer ?? '',
-            email: order.email ?? '',
-            fulfillment: normalizeFulfillmentValue(order.fulfillment),
-            tracking: order.tracking ?? '',
+            customer: order.customer_name ?? '',
+            email: order.customer_email ?? '',
+            fulfillment: normalizeFulfillmentValue(order.fulfillment_status),
+            tracking: order.tracking_number ?? '',
             source: order.source ?? 'website',
             addressLine1: a?.line1 ?? '',
             addressLine2: a?.line2 ?? '',
@@ -166,18 +171,18 @@ export function OrdersTable({
     const handleSaveEdit = () => {
         if (!editingOrder) return;
         const id = editingOrder.id;
-        const itemCount = editingOrder.lineItems?.length
-            ? lineItemsQuantitySum(editingOrder.lineItems)
+        const itemCount = editingOrder.order_items?.length
+            ? orderItemsQuantitySum(editingOrder.order_items)
             : Math.max(1, editingOrder.items ?? 1);
         onUpdateOrder(id, {
-            customer: (editForm.customer ?? '').trim() || 'Unknown',
-            email: (editForm.email ?? '').trim(),
+            customer_name: (editForm.customer ?? '').trim() || 'Unknown',
+            customer_email: (editForm.email ?? '').trim(),
             items: itemCount,
-            total: editingOrder.total ?? 0,
-            fulfillment: editForm.fulfillment ?? 'unfulfilled',
-            tracking: (editForm.tracking ?? '').trim(),
+            amount_total: editingOrder.amount_total ?? 0,
+            fulfillment_status: editForm.fulfillment ?? 'unfulfilled',
+            tracking_number: (editForm.tracking ?? '').trim(),
             source: editForm.source === 'pos' ? 'pos' : 'website',
-            address: {
+            shipping_address: {
                 line1: (editForm.addressLine1 ?? '').trim(),
                 line2: (editForm.addressLine2 ?? '').trim(),
                 city: (editForm.city ?? '').trim(),
@@ -196,7 +201,7 @@ export function OrdersTable({
     const handleQuickFulfillmentUpdate = (order, nextFulfillment) => {
         if (!order || order.refunded) return;
         onUpdateOrder(order.id, {
-            fulfillment: nextFulfillment,
+            fulfillment_status: nextFulfillment,
             status: FULFILLMENT_TO_STATUS[nextFulfillment] ?? order.status,
         });
     };
@@ -271,24 +276,26 @@ export function OrdersTable({
                                     className="group cursor-pointer border-zinc-700/80 transition-colors hover:!bg-zinc-700/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-500"
                                 >
                                     <TableCell className="text-zinc-200 px-3 py-1.5 font-mono text-[11px] font-medium group-hover:text-zinc-100">
-                                        {order.id}
+                                        {order.order_number != null && order.order_number !== ''
+                                            ? order.order_number
+                                            : String(order.id).slice(0, 8)}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
-                                        {order.customer}
+                                        {order.customer_name}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] max-w-[180px] truncate group-hover:text-zinc-300">
-                                        {order.email?.trim() ? order.email : '—'}
+                                        {order.customer_email?.trim() ? order.customer_email : '—'}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
                                         {ORDER_SOURCES.find((s) => s.value === (order.source ?? 'website'))?.label ??
                                             'Website'}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] tabular-nums group-hover:text-zinc-300">
-                                        {formatDateTime(order.date)}
+                                        {formatDateTime(order.created_at)}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-center text-[11px] tabular-nums group-hover:text-zinc-300">
-                                        {order.lineItems?.length
-                                            ? lineItemsQuantitySum(order.lineItems)
+                                        {order.order_items?.length
+                                            ? orderItemsQuantitySum(order.order_items)
                                             : (order.items ?? 0)}
                                     </TableCell>
                                     <TableCell className="px-3 py-1.5">
@@ -302,13 +309,13 @@ export function OrdersTable({
                                         </span>
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] capitalize group-hover:text-zinc-300">
-                                        {fulfillmentLabel(order.fulfillment)}
+                                        {fulfillmentLabel(order.fulfillment_status)}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] font-mono max-w-[140px] truncate group-hover:text-zinc-300">
-                                        {order.tracking?.trim() ? order.tracking : '—'}
+                                        {order.tracking_number?.trim() ? order.tracking_number : '—'}
                                     </TableCell>
                                     <TableCell className="text-zinc-100 px-3 py-1.5 text-right text-[11px] font-medium tabular-nums group-hover:text-white">
-                                        {formatCurrency(order.total)}
+                                        {formatCurrency(order.amount_total)}
                                     </TableCell>
                                     <TableCell className="px-2 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
                                         <DropdownMenu>
@@ -347,7 +354,7 @@ export function OrdersTable({
                                                     asChild
                                                 >
                                                     <a
-                                                        href={placeholderStripePaymentDashboardUrl(order.id)}
+                                                        href={stripePaymentDashboardUrl(order)}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                     >

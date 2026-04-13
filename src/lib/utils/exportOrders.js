@@ -22,31 +22,33 @@ function orderSourceLabel(source) {
  */
 export function exportOrdersToCsv(orders) {
     const headers = [
-        'Order ID',
-        'Customer',
-        'Email',
+        'Order number',
+        'Order UUID',
+        'Customer name',
+        'Customer email',
         'Source',
         'Date',
         'Items',
         'Status',
-        'Fulfillment',
-        'Tracking',
+        'Fulfillment status',
+        'Tracking number',
         'Total',
         'Refunded',
     ];
 
     const rows = orders.map((o) =>
         [
-            o.id,
-            o.customer,
-            o.email ?? '',
+            o.order_number != null && o.order_number !== '' ? String(o.order_number) : '',
+            o.id ?? '',
+            o.customer_name ?? '',
+            o.customer_email ?? '',
             orderSourceLabel(o.source ?? 'website'),
-            formatOrderDateTime(o.date),
+            formatOrderDateTime(o.created_at),
             o.items ?? 0,
             o.status,
-            o.fulfillment,
-            o.tracking ?? '',
-            formatPrice(o.total),
+            o.fulfillment_status ?? '',
+            o.tracking_number ?? '',
+            formatPrice(o.amount_total ?? 0),
             o.refunded ? 'Yes' : 'No',
         ]
             .map(escapeCsv)

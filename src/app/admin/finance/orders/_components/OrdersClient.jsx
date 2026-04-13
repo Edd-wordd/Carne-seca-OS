@@ -18,6 +18,79 @@ import {
     orderStatusForFilter,
 } from './OrdersTable';
 
+/** Mirrors `page.js` — used only for locally created orders (client cannot import server `page`). */
+function normalizeFulfillmentStatus(f) {
+    return f === 'processing' ? 'unfulfilled' : (f ?? 'unfulfilled');
+}
+
+function normalizeShippingAddress(raw) {
+    if (!raw || typeof raw !== 'object') {
+        return { line1: '', line2: '', city: '', state: '', zip: '', country: '' };
+    }
+    return {
+        line1: String(raw.line1 ?? raw.address_line1 ?? '').trim(),
+        line2: String(raw.line2 ?? raw.address_line2 ?? '').trim(),
+        city: String(raw.city ?? '').trim(),
+        state: String(raw.state ?? '').trim(),
+        zip: String(raw.zip ?? raw.postal_code ?? '').trim(),
+        country: String(raw.country ?? '').trim(),
+    };
+}
+
+function tryParseJson(s) {
+    try {
+        return JSON.parse(s);
+    } catch {
+        return null;
+    }
+}
+
+function normalizeOrderFromDb(row) {
+    if (!row) return null;
+
+    const orderItemsRaw = row.order_items ?? row.lineItems ?? [];
+    const order_items = (Array.isArray(orderItemsRaw) ? orderItemsRaw : []).map((li) => ({
+        id: li.id,
+        product_id: li.product_id,
+        quantity: li.quantity ?? 0,
+        price_at_purchase: Math.round(Number(li.price_at_purchase ?? li.unitPriceCents ?? 0)),
+        product_name: String(li.product_name ?? li.name ?? 'Item').trim() || 'Item',
+    }));
+
+    const itemsFromLines = order_items.reduce((s, li) => s + (li.quantity ?? 0), 0);
+    const rawAddr = row.shipping_address ?? row.address;
+    const shipping_address = normalizeShippingAddress(
+        rawAddr && typeof rawAddr === 'string' ? tryParseJson(rawAddr) : rawAddr,
+    );
+
+    const status = row.status ?? 'pending';
+    const sLower = String(status).toLowerCase();
+
+    const id = row.id;
+    const order_number =
+        row.order_number != null && row.order_number !== '' ? String(row.order_number) : null;
+
+    return {
+        id,
+        order_number,
+        customer_name: String(row.customer_name ?? row.customer ?? '').trim(),
+        customer_email: String(row.customer_email ?? row.email ?? '').trim(),
+        created_at: row.created_at ?? row.date ?? '',
+        fulfillment_status: normalizeFulfillmentStatus(row.fulfillment_status ?? row.fulfillment),
+        tracking_number: String(row.tracking_number ?? row.tracking ?? '').trim(),
+        amount_total: Math.round(Number(row.amount_total ?? row.total ?? 0)),
+        shipping_address,
+        order_items,
+        status,
+        source: row.source === 'pos' ? 'pos' : 'website',
+        refunded: row.refunded === true || sLower === 'refunded',
+        items: Number(row.items) || itemsFromLines,
+        stripe_payment_intent_id: row.stripe_payment_intent_id ?? null,
+        amount_discount: Math.round(Number(row.amount_discount ?? row.discountCents ?? 0)),
+        promo_code: String(row.promo_code ?? row.promoCode ?? '').trim(),
+    };
+}
+
 function newCreateOrderLineKey() {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
         return crypto.randomUUID();
@@ -70,30 +143,37 @@ function filterOrdersBySearch(orders, query) {
     const q = query.trim().toLowerCase();
     return orders.filter((o) => {
         const sourceLabel = ORDER_SOURCES.find((s) => s.value === (o.source ?? 'website'))?.label?.toLowerCase() ?? '';
-        const addrBlob = formatAddress(o.address).toLowerCase();
-        const lineNames = (o.lineItems ?? []).map((li) => (li.name ?? '').toLowerCase()).join(' ');
+        const addrBlob = formatAddress(o.shipping_address).toLowerCase();
+        const displayId =
+            o.order_number != null && o.order_number !== '' ? String(o.order_number) : String(o.id ?? '').slice(0, 8);
+        const lineNames = (o.order_items ?? [])
+            .map((li) => (li.product_name ?? '').toLowerCase())
+            .join(' ');
+        const created = String(o.created_at ?? '');
         return (
-            o.id.toLowerCase().includes(q) ||
-            o.customer.toLowerCase().includes(q) ||
-            (o.email && o.email.toLowerCase().includes(q)) ||
+            String(o.id ?? '').toLowerCase().includes(q) ||
+            displayId.toLowerCase().includes(q) ||
+            o.customer_name.toLowerCase().includes(q) ||
+            (o.customer_email && o.customer_email.toLowerCase().includes(q)) ||
             sourceLabel.includes(q) ||
             addrBlob.includes(q) ||
             lineNames.includes(q) ||
-            o.date.includes(q) ||
-            (o.tracking && o.tracking.toLowerCase().includes(q))
+            created.toLowerCase().includes(q) ||
+            (o.tracking_number && o.tracking_number.toLowerCase().includes(q))
         );
     });
 }
 
 function getOrderDate(order) {
-    const d = new Date(order.date);
+    const d = new Date(order.created_at);
     return isNaN(d.getTime()) ? null : d;
 }
 
 function applyOrderFilters(orders, statusFilter, fulfillmentFilter, dateRange) {
     return orders.filter((o) => {
         if (statusFilter !== 'all' && orderStatusForFilter(o) !== statusFilter) return false;
-        if (fulfillmentFilter !== 'all' && normalizeFulfillmentValue(o.fulfillment) !== fulfillmentFilter) return false;
+        if (fulfillmentFilter !== 'all' && normalizeFulfillmentValue(o.fulfillment_status) !== fulfillmentFilter)
+            return false;
 
         const orderDate = getOrderDate(o);
         if (!orderDate) return true;
@@ -160,11 +240,13 @@ export function OrdersClient({ initialOrders = [] }) {
     const [currentPage, setCurrentPage] = React.useState(1);
     const [dateSortOrder, setDateSortOrder] = React.useState('desc');
     const [createModalOpen, setCreateModalOpen] = React.useState(false);
-    const [orders, setOrders] = React.useState(() =>
-        typeof structuredClone === 'function'
-            ? structuredClone(initialOrders)
-            : JSON.parse(JSON.stringify(initialOrders)),
-    );
+    const [orders, setOrders] = React.useState(() => {
+        const raw =
+            typeof structuredClone === 'function'
+                ? structuredClone(initialOrders)
+                : JSON.parse(JSON.stringify(initialOrders));
+        return Array.isArray(raw) ? raw : [];
+    });
     const [catalogProducts, setCatalogProducts] = React.useState([]);
     const [catalogLoading, setCatalogLoading] = React.useState(false);
     const [catalogError, setCatalogError] = React.useState(null);
@@ -239,12 +321,6 @@ export function OrdersClient({ initialOrders = [] }) {
 
     const allOrders = orders;
 
-    const getNextOrderId = () => {
-        const nums = orders.map((o) => parseInt(o.id.replace(/\D/g, ''), 10)).filter(Boolean);
-        const max = nums.length ? Math.max(...nums) : 1082;
-        return `ORD-${max + 1}`;
-    };
-
     const handleCreateOrder = () => {
         const byId = new Map(orderableCatalog.map((p) => [String(p.id), p]));
         const merged = new Map();
@@ -258,19 +334,20 @@ export function OrdersClient({ initialOrders = [] }) {
             if (prev) prev.quantity += qty;
             else merged.set(id, { product: p, quantity: qty, unitPriceCents });
         }
-        const lineItems = [...merged.values()].map(({ product, quantity, unitPriceCents }) => ({
-            name: formatProductLineName(product),
+        const order_items = [...merged.values()].map(({ product, quantity, unitPriceCents }) => ({
+            product_name: formatProductLineName(product),
             quantity,
-            unitPriceCents,
+            price_at_purchase: unitPriceCents,
+            product_id: product.id,
         }));
-        if (!lineItems.length) return;
+        if (!order_items.length) return;
 
-        const total = lineItems.reduce((s, li) => s + li.quantity * li.unitPriceCents, 0);
-        const items = lineItems.reduce((s, li) => s + li.quantity, 0);
+        const amount_total = order_items.reduce((s, li) => s + li.quantity * li.price_at_purchase, 0);
+        const items = order_items.reduce((s, li) => s + li.quantity, 0);
         const fulfillment = newOrderForm.fulfillment ?? 'unfulfilled';
         const status = FULFILLMENT_TO_STATUS[fulfillment] ?? 'pending';
         const line2 = (newOrderForm.addressLine2 ?? '').trim();
-        const address = {
+        const shipping_address = {
             line1: (newOrderForm.addressLine1 ?? '').trim(),
             ...(line2 ? { line2 } : {}),
             city: (newOrderForm.city ?? '').trim(),
@@ -278,24 +355,38 @@ export function OrdersClient({ initialOrders = [] }) {
             zip: (newOrderForm.zip ?? '').trim(),
             country: (newOrderForm.country ?? '').trim(),
         };
-        setOrders((prev) => [
-            {
-                id: getNextOrderId(),
-                customer: (newOrderForm.customer ?? '').trim() || 'Unknown',
-                email: (newOrderForm.email ?? '').trim(),
-                date: new Date().toISOString().slice(0, 16),
-                status,
-                fulfillment,
-                tracking: '',
-                total,
-                items,
-                refunded: false,
-                source: newOrderForm.source === 'pos' ? 'pos' : 'website',
-                address,
-                lineItems,
-            },
-            ...prev,
-        ]);
+        const newId =
+            typeof crypto !== 'undefined' && crypto.randomUUID
+                ? crypto.randomUUID()
+                : `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+        setOrders((prev) => {
+            const nums = prev
+                .map((o) => parseInt(String(o.order_number ?? '').replace(/\D/g, ''), 10))
+                .filter((n) => !isNaN(n) && n > 0);
+            const nextOrderNum = nums.length ? Math.max(...nums) + 1 : 1083;
+            return [
+                normalizeOrderFromDb({
+                    id: newId,
+                    order_number: String(nextOrderNum),
+                    customer_name: (newOrderForm.customer ?? '').trim() || 'Unknown',
+                    customer_email: (newOrderForm.email ?? '').trim(),
+                    created_at: new Date().toISOString(),
+                    status,
+                    fulfillment_status: fulfillment,
+                    tracking_number: '',
+                    amount_total,
+                    items,
+                    refunded: false,
+                    source: newOrderForm.source === 'pos' ? 'pos' : 'website',
+                    shipping_address,
+                    order_items,
+                    stripe_payment_intent_id: null,
+                    amount_discount: 0,
+                    promo_code: '',
+                }),
+                ...prev,
+            ];
+        });
         setCreateModalOpen(false);
         resetNewOrderForm();
     };
@@ -326,8 +417,8 @@ export function OrdersClient({ initialOrders = [] }) {
 
     const sortedOrders = React.useMemo(() => {
         return [...filteredOrders].sort((a, b) => {
-            const da = new Date(a.date).getTime();
-            const db = new Date(b.date).getTime();
+            const da = new Date(a.created_at).getTime();
+            const db = new Date(b.created_at).getTime();
             return dateSortOrder === 'asc' ? da - db : db - da;
         });
     }, [filteredOrders, dateSortOrder]);

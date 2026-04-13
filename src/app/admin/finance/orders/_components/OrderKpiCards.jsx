@@ -7,7 +7,12 @@ import { OrderKpiCard } from './OrderKpiCard';
 
 export function OrderKpiCards({ allOrders = [] }) {
     const pendingOrders = React.useMemo(
-        () => allOrders.filter((o) => !o.refunded && (o.status === 'pending' || o.status === 'processing')),
+        () =>
+            allOrders.filter(
+                (o) =>
+                    !o.refunded &&
+                    (o.status === 'pending' || o.status === 'processing' || o.status === 'paid'),
+            ),
         [allOrders],
     );
     const refundedOrders = React.useMemo(() => allOrders.filter((o) => o.refunded), [allOrders]);
@@ -15,9 +20,11 @@ export function OrderKpiCards({ allOrders = [] }) {
     const orderMetrics = React.useMemo(() => {
         const total = allOrders.length;
         const pending = pendingOrders.length;
-        const revenue = allOrders.filter((o) => !o.refunded).reduce((sum, o) => sum + o.total, 0);
+        const revenue = allOrders
+            .filter((o) => !o.refunded)
+            .reduce((sum, o) => sum + (o.amount_total ?? 0), 0);
         const refunded = refundedOrders.length;
-        const refundedAmount = refundedOrders.reduce((sum, o) => sum + o.total, 0);
+        const refundedAmount = refundedOrders.reduce((sum, o) => sum + (o.amount_total ?? 0), 0);
         return [
             {
                 label: 'Total Orders',
