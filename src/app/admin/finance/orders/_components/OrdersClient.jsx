@@ -6,9 +6,11 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { ChevronLeft, ChevronRight, Download, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
 import { exportOrdersToCsv } from '@/lib/utils/exportOrders';
+import { toast } from 'sonner';
 import { OrderKpiCards } from './OrderKpiCards';
 import { CreateOrderDialog } from './CreateOrderDialog';
 import { getProducts } from '@/lib/supabase/queries/catalog/getProducts';
+import { createOrder } from '@/app/actions/orders/createOrder';
 import {
     OrdersTable,
     ORDER_SOURCES,
@@ -249,6 +251,7 @@ export function OrdersClient({ initialOrders = [] }) {
     const [catalogProducts, setCatalogProducts] = React.useState([]);
     const [catalogLoading, setCatalogLoading] = React.useState(false);
     const [catalogError, setCatalogError] = React.useState(null);
+    const [isCreatePending, setIsCreatePending] = React.useState(false);
     const [createOrderLines, setCreateOrderLines] = React.useState(() => [
         { key: newCreateOrderLineKey(), productId: '', quantity: 1 },
     ]);
@@ -320,7 +323,8 @@ export function OrdersClient({ initialOrders = [] }) {
 
     const allOrders = orders;
 
-    const handleCreateOrder = () => {
+    const handleCreateOrder = async () => {
+        if (isCreatePending) return;
         const byId = new Map(orderableCatalog.map((p) => [String(p.id), p]));
         const merged = new Map();
         for (const line of createOrderLines) {
@@ -354,40 +358,68 @@ export function OrdersClient({ initialOrders = [] }) {
             zip: (newOrderForm.zip ?? '').trim(),
             country: (newOrderForm.country ?? '').trim(),
         };
-        const newId =
-            typeof crypto !== 'undefined' && crypto.randomUUID
-                ? crypto.randomUUID()
-                : `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-        setOrders((prev) => {
-            const nums = prev
-                .map((o) => parseInt(String(o.order_number ?? '').replace(/\D/g, ''), 10))
-                .filter((n) => !isNaN(n) && n > 0);
-            const nextOrderNum = nums.length ? Math.max(...nums) + 1 : 1083;
-            return [
-                normalizeOrderFromDb({
-                    id: newId,
-                    order_number: String(nextOrderNum),
-                    customer_name: (newOrderForm.customer ?? '').trim() || 'Unknown',
-                    customer_email: (newOrderForm.email ?? '').trim(),
-                    created_at: new Date().toISOString(),
-                    status,
-                    fulfillment_status: fulfillment,
-                    tracking_number: '',
-                    amount_total,
-                    items,
-                    refunded: false,
-                    source: newOrderForm.source === 'pos' ? 'pos' : 'website',
-                    shipping_address,
-                    order_items,
-                    stripe_payment_intent_id: null,
-                    amount_discount: 0,
-                    promo_code: '',
-                }),
-                ...prev,
-            ];
-        });
-        setCreateModalOpen(false);
-        resetNewOrderForm();
+        const rpcLineItems = order_items.map((li) => ({
+            product_id: li.product_id,
+            quantity: li.quantity,
+        }));
+
+        setIsCreatePending(true);
+        try {
+            const result = await createOrder({
+                name: (newOrderForm.customer ?? '').trim() || 'Unknown',
+                email: (newOrderForm.email ?? '').trim(),
+                source: newOrderForm.source === 'pos' ? 'pos' : 'website',
+                fulfillment,
+                address: shipping_address,
+                items: rpcLineItems,
+            });
+
+            if (!result?.success) {
+                toast.error(result?.message ?? 'Failed to create order');
+                return;
+            }
+
+            const newId =
+                typeof result?.data === 'string'
+                    ? result.data
+                    : typeof crypto !== 'undefined' && crypto.randomUUID
+                      ? crypto.randomUUID()
+                      : `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+            setOrders((prev) => {
+                const nums = prev
+                    .map((o) => parseInt(String(o.order_number ?? '').replace(/\D/g, ''), 10))
+                    .filter((n) => !isNaN(n) && n > 0);
+                const nextOrderNum = nums.length ? Math.max(...nums) + 1 : 1083;
+                return [
+                    normalizeOrderFromDb({
+                        id: newId,
+                        order_number: String(nextOrderNum),
+                        customer_name: (newOrderForm.customer ?? '').trim() || 'Unknown',
+                        customer_email: (newOrderForm.email ?? '').trim(),
+                        created_at: new Date().toISOString(),
+                        status,
+                        fulfillment_status: fulfillment,
+                        tracking_number: '',
+                        amount_total,
+                        items,
+                        refunded: false,
+                        source: newOrderForm.source === 'pos' ? 'pos' : 'website',
+                        shipping_address,
+                        order_items,
+                        stripe_payment_intent_id: null,
+                        amount_discount: 0,
+                        promo_code: '',
+                    }),
+                    ...prev,
+                ];
+            });
+            toast.success('Order created');
+            setCreateModalOpen(false);
+            resetNewOrderForm();
+        } finally {
+            setIsCreatePending(false);
+        }
     };
 
     const updateCreateLine = (key, patch) => {
@@ -558,6 +590,7 @@ export function OrdersClient({ initialOrders = [] }) {
                 addCreateOrderLine={addCreateOrderLine}
                 removeCreateOrderLine={removeCreateOrderLine}
                 formatProductLineName={formatProductLineName}
+                isCreatePending={isCreatePending}
                 onSubmit={handleCreateOrder}
             />
         </div>

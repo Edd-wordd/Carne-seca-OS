@@ -29,6 +29,7 @@ export function CreateOrderDialog({
     addCreateOrderLine,
     removeCreateOrderLine,
     formatProductLineName,
+    isCreatePending = false,
     onSubmit,
 }) {
     return (
@@ -303,6 +304,7 @@ export function CreateOrderDialog({
                         <Button
                             type="submit"
                             disabled={
+                                isCreatePending ||
                                 catalogLoading ||
                                 !!catalogError ||
                                 !createPreview.hasValidLine ||
@@ -310,7 +312,7 @@ export function CreateOrderDialog({
                             }
                             className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 disabled:opacity-50"
                         >
-                            Create Order
+                            {isCreatePending ? 'Creating…' : 'Create Order'}
                         </Button>
                     </DialogFooter>
                 </form>

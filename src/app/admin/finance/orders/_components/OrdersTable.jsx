@@ -101,7 +101,6 @@ function fulfillmentLabel(f) {
     return FULFILLMENT_OPTIONS.find((o) => o.value === v)?.label ?? v ?? '—';
 }
 
-
 export function OrdersTable({
     orders,
     allOrders = orders,
@@ -338,7 +337,7 @@ export function OrdersTable({
                                 >
                                     <TableCell className="text-zinc-200 px-3 py-1.5 font-mono text-[11px] font-medium group-hover:text-zinc-100">
                                         {order.order_number != null && order.order_number !== ''
-                                            ? order.order_number
+                                            ? `ORD-${order.order_number}`
                                             : String(order.id).slice(0, 8)}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
