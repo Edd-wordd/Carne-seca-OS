@@ -394,8 +394,6 @@ function OrdersTable({
     const [editForm, setEditForm] = React.useState({
         customer: '',
         email: '',
-        items: 1,
-        total: '',
         fulfillment: 'unfulfilled',
         tracking: '',
         source: 'website',
@@ -434,8 +432,6 @@ function OrdersTable({
         setEditForm({
             customer: order.customer ?? '',
             email: order.email ?? '',
-            items: order.items ?? 1,
-            total: (order.total / 100).toFixed(2),
             fulfillment: normalizeFulfillmentValue(order.fulfillment),
             tracking: order.tracking ?? '',
             source: order.source ?? 'website',
@@ -456,14 +452,15 @@ function OrdersTable({
 
     const handleSaveEdit = () => {
         if (!editingOrder) return;
-        const raw = String(editForm.total ?? '').trim().replace(/[^0-9.]/g, '');
-        const total = Math.round(parseFloat(raw || 0) * 100) || 0;
         const id = editingOrder.id;
+        const itemCount = editingOrder.lineItems?.length
+            ? lineItemsQuantitySum(editingOrder.lineItems)
+            : Math.max(1, editingOrder.items ?? 1);
         onUpdateOrder(id, {
             customer: (editForm.customer ?? '').trim() || 'Unknown',
             email: (editForm.email ?? '').trim(),
-            items: Math.max(1, parseInt(String(editForm.items), 10) || 1),
-            total,
+            items: itemCount,
+            total: editingOrder.total ?? 0,
             fulfillment: editForm.fulfillment ?? 'unfulfilled',
             tracking: (editForm.tracking ?? '').trim(),
             source: editForm.source === 'pos' ? 'pos' : 'website',
@@ -1133,35 +1130,20 @@ function OrdersTable({
                                 </div>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="edit-order-items" className="text-xs text-zinc-400">
-                                    Items
-                                </Label>
-                                <Input
-                                    id="edit-order-items"
-                                    type="number"
-                                    min={1}
-                                    value={editForm.items ?? 1}
-                                    onChange={(e) =>
-                                        setEditForm((f) => ({
-                                            ...f,
-                                            items: parseInt(e.target.value, 10) || 1,
-                                        }))
-                                    }
-                                    className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
-                                />
+                        <div className="grid grid-cols-2 gap-4 border-b border-zinc-800/80 pb-3">
+                            <div>
+                                <p className="text-xs text-zinc-500">Items</p>
+                                <p className="mt-0.5 text-sm font-medium tabular-nums text-zinc-200">
+                                    {editingOrder?.lineItems?.length
+                                        ? lineItemsQuantitySum(editingOrder.lineItems)
+                                        : (editingOrder?.items ?? 0)}
+                                </p>
                             </div>
-                            <div className="space-y-1.5">
-                                <Label htmlFor="edit-order-total" className="text-xs text-zinc-400">
-                                    Total ($)
-                                </Label>
-                                <Input
-                                    id="edit-order-total"
-                                    value={editForm.total ?? ''}
-                                    onChange={(e) => setEditForm((f) => ({ ...f, total: e.target.value }))}
-                                    className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
-                                />
+                            <div>
+                                <p className="text-xs text-zinc-500">Total</p>
+                                <p className="mt-0.5 text-sm font-medium tabular-nums text-zinc-200">
+                                    {formatCurrency(editingOrder?.total ?? 0)}
+                                </p>
                             </div>
                         </div>
                         <div className="space-y-1.5">
