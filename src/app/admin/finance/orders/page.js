@@ -37,6 +37,7 @@ import {
     Plus,
     MoreHorizontal,
     Trash2,
+    ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
 import { getProducts } from '@/lib/supabase/queries/catalog/getProducts';
@@ -246,6 +247,12 @@ const MOCK_ORDERS = [
         ],
     },
 ];
+
+/** UI-only placeholder until orders store a real Stripe payment intent id (e.g. pi_…). */
+function placeholderStripePaymentDashboardUrl(orderId) {
+    const suffix = String(orderId).replace(/[^a-zA-Z0-9]/g, '_');
+    return `https://dashboard.stripe.com/test/payments/pi_PLACEHOLDER_${suffix}`;
+}
 
 const STATUS_STYLES = {
     pending: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400',
@@ -708,6 +715,19 @@ function OrdersTable({
                                                 >
                                                     <Printer className="mr-2 size-3.5" />
                                                     Print packing slip
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
+                                                    asChild
+                                                >
+                                                    <a
+                                                        href={placeholderStripePaymentDashboardUrl(order.id)}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        <ExternalLink className="mr-2 size-3.5" />
+                                                        View in Stripe
+                                                    </a>
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
