@@ -706,19 +706,6 @@ function OrdersTable({
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
-                                                    onClick={() =>
-                                                        onUpdateOrder(order.id, {
-                                                            refunded: true,
-                                                            status: 'refunded',
-                                                        })
-                                                    }
-                                                    disabled={order.refunded}
-                                                >
-                                                    <RotateCcw className="mr-2 size-3.5" />
-                                                    {order.refunded ? 'Already refunded' : 'Mark refunded'}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
                                                     onClick={() => setPackingSlipOrder(order)}
                                                     disabled={order.refunded}
                                                 >
