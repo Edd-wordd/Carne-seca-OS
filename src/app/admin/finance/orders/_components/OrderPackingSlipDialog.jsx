@@ -32,7 +32,7 @@ function escapeHtml(value) {
 
 function printPackingSlip(order) {
     if (!order) return;
-    const popup = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700');
+    const popup = window.open('', '_blank', 'width=900,height=700');
     if (!popup) return;
 
     const lines = order.order_items?.length
@@ -101,12 +101,19 @@ function printPackingSlip(order) {
                 </body>
             </html>
         `;
-
     popup.document.open();
     popup.document.write(html);
     popup.document.close();
-    popup.focus();
-    popup.print();
+    let printed = false;
+    const triggerPrint = () => {
+        if (popup.closed || printed) return;
+        printed = true;
+        popup.focus();
+        popup.print();
+    };
+
+    popup.onload = triggerPrint;
+    setTimeout(triggerPrint, 350);
 }
 
 export function OrderPackingSlipDialog({ order, onClose }) {
