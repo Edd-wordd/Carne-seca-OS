@@ -28,10 +28,6 @@ import {
     ChevronRight,
     ChevronUp,
     ChevronDown,
-    ShoppingBag,
-    Clock,
-    DollarSign,
-    RotateCcw,
     Download,
     Pencil,
     Plus,
@@ -40,6 +36,7 @@ import {
     ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
+import { OrderKpiCards } from './_components/OrderKpiCards';
 import { getProducts } from '@/lib/supabase/queries/catalog/getProducts';
 
 const FULFILLMENT_OPTIONS = [
@@ -252,6 +249,7 @@ const MOCK_ORDERS = [
 function placeholderStripePaymentDashboardUrl(orderId) {
     const suffix = String(orderId).replace(/[^a-zA-Z0-9]/g, '_');
     return `https://dashboard.stripe.com/test/payments/pi_PLACEHOLDER_${suffix}`;
+    // return `https://dashboard.stripe.com/test/payments/${order.stripe_payment_intent_id}`;
 }
 
 const STATUS_STYLES = {
@@ -1484,12 +1482,6 @@ export default function OrdersPage() {
         setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, ...updates } : o)));
     }, []);
 
-    const pendingOrders = React.useMemo(
-        () => allOrders.filter((o) => !o.refunded && (o.status === 'pending' || o.status === 'processing')),
-        [allOrders],
-    );
-    const refundedOrders = React.useMemo(() => allOrders.filter((o) => o.refunded), [allOrders]);
-
     const filteredOrders = React.useMemo(() => {
         const bySearch = filterOrdersBySearch(allOrders, searchQuery);
         return applyOrderFilters(bySearch, filterStatus, filterFulfillment, dateRange);
@@ -1557,44 +1549,6 @@ export default function OrdersPage() {
         URL.revokeObjectURL(url);
     };
 
-    const orderMetrics = React.useMemo(() => {
-        const total = allOrders.length;
-        const pending = pendingOrders.length;
-        const revenue = allOrders.filter((o) => !o.refunded).reduce((sum, o) => sum + o.total, 0);
-        const refunded = refundedOrders.length;
-        const refundedAmount = refundedOrders.reduce((sum, o) => sum + o.total, 0);
-        return [
-            {
-                label: 'Total Orders',
-                value: String(total),
-                sublabel: 'All orders',
-                icon: ShoppingBag,
-                accent: 'neutral',
-            },
-            {
-                label: 'Pending Fulfillment',
-                value: String(pending),
-                sublabel: 'Need action',
-                icon: Clock,
-                accent: pending > 0 ? 'amber' : 'neutral',
-            },
-            {
-                label: 'Revenue',
-                value: formatCurrency(revenue),
-                sublabel: 'Total Revenue',
-                icon: DollarSign,
-                accent: 'emerald',
-            },
-            {
-                label: 'Refunded',
-                value: `${refunded} (${formatCurrency(refundedAmount)})`,
-                sublabel: 'Orders',
-                icon: RotateCcw,
-                accent: refunded > 0 ? 'red' : 'neutral',
-            },
-        ];
-    }, [allOrders, pendingOrders, refundedOrders]);
-
     return (
         <div className="space-y-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1619,40 +1573,7 @@ export default function OrdersPage() {
                     <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Overview</span>
                     <DateRangePicker date={dateRange} onDateChange={setDateRange} />
                 </div>
-                <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
-                    {orderMetrics.map((m) => {
-                        const Icon = m.icon;
-                        const accentCls =
-                            m.accent === 'emerald'
-                                ? 'text-emerald-400/80'
-                                : m.accent === 'amber'
-                                  ? 'text-amber-400/80'
-                                  : m.accent === 'red'
-                                    ? 'text-red-400/80'
-                                    : 'text-zinc-500';
-                        const valueCls =
-                            m.accent === 'emerald'
-                                ? 'text-emerald-400'
-                                : m.accent === 'amber'
-                                  ? 'text-amber-400'
-                                  : m.accent === 'red'
-                                    ? 'text-red-400'
-                                    : 'text-zinc-100';
-                        return (
-                            <div
-                                key={m.label}
-                                className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5"
-                            >
-                                <Icon className={cn('size-4 shrink-0', accentCls)} />
-                                <div className="min-w-0">
-                                    <p className="truncate text-zinc-400 text-[10px]">{m.label}</p>
-                                    <p className={cn('text-sm font-semibold tabular-nums', valueCls)}>{m.value}</p>
-                                    <p className="mt-0.5 truncate text-zinc-500 text-[9px]">{m.sublabel}</p>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                <OrderKpiCards allOrders={allOrders} />
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
