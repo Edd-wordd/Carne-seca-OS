@@ -42,6 +42,7 @@ export async function POST(req) {
             const { error: fulfillError } = await supabaseAdmin.rpc('fulfill_order', {
                 p_guest_id: guestId || null,
                 p_stripe_session_id: session.id,
+                p_payment_intent_id: session.payment_intent,
                 p_customer_email: session.customer_details?.email,
                 p_amount_total: session.amount_total,
                 p_amount_discount: session.total_details?.amount_discount ?? 0,
