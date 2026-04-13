@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Search, ChevronUp, ChevronDown, Printer, Pencil, MoreHorizontal, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
+import { toast } from 'sonner';
+import { updateOrder } from '@/app/actions/orders/updateOrder';
 import { OrderPackingSlipDialog } from './OrderPackingSlipDialog';
 import { OrderDetailDialog } from './OrderDetailDialog';
 import { OrderEditDialog } from './OrderEditDialog';
@@ -115,6 +117,7 @@ export function OrdersTable({
     const [detailOrderId, setDetailOrderId] = React.useState(null);
     const [editOpen, setEditOpen] = React.useState(false);
     const [editingOrder, setEditingOrder] = React.useState(null);
+    const [isEditSavePending, setIsEditSavePending] = React.useState(false);
     const [editForm, setEditForm] = React.useState({
         customer: '',
         email: '',
@@ -168,42 +171,100 @@ export function OrdersTable({
         setDetailOrderId(order.id);
     };
 
-    const handleSaveEdit = () => {
-        if (!editingOrder) return;
+    const handleSaveEdit = async () => {
+        if (!editingOrder || isEditSavePending) return;
         const id = editingOrder.id;
         const itemCount = editingOrder.order_items?.length
             ? orderItemsQuantitySum(editingOrder.order_items)
             : Math.max(1, editingOrder.items ?? 1);
-        onUpdateOrder(id, {
-            customer_name: (editForm.customer ?? '').trim() || 'Unknown',
-            customer_email: (editForm.email ?? '').trim(),
-            items: itemCount,
-            amount_total: editingOrder.amount_total ?? 0,
-            fulfillment_status: editForm.fulfillment ?? 'unfulfilled',
-            tracking_number: (editForm.tracking ?? '').trim(),
-            source: editForm.source === 'pos' ? 'pos' : 'website',
-            shipping_address: {
-                line1: (editForm.addressLine1 ?? '').trim(),
-                line2: (editForm.addressLine2 ?? '').trim(),
-                city: (editForm.city ?? '').trim(),
-                state: (editForm.state ?? '').trim(),
-                zip: (editForm.zip ?? '').trim(),
-                country: (editForm.country ?? '').trim(),
-            },
-            status: editingOrder.refunded
-                ? editingOrder.status
-                : (FULFILLMENT_TO_STATUS[editForm.fulfillment ?? 'unfulfilled'] ?? 'pending'),
-        });
-        setEditOpen(false);
-        setEditingOrder(null);
+        const customer_name = (editForm.customer ?? '').trim() || 'Unknown';
+        const customer_email = (editForm.email ?? '').trim();
+        const source = editForm.source === 'pos' ? 'pos' : 'website';
+        const fulfillment_status = editForm.fulfillment ?? 'unfulfilled';
+        const tracking_number = (editForm.tracking ?? '').trim();
+        const shipping_address = {
+            line1: (editForm.addressLine1 ?? '').trim(),
+            line2: (editForm.addressLine2 ?? '').trim(),
+            city: (editForm.city ?? '').trim(),
+            state: (editForm.state ?? '').trim(),
+            zip: (editForm.zip ?? '').trim(),
+            country: (editForm.country ?? '').trim(),
+        };
+
+        setIsEditSavePending(true);
+        try {
+            const result = await updateOrder({
+                orderId: id,
+                customer: customer_name,
+                email: customer_email,
+                source,
+                address: shipping_address,
+                fulfillment: fulfillment_status,
+                tracking: tracking_number,
+            });
+
+            if (!result?.success) {
+                toast.error(result?.message ?? 'Failed to update order');
+                return;
+            }
+
+            onUpdateOrder(id, {
+                customer_name,
+                customer_email,
+                items: itemCount,
+                amount_total: editingOrder.amount_total ?? 0,
+                fulfillment_status,
+                tracking_number,
+                source,
+                shipping_address,
+                status: editingOrder.refunded
+                    ? editingOrder.status
+                    : (FULFILLMENT_TO_STATUS[fulfillment_status] ?? 'pending'),
+            });
+            toast.success('Order updated');
+            setEditOpen(false);
+            setEditingOrder(null);
+        } finally {
+            setIsEditSavePending(false);
+        }
     };
 
-    const handleQuickFulfillmentUpdate = (order, nextFulfillment) => {
+    const handleQuickFulfillmentUpdate = async (order, nextFulfillment) => {
         if (!order || order.refunded) return;
+        const customer_name = (order.customer_name ?? '').trim() || 'Unknown';
+        const customer_email = (order.customer_email ?? '').trim();
+        const source = order.source === 'pos' ? 'pos' : 'website';
+        const a = order.shipping_address ?? {};
+        const shipping_address = {
+            line1: String(a.line1 ?? '').trim(),
+            line2: String(a.line2 ?? '').trim(),
+            city: String(a.city ?? '').trim(),
+            state: String(a.state ?? '').trim(),
+            zip: String(a.zip ?? '').trim(),
+            country: String(a.country ?? '').trim(),
+        };
+        const tracking_number = (order.tracking_number ?? '').trim();
+
+        const result = await updateOrder({
+            orderId: order.id,
+            customer: customer_name,
+            email: customer_email,
+            source,
+            address: shipping_address,
+            fulfillment: nextFulfillment,
+            tracking: tracking_number,
+        });
+
+        if (!result?.success) {
+            toast.error(result?.message ?? 'Failed to update fulfillment');
+            return;
+        }
+
         onUpdateOrder(order.id, {
             fulfillment_status: nextFulfillment,
             status: FULFILLMENT_TO_STATUS[nextFulfillment] ?? order.status,
         });
+        toast.success('Fulfillment updated');
     };
 
     return (
@@ -385,12 +446,17 @@ export function OrdersTable({
                 editingOrder={editingOrder}
                 editForm={editForm}
                 setEditForm={setEditForm}
+                savePending={isEditSavePending}
                 onOpenChange={(open) => {
                     setEditOpen(open);
-                    if (!open) setEditingOrder(null);
+                    if (!open) {
+                        setEditingOrder(null);
+                        setIsEditSavePending(false);
+                    }
                 }}
                 onSave={handleSaveEdit}
                 onCancel={() => {
+                    if (isEditSavePending) return;
                     setEditOpen(false);
                     setEditingOrder(null);
                 }}

@@ -26,9 +26,24 @@ function orderItemsQuantitySum(order_items) {
     return (order_items ?? []).reduce((s, li) => s + (li.quantity ?? 0), 0);
 }
 
-export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onOpenChange, onSave, onCancel }) {
+export function OrderEditDialog({
+    open,
+    editingOrder,
+    editForm,
+    setEditForm,
+    savePending = false,
+    onOpenChange,
+    onSave,
+    onCancel,
+}) {
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog
+            open={open}
+            onOpenChange={(next) => {
+                if (!next && savePending) return;
+                onOpenChange(next);
+            }}
+        >
             <DialogContent className="max-h-[min(90vh,640px)] overflow-y-auto border-zinc-800 bg-zinc-900 sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Edit order</DialogTitle>
@@ -45,6 +60,7 @@ export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onO
                             id="edit-order-customer"
                             value={editForm.customer ?? ''}
                             onChange={(e) => setEditForm((f) => ({ ...f, customer: e.target.value }))}
+                            disabled={savePending}
                             className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
                         />
                     </div>
@@ -58,6 +74,7 @@ export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onO
                             autoComplete="email"
                             value={editForm.email ?? ''}
                             onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                            disabled={savePending}
                             className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
                         />
                     </div>
@@ -66,6 +83,7 @@ export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onO
                         <Select
                             value={editForm.source ?? 'website'}
                             onValueChange={(v) => setEditForm((f) => ({ ...f, source: v }))}
+                            disabled={savePending}
                         >
                             <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100">
                                 <SelectValue />
@@ -89,6 +107,7 @@ export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onO
                                 id="edit-addr-line1"
                                 value={editForm.addressLine1 ?? ''}
                                 onChange={(e) => setEditForm((f) => ({ ...f, addressLine1: e.target.value }))}
+                                disabled={savePending}
                                 className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
                             />
                         </div>
@@ -100,6 +119,7 @@ export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onO
                                 id="edit-addr-line2"
                                 value={editForm.addressLine2 ?? ''}
                                 onChange={(e) => setEditForm((f) => ({ ...f, addressLine2: e.target.value }))}
+                                disabled={savePending}
                                 className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
                             />
                         </div>
@@ -112,6 +132,7 @@ export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onO
                                     id="edit-addr-city"
                                     value={editForm.city ?? ''}
                                     onChange={(e) => setEditForm((f) => ({ ...f, city: e.target.value }))}
+                                    disabled={savePending}
                                     className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
                                 />
                             </div>
@@ -123,6 +144,7 @@ export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onO
                                     id="edit-addr-state"
                                     value={editForm.state ?? ''}
                                     onChange={(e) => setEditForm((f) => ({ ...f, state: e.target.value }))}
+                                    disabled={savePending}
                                     className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
                                 />
                             </div>
@@ -136,6 +158,7 @@ export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onO
                                     id="edit-addr-zip"
                                     value={editForm.zip ?? ''}
                                     onChange={(e) => setEditForm((f) => ({ ...f, zip: e.target.value }))}
+                                    disabled={savePending}
                                     className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
                                 />
                             </div>
@@ -147,6 +170,7 @@ export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onO
                                     id="edit-addr-country"
                                     value={editForm.country ?? ''}
                                     onChange={(e) => setEditForm((f) => ({ ...f, country: e.target.value }))}
+                                    disabled={savePending}
                                     className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100"
                                 />
                             </div>
@@ -173,7 +197,7 @@ export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onO
                         <Select
                             value={editForm.fulfillment ?? 'unfulfilled'}
                             onValueChange={(v) => setEditForm((f) => ({ ...f, fulfillment: v }))}
-                            disabled={editingOrder?.refunded}
+                            disabled={editingOrder?.refunded || savePending}
                         >
                             <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100">
                                 <SelectValue />
@@ -195,6 +219,7 @@ export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onO
                             id="edit-order-tracking"
                             value={editForm.tracking ?? ''}
                             onChange={(e) => setEditForm((f) => ({ ...f, tracking: e.target.value }))}
+                            disabled={savePending}
                             className="h-9 border-zinc-700 bg-zinc-950/80 font-mono text-xs text-zinc-100"
                         />
                     </div>
@@ -204,16 +229,18 @@ export function OrderEditDialog({ open, editingOrder, editForm, setEditForm, onO
                         type="button"
                         variant="outline"
                         onClick={onCancel}
-                        className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                        disabled={savePending}
+                        className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:opacity-60"
                     >
                         Cancel
                     </Button>
                     <Button
                         type="button"
                         onClick={onSave}
-                        className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
+                        disabled={savePending}
+                        className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 disabled:opacity-60"
                     >
-                        Save changes
+                        {savePending ? 'Saving…' : 'Save changes'}
                     </Button>
                 </DialogFooter>
             </DialogContent>
