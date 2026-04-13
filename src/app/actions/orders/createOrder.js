@@ -1,0 +1,48 @@
+'use server';
+
+import { createClient } from '@/lib/supabase/server';
+import { withSentryAction } from '@/lib/sentry/with-sentry-action';
+import { withAuth } from '@/lib/clerk/with-auth';
+
+const VALID_FULFILLMENT = ['unfulfilled', 'shipped', 'delivered'];
+const VALID_SOURCES = ['website', 'pos'];
+
+async function createOrderHandler({ name, email, source, fulfillment, address, items }) {
+    const supabase = await createClient();
+
+    if (fulfillment && !VALID_FULFILLMENT.includes(fulfillment)) {
+        return { success: false, message: 'Invalid fulfillment status' };
+    }
+
+    if (source && !VALID_SOURCES.includes(source)) {
+        return { success: false, message: 'Invalid source' };
+    }
+    if (!name) return { success: false, message: 'Customer name is required' };
+    if (!email) return { success: false, message: 'Customer needs to have an email' };
+    if (name.length > 100) return { success: false, message: 'Customer name is too long' };
+    if (email.length > 254) return { success: false, message: 'Email is too long' };
+    if (!Array.isArray(items) || items.length === 0) {
+        return { success: false, message: 'Order must have at least one item' };
+    }
+    if (items.length > 50) {
+        return { success: false, message: 'Order cannot exceed 50 line items' };
+    }
+
+    try {
+        const { data, error } = await supabase.rpc('create_manual_order', {
+            p_customer_name: name,
+            p_customer_email: email,
+            p_source: source,
+            p_fulfillment_status: fulfillment,
+            p_shipping_address: address,
+            p_line_items: items,
+        });
+
+        if (error) return { success: false, message: error?.message ?? 'Unable to create order' };
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, message: error?.message ?? 'unknown error' };
+    }
+}
+
+export const createOrder = withSentryAction('createOrder', withAuth(createOrderHandler));

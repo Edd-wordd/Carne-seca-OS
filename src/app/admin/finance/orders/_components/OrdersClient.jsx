@@ -67,8 +67,7 @@ function normalizeOrderFromDb(row) {
     const sLower = String(status).toLowerCase();
 
     const id = row.id;
-    const order_number =
-        row.order_number != null && row.order_number !== '' ? String(row.order_number) : null;
+    const order_number = row.order_number != null && row.order_number !== '' ? String(row.order_number) : null;
 
     return {
         id,
@@ -146,12 +145,12 @@ function filterOrdersBySearch(orders, query) {
         const addrBlob = formatAddress(o.shipping_address).toLowerCase();
         const displayId =
             o.order_number != null && o.order_number !== '' ? String(o.order_number) : String(o.id ?? '').slice(0, 8);
-        const lineNames = (o.order_items ?? [])
-            .map((li) => (li.product_name ?? '').toLowerCase())
-            .join(' ');
+        const lineNames = (o.order_items ?? []).map((li) => (li.product_name ?? '').toLowerCase()).join(' ');
         const created = String(o.created_at ?? '');
         return (
-            String(o.id ?? '').toLowerCase().includes(q) ||
+            String(o.id ?? '')
+                .toLowerCase()
+                .includes(q) ||
             displayId.toLowerCase().includes(q) ||
             o.customer_name.toLowerCase().includes(q) ||
             (o.customer_email && o.customer_email.toLowerCase().includes(q)) ||
@@ -290,7 +289,7 @@ export function OrdersClient({ initialOrders = [] }) {
         getProducts()
             .then((data) => {
                 if (cancelled) return;
-                setCatalogProducts(normalizeProductsFetch(data));
+                setCatalogProducts(normalizeProductsFetch(data?.data));
             })
             .catch(() => {
                 if (!cancelled) {

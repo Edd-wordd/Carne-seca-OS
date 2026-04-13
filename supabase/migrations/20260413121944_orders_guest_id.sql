@@ -1,0 +1,1 @@
+ALTER TABLE orders ALTER COLUMN guest_id DROP NOT NULL;
