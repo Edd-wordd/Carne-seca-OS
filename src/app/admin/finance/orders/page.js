@@ -413,7 +413,7 @@ function OrdersTable({
     });
 
     const detailOrder = React.useMemo(
-        () => (detailOrderId ? allOrders.find((o) => o.id === detailOrderId) ?? null : null),
+        () => (detailOrderId ? (allOrders.find((o) => o.id === detailOrderId) ?? null) : null),
         [detailOrderId, allOrders],
     );
 
@@ -424,8 +424,7 @@ function OrdersTable({
     const detailLineSubtotal = detailOrder?.lineItems?.length ? lineItemsSubtotalCents(detailOrder.lineItems) : null;
     const detailDiscountCents = detailOrder ? orderDiscountCents(detailOrder) : 0;
     const detailPromoCode = detailOrder ? orderPromoCode(detailOrder) : '';
-    const detailExpectedAfterDiscount =
-        detailLineSubtotal != null ? detailLineSubtotal - detailDiscountCents : null;
+    const detailExpectedAfterDiscount = detailLineSubtotal != null ? detailLineSubtotal - detailDiscountCents : null;
 
     const getStatus = (order) => {
         if (order.refunded) return 'refunded';
@@ -616,7 +615,9 @@ function OrdersTable({
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Fulfillment</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Tracking</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px] text-right">Total</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-2 text-[10px] text-right w-14">Actions</TableHead>
+                            <TableHead className="text-zinc-400 h-8 px-2 text-[10px] text-right w-14">
+                                Actions
+                            </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -681,21 +682,18 @@ function OrdersTable({
                                     <TableCell className="text-zinc-100 px-3 py-1.5 text-right text-[11px] font-medium tabular-nums group-hover:text-white">
                                         {formatCurrency(order.total)}
                                     </TableCell>
-                                    <TableCell
-                                        className="px-2 py-1.5 text-right"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
+                                    <TableCell className="px-2 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
                                                     className="h-7 w-7 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/50"
                                                     onClick={(e) => e.stopPropagation()}
-                                        >
+                                                >
                                                     <MoreHorizontal className="size-4" />
                                                     <span className="sr-only">Actions</span>
-                                        </Button>
+                                                </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent
                                                 align="end"
@@ -759,7 +757,7 @@ function OrdersTable({
                                         Order ID: <span className="font-mono text-zinc-300">{packingSlipOrder.id}</span>
                                     </p>
                                     <p>{formatDateTime(packingSlipOrder.date)}</p>
-                    </div>
+                                </div>
                             </div>
                             <div className="mt-3 space-y-1">
                                 <p className="text-[10px] uppercase tracking-wider text-zinc-500">Customer</p>
@@ -772,12 +770,16 @@ function OrdersTable({
                                 </p>
                             </div>
                             <div className="mt-4">
-                                <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1.5">Items to pack</p>
+                                <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1.5">
+                                    Items to pack
+                                </p>
                                 <div className="rounded border border-zinc-800 overflow-hidden">
                                     <Table>
                                         <TableHeader>
                                             <TableRow className="border-zinc-800 hover:bg-transparent">
-                                                <TableHead className="h-8 px-3 text-[10px] text-zinc-500">Item</TableHead>
+                                                <TableHead className="h-8 px-3 text-[10px] text-zinc-500">
+                                                    Item
+                                                </TableHead>
                                                 <TableHead className="h-8 px-3 text-[10px] text-zinc-500 text-right w-16">
                                                     Qty
                                                 </TableHead>
@@ -786,10 +788,20 @@ function OrdersTable({
                                         <TableBody>
                                             {(packingSlipOrder.lineItems?.length
                                                 ? packingSlipOrder.lineItems
-                                                : [{ name: `${packingSlipOrder.items ?? 0} item(s)`, quantity: packingSlipOrder.items ?? 0 }]
+                                                : [
+                                                      {
+                                                          name: `${packingSlipOrder.items ?? 0} item(s)`,
+                                                          quantity: packingSlipOrder.items ?? 0,
+                                                      },
+                                                  ]
                                             ).map((li, idx) => (
-                                                <TableRow key={`${packingSlipOrder.id}-pack-li-${idx}`} className="border-zinc-800">
-                                                    <TableCell className="px-3 py-2 text-xs text-zinc-200">{li.name}</TableCell>
+                                                <TableRow
+                                                    key={`${packingSlipOrder.id}-pack-li-${idx}`}
+                                                    className="border-zinc-800"
+                                                >
+                                                    <TableCell className="px-3 py-2 text-xs text-zinc-200">
+                                                        {li.name}
+                                                    </TableCell>
                                                     <TableCell className="px-3 py-2 text-xs text-zinc-300 text-right tabular-nums">
                                                         {li.quantity ?? 0}
                                                     </TableCell>
@@ -843,26 +855,22 @@ function OrdersTable({
                                 </span>
                                 <span className="text-zinc-500 text-[11px]">
                                     Fulfillment:{' '}
-                                    <span className="text-zinc-300">
-                                        {fulfillmentLabel(detailOrder.fulfillment)}
-                                    </span>
+                                    <span className="text-zinc-300">{fulfillmentLabel(detailOrder.fulfillment)}</span>
                                 </span>
                                 {detailOrder.tracking?.trim() ? (
                                     <span className="text-zinc-500 text-[11px] font-mono">
-                                        Tracking:{' '}
-                                        <span className="text-zinc-300">{detailOrder.tracking}</span>
+                                        Tracking: <span className="text-zinc-300">{detailOrder.tracking}</span>
                                     </span>
                                 ) : null}
                                 {!detailOrder.refunded ? (
                                     <>
-                                        {detailOrder.fulfillment !== 'shipped' && detailOrder.fulfillment !== 'delivered' ? (
+                                        {detailOrder.fulfillment !== 'shipped' &&
+                                        detailOrder.fulfillment !== 'delivered' ? (
                                             <Button
                                                 type="button"
                                                 size="sm"
                                                 className="h-6 px-2 text-[10px] bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
-                                                onClick={() =>
-                                                    handleQuickFulfillmentUpdate(detailOrder, 'shipped')
-                                                }
+                                                onClick={() => handleQuickFulfillmentUpdate(detailOrder, 'shipped')}
                                             >
                                                 Mark shipped
                                             </Button>
@@ -873,9 +881,7 @@ function OrdersTable({
                                                 size="sm"
                                                 variant="outline"
                                                 className="h-6 px-2 text-[10px] border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                                                onClick={() =>
-                                                    handleQuickFulfillmentUpdate(detailOrder, 'delivered')
-                                                }
+                                                onClick={() => handleQuickFulfillmentUpdate(detailOrder, 'delivered')}
                                             >
                                                 Mark delivered
                                             </Button>
@@ -926,8 +932,7 @@ function OrdersTable({
                                             </TableHeader>
                                             <TableBody>
                                                 {detailOrder.lineItems.map((li, idx) => {
-                                                    const lineTotal =
-                                                        (li.quantity ?? 0) * (li.unitPriceCents ?? 0);
+                                                    const lineTotal = (li.quantity ?? 0) * (li.unitPriceCents ?? 0);
                                                     return (
                                                         <TableRow
                                                             key={`${detailOrder.id}-li-${idx}`}
@@ -953,8 +958,7 @@ function OrdersTable({
                                     </div>
                                 ) : (
                                     <p className="text-zinc-500 text-xs">
-                                        No line breakdown on file. Item count (summary):{' '}
-                                        {detailOrder.items ?? 0}
+                                        No line breakdown on file. Item count (summary): {detailOrder.items ?? 0}
                                     </p>
                                 )}
                             </div>
@@ -970,9 +974,7 @@ function OrdersTable({
                                 ) : null}
                                 {detailDiscountCents > 0 ? (
                                     <div className="flex justify-between text-xs text-zinc-500">
-                                        <span>
-                                            Discount{detailPromoCode ? ` (${detailPromoCode})` : ''}
-                                        </span>
+                                        <span>Discount{detailPromoCode ? ` (${detailPromoCode})` : ''}</span>
                                         <span className="tabular-nums text-emerald-400">
                                             -{formatCurrency(detailDiscountCents)}
                                         </span>
@@ -984,10 +986,11 @@ function OrdersTable({
                                         {formatCurrency(detailOrder.total)}
                                     </span>
                                 </div>
-                                {detailExpectedAfterDiscount != null && detailExpectedAfterDiscount !== detailOrder.total ? (
+                                {detailExpectedAfterDiscount != null &&
+                                detailExpectedAfterDiscount !== detailOrder.total ? (
                                     <p className="text-[10px] text-amber-500/90">
-                                        Line subtotal differs from order total (taxes, shipping, or manual adjustments may
-                                        apply).
+                                        Line subtotal differs from order total (taxes, shipping, or manual adjustments
+                                        may apply).
                                     </p>
                                 ) : null}
                             </div>
@@ -1028,9 +1031,7 @@ function OrdersTable({
                 <DialogContent className="max-h-[min(90vh,640px)] overflow-y-auto border-zinc-800 bg-zinc-900 sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Edit order</DialogTitle>
-                        <DialogDescription>
-                            {editingOrder ? `Update ${editingOrder.id}` : ''}
-                        </DialogDescription>
+                        <DialogDescription>{editingOrder ? `Update ${editingOrder.id}` : ''}</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div className="space-y-1.5">
@@ -1219,7 +1220,6 @@ function OrdersTable({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
         </>
     );
 }
@@ -1238,12 +1238,9 @@ function filterOrdersBySearch(orders, query) {
     if (!query.trim()) return orders;
     const q = query.trim().toLowerCase();
     return orders.filter((o) => {
-        const sourceLabel =
-            ORDER_SOURCES.find((s) => s.value === (o.source ?? 'website'))?.label?.toLowerCase() ?? '';
+        const sourceLabel = ORDER_SOURCES.find((s) => s.value === (o.source ?? 'website'))?.label?.toLowerCase() ?? '';
         const addrBlob = formatAddress(o.address).toLowerCase();
-        const lineNames = (o.lineItems ?? [])
-            .map((li) => (li.name ?? '').toLowerCase())
-            .join(' ');
+        const lineNames = (o.lineItems ?? []).map((li) => (li.name ?? '').toLowerCase()).join(' ');
         return (
             o.id.toLowerCase().includes(q) ||
             o.customer.toLowerCase().includes(q) ||
@@ -1253,7 +1250,7 @@ function filterOrdersBySearch(orders, query) {
             lineNames.includes(q) ||
             o.date.includes(q) ||
             (o.tracking && o.tracking.toLowerCase().includes(q))
-    );
+        );
     });
 }
 
@@ -1265,8 +1262,7 @@ function getOrderDate(order) {
 function applyOrderFilters(orders, statusFilter, fulfillmentFilter, dateRange) {
     return orders.filter((o) => {
         if (statusFilter !== 'all' && orderStatusForFilter(o) !== statusFilter) return false;
-        if (fulfillmentFilter !== 'all' && normalizeFulfillmentValue(o.fulfillment) !== fulfillmentFilter)
-            return false;
+        if (fulfillmentFilter !== 'all' && normalizeFulfillmentValue(o.fulfillment) !== fulfillmentFilter) return false;
 
         const orderDate = getOrderDate(o);
         if (!orderDate) return true;
@@ -1399,7 +1395,10 @@ export default function OrdersPage() {
     );
 
     const orderableCatalog = React.useMemo(
-        () => [...catalogProducts].filter(isProductOrderable).sort((a, b) => String(a.name).localeCompare(String(b.name))),
+        () =>
+            [...catalogProducts]
+                .filter(isProductOrderable)
+                .sort((a, b) => String(a.name).localeCompare(String(b.name))),
         [catalogProducts],
     );
 
@@ -1486,10 +1485,7 @@ export default function OrdersPage() {
     }, []);
 
     const pendingOrders = React.useMemo(
-        () =>
-            allOrders.filter(
-                (o) => !o.refunded && (o.status === 'pending' || o.status === 'processing'),
-            ),
+        () => allOrders.filter((o) => !o.refunded && (o.status === 'pending' || o.status === 'processing')),
         [allOrders],
     );
     const refundedOrders = React.useMemo(() => allOrders.filter((o) => o.refunded), [allOrders]);
@@ -1585,7 +1581,7 @@ export default function OrdersPage() {
             {
                 label: 'Revenue',
                 value: formatCurrency(revenue),
-                sublabel: 'Active orders',
+                sublabel: 'Total Revenue',
                 icon: DollarSign,
                 accent: 'emerald',
             },
@@ -1623,80 +1619,80 @@ export default function OrdersPage() {
                     <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Overview</span>
                     <DateRangePicker date={dateRange} onDateChange={setDateRange} />
                 </div>
-            <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
-                {orderMetrics.map((m) => {
-                    const Icon = m.icon;
-                    const accentCls =
-                        m.accent === 'emerald'
-                            ? 'text-emerald-400/80'
-                            : m.accent === 'amber'
-                              ? 'text-amber-400/80'
-                              : m.accent === 'red'
-                                ? 'text-red-400/80'
-                                : 'text-zinc-500';
-                    const valueCls =
-                        m.accent === 'emerald'
-                            ? 'text-emerald-400'
-                            : m.accent === 'amber'
-                              ? 'text-amber-400'
-                              : m.accent === 'red'
-                                ? 'text-red-400'
-                                : 'text-zinc-100';
-                    return (
-                        <div
-                            key={m.label}
-                            className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5"
-                        >
-                            <Icon className={cn('size-4 shrink-0', accentCls)} />
-                            <div className="min-w-0">
-                                <p className="truncate text-zinc-400 text-[10px]">{m.label}</p>
-                                <p className={cn('text-sm font-semibold tabular-nums', valueCls)}>{m.value}</p>
-                                <p className="mt-0.5 truncate text-zinc-500 text-[9px]">{m.sublabel}</p>
+                <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
+                    {orderMetrics.map((m) => {
+                        const Icon = m.icon;
+                        const accentCls =
+                            m.accent === 'emerald'
+                                ? 'text-emerald-400/80'
+                                : m.accent === 'amber'
+                                  ? 'text-amber-400/80'
+                                  : m.accent === 'red'
+                                    ? 'text-red-400/80'
+                                    : 'text-zinc-500';
+                        const valueCls =
+                            m.accent === 'emerald'
+                                ? 'text-emerald-400'
+                                : m.accent === 'amber'
+                                  ? 'text-amber-400'
+                                  : m.accent === 'red'
+                                    ? 'text-red-400'
+                                    : 'text-zinc-100';
+                        return (
+                            <div
+                                key={m.label}
+                                className="flex min-w-0 items-center gap-2.5 rounded border border-zinc-700/80 bg-zinc-900/60 px-3 py-2.5"
+                            >
+                                <Icon className={cn('size-4 shrink-0', accentCls)} />
+                                <div className="min-w-0">
+                                    <p className="truncate text-zinc-400 text-[10px]">{m.label}</p>
+                                    <p className={cn('text-sm font-semibold tabular-nums', valueCls)}>{m.value}</p>
+                                    <p className="mt-0.5 truncate text-zinc-500 text-[9px]">{m.sublabel}</p>
+                                </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
                 </div>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-1 flex-wrap items-center gap-2">
                     <div className="flex flex-wrap items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
-                {STATUS_FILTER_OPTIONS.map((opt) => (
-                    <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setFilterStatus(opt.value)}
-                        className={cn(
+                        {STATUS_FILTER_OPTIONS.map((opt) => (
+                            <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => setFilterStatus(opt.value)}
+                                className={cn(
                                     'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
-                            filterStatus === opt.value
+                                    filterStatus === opt.value
                                         ? 'bg-zinc-700 text-zinc-100'
                                         : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
-                        )}
-                    >
-                        {opt.label}
-                    </button>
-                ))}
+                                )}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
                     </div>
                     <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
                         {[
                             { value: 'all', label: 'All' },
                             { value: 'unfulfilled', label: 'Unfulfilled' },
                         ].map((opt) => (
-                    <button
-                        key={opt.value}
-                        type="button"
+                            <button
+                                key={opt.value}
+                                type="button"
                                 onClick={() => setFilterFulfillment(opt.value)}
-                        className={cn(
+                                className={cn(
                                     'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
                                     filterFulfillment === opt.value
                                         ? 'bg-zinc-700 text-zinc-100'
                                         : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50',
-                        )}
-                    >
-                        {opt.label}
-                    </button>
-                ))}
+                                )}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
                 <Button
@@ -1767,38 +1763,38 @@ export default function OrdersPage() {
                                 className="h-9 border-zinc-700 bg-zinc-950/80"
                             />
                         </div>
-                            <div className="space-y-1.5">
+                        <div className="space-y-1.5">
                             <Label htmlFor="order-email" className="text-xs text-zinc-400">
                                 Email
-                                </Label>
-                                <Input
+                            </Label>
+                            <Input
                                 id="order-email"
                                 type="email"
                                 autoComplete="email"
                                 placeholder="customer@example.com"
                                 value={newOrderForm.email ?? ''}
                                 onChange={(e) => setNewOrderForm((f) => ({ ...f, email: e.target.value }))}
-                                    className="h-9 border-zinc-700 bg-zinc-950/80"
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label className="text-xs text-zinc-400">Source</Label>
-                                <Select
+                                className="h-9 border-zinc-700 bg-zinc-950/80"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs text-zinc-400">Source</Label>
+                            <Select
                                 value={newOrderForm.source ?? 'website'}
-                                    onValueChange={(v) => setNewOrderForm((f) => ({ ...f, source: v }))}
-                                >
-                                    <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {ORDER_SOURCES.map((opt) => (
-                                            <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                                                {opt.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                                onValueChange={(v) => setNewOrderForm((f) => ({ ...f, source: v }))}
+                            >
+                                <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ORDER_SOURCES.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                            {opt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/40 p-3">
                             <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
                                 Shipping address
@@ -1944,7 +1940,10 @@ export default function OrdersPage() {
                                                 </Select>
                                             </div>
                                             <div className="w-20 space-y-1">
-                                                <Label htmlFor={`qty-${line.key}`} className="text-[10px] text-zinc-500">
+                                                <Label
+                                                    htmlFor={`qty-${line.key}`}
+                                                    className="text-[10px] text-zinc-500"
+                                                >
                                                     Qty
                                                 </Label>
                                                 <Input
@@ -1985,23 +1984,23 @@ export default function OrdersPage() {
                                 </span>
                             </div>
                         </div>
-                            <div className="space-y-1.5">
-                                <Label className="text-xs text-zinc-400">Fulfillment</Label>
-                                <Select
+                        <div className="space-y-1.5">
+                            <Label className="text-xs text-zinc-400">Fulfillment</Label>
+                            <Select
                                 value={newOrderForm.fulfillment ?? 'unfulfilled'}
-                                    onValueChange={(v) => setNewOrderForm((f) => ({ ...f, fulfillment: v }))}
-                                >
-                                    <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {FULFILLMENT_OPTIONS.map((opt) => (
-                                            <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                                                {opt.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                onValueChange={(v) => setNewOrderForm((f) => ({ ...f, fulfillment: v }))}
+                            >
+                                <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {FULFILLMENT_OPTIONS.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                            {opt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <DialogFooter className="gap-4 pt-4">
                             <Button
