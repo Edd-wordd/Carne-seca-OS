@@ -35,6 +35,13 @@ async function createOrderHandler({ name, email, source, fulfillment, address, i
             return { success: false, message: 'Each item must have a quantity of at least 1' };
         }
     }
+    if (source === 'website') {
+        if (!address?.line1?.trim()) return { success: false, message: 'Address line 1 is required' };
+        if (!address?.city?.trim()) return { success: false, message: 'City is required' };
+        if (!address?.state?.trim()) return { success: false, message: 'State is required' };
+        if (!address?.zip?.trim()) return { success: false, message: 'ZIP code is required' };
+        if (!address?.country?.trim()) return { success: false, message: 'Country is required' };
+    }
 
     try {
         const { data, error } = await supabase.rpc('create_manual_order', {

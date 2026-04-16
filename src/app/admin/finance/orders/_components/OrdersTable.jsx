@@ -77,12 +77,11 @@ export function orderStatusForFilter(o) {
 }
 
 function stripePaymentDashboardUrl(order) {
-    const pi = order?.stripe_payment_intent_id;
-    if (pi && String(pi).startsWith('pi_')) {
-        return `https://dashboard.stripe.com/test/payments/${pi}`;
-    }
-    const suffix = String(order?.id ?? '').replace(/[^a-zA-Z0-9]/g, '_');
-    return `https://dashboard.stripe.com/test/payments/pi_PLACEHOLDER_${suffix}`;
+    const isProduction = process.env.NODE_ENV === 'production';
+    const base = isProduction
+        ? 'https://dashboard.stripe.com/payments'
+        : 'https://dashboard.stripe.com/test/payments';
+    return `${base}/${order.stripe_payment_intent_id}`;
 }
 
 const STATUS_STYLES = {
@@ -409,19 +408,21 @@ export function OrdersTable({
                                                     <Printer className="mr-2 size-3.5" />
                                                     Print packing slip
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
-                                                    asChild
-                                                >
-                                                    <a
-                                                        href={stripePaymentDashboardUrl(order)}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
+                                                {order.stripe_payment_intent_id != null && (
+                                                    <DropdownMenuItem
+                                                        className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
+                                                        asChild
                                                     >
-                                                        <ExternalLink className="mr-2 size-3.5" />
-                                                        View in Stripe
-                                                    </a>
-                                                </DropdownMenuItem>
+                                                        <a
+                                                            href={stripePaymentDashboardUrl(order)}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                        >
+                                                            <ExternalLink className="mr-2 size-3.5" />
+                                                            View in Stripe
+                                                        </a>
+                                                    </DropdownMenuItem>
+                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
