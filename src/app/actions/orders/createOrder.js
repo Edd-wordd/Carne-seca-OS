@@ -29,6 +29,12 @@ async function createOrderHandler({ name, email, source, fulfillment, address, i
     if (items.length > 50) {
         return { success: false, message: 'Order cannot exceed 50 line items' };
     }
+    for (const item of items) {
+        if (!item.product_id) return { success: false, message: 'Each item must have a product ID' };
+        if (!Number.isFinite(Number(item.quantity)) || Number(item.quantity) < 1) {
+            return { success: false, message: 'Each item must have a quantity of at least 1' };
+        }
+    }
 
     try {
         const { data, error } = await supabase.rpc('create_manual_order', {
