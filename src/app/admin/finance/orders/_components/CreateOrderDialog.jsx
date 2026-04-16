@@ -32,6 +32,9 @@ export function CreateOrderDialog({
     isCreatePending = false,
     onSubmit,
 }) {
+    const inputClassName =
+        'h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100 placeholder:text-zinc-500 caret-zinc-100';
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-h-[min(90vh,720px)] overflow-y-auto border-zinc-800 bg-zinc-900 sm:max-w-lg">
@@ -55,7 +58,7 @@ export function CreateOrderDialog({
                             placeholder="Name"
                             value={newOrderForm.customer ?? ''}
                             onChange={(e) => setNewOrderForm((f) => ({ ...f, customer: e.target.value }))}
-                            className="h-9 border-zinc-700 bg-zinc-950/80"
+                            className={inputClassName}
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -69,7 +72,7 @@ export function CreateOrderDialog({
                             placeholder="customer@example.com"
                             value={newOrderForm.email ?? ''}
                             onChange={(e) => setNewOrderForm((f) => ({ ...f, email: e.target.value }))}
-                            className="h-9 border-zinc-700 bg-zinc-950/80"
+                            className={inputClassName}
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -78,12 +81,12 @@ export function CreateOrderDialog({
                             value={newOrderForm.source ?? 'website'}
                             onValueChange={(v) => setNewOrderForm((f) => ({ ...f, source: v }))}
                         >
-                            <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
-                                <SelectValue />
+                            <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100">
+                                <SelectValue className="text-zinc-100" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="border-zinc-700 bg-zinc-900 text-zinc-100">
                                 {ORDER_SOURCES.map((opt) => (
-                                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                    <SelectItem key={opt.value} value={opt.value} className="text-xs text-zinc-100">
                                         {opt.label}
                                     </SelectItem>
                                 ))}
@@ -102,7 +105,7 @@ export function CreateOrderDialog({
                                 id="new-addr-line1"
                                 value={newOrderForm.addressLine1 ?? ''}
                                 onChange={(e) => setNewOrderForm((f) => ({ ...f, addressLine1: e.target.value }))}
-                                className="h-9 border-zinc-700 bg-zinc-950/80"
+                                className={inputClassName}
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -113,7 +116,7 @@ export function CreateOrderDialog({
                                 id="new-addr-line2"
                                 value={newOrderForm.addressLine2 ?? ''}
                                 onChange={(e) => setNewOrderForm((f) => ({ ...f, addressLine2: e.target.value }))}
-                                className="h-9 border-zinc-700 bg-zinc-950/80"
+                                className={inputClassName}
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
@@ -125,7 +128,7 @@ export function CreateOrderDialog({
                                     id="new-addr-city"
                                     value={newOrderForm.city ?? ''}
                                     onChange={(e) => setNewOrderForm((f) => ({ ...f, city: e.target.value }))}
-                                    className="h-9 border-zinc-700 bg-zinc-950/80"
+                                    className={inputClassName}
                                 />
                             </div>
                             <div className="space-y-1.5">
@@ -136,7 +139,7 @@ export function CreateOrderDialog({
                                     id="new-addr-state"
                                     value={newOrderForm.state ?? ''}
                                     onChange={(e) => setNewOrderForm((f) => ({ ...f, state: e.target.value }))}
-                                    className="h-9 border-zinc-700 bg-zinc-950/80"
+                                    className={inputClassName}
                                 />
                             </div>
                         </div>
@@ -149,7 +152,7 @@ export function CreateOrderDialog({
                                     id="new-addr-zip"
                                     value={newOrderForm.zip ?? ''}
                                     onChange={(e) => setNewOrderForm((f) => ({ ...f, zip: e.target.value }))}
-                                    className="h-9 border-zinc-700 bg-zinc-950/80"
+                                    className={inputClassName}
                                 />
                             </div>
                             <div className="space-y-1.5">
@@ -160,7 +163,7 @@ export function CreateOrderDialog({
                                     id="new-addr-country"
                                     value={newOrderForm.country ?? ''}
                                     onChange={(e) => setNewOrderForm((f) => ({ ...f, country: e.target.value }))}
-                                    className="h-9 border-zinc-700 bg-zinc-950/80"
+                                    className={inputClassName}
                                 />
                             </div>
                         </div>
@@ -246,7 +249,7 @@ export function CreateOrderDialog({
                                                         quantity: Math.max(1, parseInt(e.target.value, 10) || 1),
                                                     })
                                                 }
-                                                className="h-9 border-zinc-700 bg-zinc-950/80 text-xs tabular-nums"
+                                                className={`${inputClassName} text-xs tabular-nums`}
                                             />
                                         </div>
                                         <Button
@@ -280,12 +283,12 @@ export function CreateOrderDialog({
                             value={newOrderForm.fulfillment ?? 'unfulfilled'}
                             onValueChange={(v) => setNewOrderForm((f) => ({ ...f, fulfillment: v }))}
                         >
-                            <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80">
-                                <SelectValue />
+                            <SelectTrigger className="h-9 border-zinc-700 bg-zinc-950/80 text-zinc-100">
+                                <SelectValue className="text-zinc-100" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="border-zinc-700 bg-zinc-900 text-zinc-100">
                                 {FULFILLMENT_OPTIONS.map((opt) => (
-                                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                    <SelectItem key={opt.value} value={opt.value} className="text-xs text-zinc-100">
                                         {opt.label}
                                     </SelectItem>
                                 ))}
