@@ -11,10 +11,12 @@ import { usePathname } from 'next/navigation';
 export default function ConditionalHeader({ storeHeader, children }) {
     const pathname = usePathname();
     const isAdmin = pathname?.startsWith('/admin');
+    const isSignIn = pathname?.startsWith('/sign-in');
+    const shouldHideHeader = isAdmin || isSignIn;
 
     return (
         <>
-            {!isAdmin && storeHeader}
+            {!shouldHideHeader && storeHeader}
             {children}
         </>
     );
