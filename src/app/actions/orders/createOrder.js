@@ -9,6 +9,7 @@ const VALID_SOURCES = ['website', 'pos'];
 
 async function createOrderHandler({ name, email, source, fulfillment, address, items }) {
     const supabase = await createClient();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (fulfillment && !VALID_FULFILLMENT.includes(fulfillment)) {
         return { success: false, message: 'Invalid fulfillment status' };
@@ -21,6 +22,7 @@ async function createOrderHandler({ name, email, source, fulfillment, address, i
     if (!email) return { success: false, message: 'Customer needs to have an email' };
     if (name.length > 100) return { success: false, message: 'Customer name is too long' };
     if (email.length > 254) return { success: false, message: 'Email is too long' };
+    if (!emailRegex.test(email)) return { success: false, message: 'Invalid email address' };
     if (!Array.isArray(items) || items.length === 0) {
         return { success: false, message: 'Order must have at least one item' };
     }
