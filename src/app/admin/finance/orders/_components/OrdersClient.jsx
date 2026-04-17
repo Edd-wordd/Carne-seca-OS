@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { ChevronLeft, ChevronRight, Download, Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils/helpers';
 import { exportOrdersToCsv } from '@/lib/utils/exportOrders';
 import { toast } from 'sonner';
@@ -15,11 +16,9 @@ import {
     OrdersTable,
     ORDER_SOURCES,
     formatAddress,
-    FULFILLMENT_TO_STATUS,
     normalizeFulfillmentValue,
     orderStatusForFilter,
 } from './OrdersTable';
-import { normalizeOrderFromDb } from '@/lib/utils/helpers';
 
 function newCreateOrderLineKey() {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -163,6 +162,7 @@ function PaginationBar({ total, currentPage, pageSize, onPageChange }) {
 }
 
 export function OrdersClient({ initialOrders = [] }) {
+    const router = useRouter();
     const [searchQuery, setSearchQuery] = React.useState('');
     const [filterStatus, setFilterStatus] = React.useState('all');
     const [filterFulfillment, setFilterFulfillment] = React.useState('all');
@@ -274,10 +274,7 @@ export function OrdersClient({ initialOrders = [] }) {
         }));
         if (!order_items.length) return;
 
-        const amount_total = order_items.reduce((s, li) => s + li.quantity * li.price_at_purchase, 0);
-        const items = order_items.reduce((s, li) => s + li.quantity, 0);
         const fulfillment = newOrderForm.fulfillment ?? 'unfulfilled';
-        const status = FULFILLMENT_TO_STATUS[fulfillment] ?? 'pending';
         const line2 = (newOrderForm.addressLine2 ?? '').trim();
         const shipping_address = {
             line1: (newOrderForm.addressLine1 ?? '').trim(),
@@ -308,42 +305,8 @@ export function OrdersClient({ initialOrders = [] }) {
                 return;
             }
 
-            const newId =
-                typeof result?.data === 'string'
-                    ? result.data
-                    : typeof crypto !== 'undefined' && crypto.randomUUID
-                      ? crypto.randomUUID()
-                      : `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-
-            setOrders((prev) => {
-                const nums = prev
-                    .map((o) => parseInt(String(o.order_number ?? '').replace(/\D/g, ''), 10))
-                    .filter((n) => !isNaN(n) && n > 0);
-                const nextOrderNum = nums.length ? Math.max(...nums) + 1 : 1083;
-                return [
-                    normalizeOrderFromDb({
-                        id: newId,
-                        order_number: String(nextOrderNum),
-                        customer_name: (newOrderForm.customer ?? '').trim() || 'Unknown',
-                        customer_email: (newOrderForm.email ?? '').trim(),
-                        created_at: new Date().toISOString(),
-                        status,
-                        fulfillment_status: fulfillment,
-                        tracking_number: '',
-                        amount_total,
-                        items,
-                        refunded: false,
-                        source: newOrderForm.source === 'pos' ? 'pos' : 'website',
-                        shipping_address,
-                        order_items,
-                        stripe_payment_intent_id: null,
-                        amount_discount: 0,
-                        promo_code: '',
-                    }),
-                    ...prev,
-                ];
-            });
             toast.success('Order created');
+            router.refresh();
             setCreateModalOpen(false);
             resetNewOrderForm();
         } finally {
