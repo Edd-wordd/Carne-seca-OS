@@ -19,6 +19,8 @@ import {
     MoreHorizontal,
     ExternalLink,
     RotateCcw,
+    Package,
+    CheckCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
 import { toast } from 'sonner';
@@ -28,6 +30,7 @@ import { markAsRefunded } from '@/app/actions/orders/markAsRefunded';
 import { OrderPackingSlipDialog } from './OrderPackingSlipDialog';
 import { OrderDetailDialog } from './OrderDetailDialog';
 import { OrderEditDialog } from './OrderEditDialog';
+import { ShippingLabelModal } from './ShippingLabelModal';
 
 export const FULFILLMENT_OPTIONS = [
     { value: 'unfulfilled', label: 'Unfulfilled' },
@@ -89,9 +92,7 @@ export function orderStatusForFilter(o) {
 
 function stripePaymentDashboardUrl(order) {
     const isProduction = process.env.NODE_ENV === 'production';
-    const base = isProduction
-        ? 'https://dashboard.stripe.com/payments'
-        : 'https://dashboard.stripe.com/test/payments';
+    const base = isProduction ? 'https://dashboard.stripe.com/payments' : 'https://dashboard.stripe.com/test/payments';
     return `${base}/${order.stripe_payment_intent_id}`;
 }
 
@@ -140,6 +141,7 @@ export function OrdersTable({
         zip: '',
         country: '',
     });
+    const [shippingLabelOrder, setShippingLabelOrder] = React.useState(null);
 
     const detailOrder = React.useMemo(
         () => (detailOrderId ? (allOrders.find((o) => o.id === detailOrderId) ?? null) : null),
@@ -412,12 +414,21 @@ export function OrdersTable({
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
+                                                    onClick={() => setShippingLabelOrder(order)}
+                                                    disabled={order.refunded}
+                                                >
+                                                    <Package className="mr-2 size-3.5" />
+                                                    Generate Label
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
                                                     onClick={() => handleQuickFulfillmentUpdate(order, 'delivered')}
                                                     disabled={
                                                         normalizeFulfillmentValue(order.fulfillment_status) ===
                                                             'delivered' || order.refunded
                                                     }
                                                 >
+                                                    <CheckCheck className="mr-2 size-3.5" />
                                                     Mark as Delivered
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
@@ -479,6 +490,18 @@ export function OrdersTable({
                     if (isEditSavePending) return;
                     setEditOpen(false);
                     setEditingOrder(null);
+                }}
+            />
+            <ShippingLabelModal
+                order={shippingLabelOrder}
+                open={!!shippingLabelOrder}
+                onOpenChange={(open) => {
+                    if (!open) setShippingLabelOrder(null);
+                }}
+                onSuccess={(updates) => {
+                    if (shippingLabelOrder) {
+                        onUpdateOrder(shippingLabelOrder.id, updates);
+                    }
                 }}
             />
         </>

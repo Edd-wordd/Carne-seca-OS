@@ -26,6 +26,12 @@ async function updateOrderHandler({ orderId, customer, email, source, address, f
     if (!emailRegex.test(email)) return { success: false, message: 'Invalid email address' };
 
     if (tracking && tracking.length > 100) return { success: false, message: 'Tracking number is too long' };
+    if (address?.line1 && address.line1.length > 200) return { success: false, message: 'Address line 1 is too long' };
+    if (address?.line2 && address.line2.length > 200) return { success: false, message: 'Address line 2 is too long' };
+    if (address?.city && address.city.length > 100) return { success: false, message: 'City is too long' };
+    if (address?.state && address.state.length > 100) return { success: false, message: 'State is too long' };
+    if (address?.zip && address.zip.length > 20) return { success: false, message: 'ZIP code is too long' };
+    if (address?.country && address.country.length > 100) return { success: false, message: 'Country is too long' };
 
     try {
         const { error } = await supabase
