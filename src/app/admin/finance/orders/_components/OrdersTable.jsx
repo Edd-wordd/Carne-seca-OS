@@ -10,10 +10,20 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, ChevronUp, ChevronDown, Printer, Pencil, MoreHorizontal, ExternalLink } from 'lucide-react';
+import {
+    Search,
+    ChevronUp,
+    ChevronDown,
+    Printer,
+    Pencil,
+    MoreHorizontal,
+    ExternalLink,
+    RotateCcw,
+} from 'lucide-react';
 import { cn } from '@/lib/utils/helpers';
 import { toast } from 'sonner';
 import { updateOrder } from '@/app/actions/orders/updateOrder';
+import { markAsRefunded } from '@/app/actions/orders/markAsRefunded';
 import { OrderPackingSlipDialog } from './OrderPackingSlipDialog';
 import { OrderDetailDialog } from './OrderDetailDialog';
 import { OrderEditDialog } from './OrderEditDialog';
@@ -265,6 +275,16 @@ export function OrdersTable({
         toast.success('Fulfillment updated');
     };
 
+    const handleMarkAsRefunded = async (order) => {
+        const result = await markAsRefunded({ orderId: order.id });
+        if (!result?.success) {
+            toast.error(result?.message ?? 'Failed to mark as refunded');
+            return;
+        }
+        onUpdateOrder(order.id, { refunded: true, status: 'refunded' });
+        toast.success('Order marked as refunded');
+    };
+
     return (
         <>
             <div className="overflow-hidden rounded border border-zinc-800">
@@ -407,6 +427,14 @@ export function OrdersTable({
                                                 >
                                                     <Printer className="mr-2 size-3.5" />
                                                     Print packing slip
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100 text-red-400 focus:text-red-400"
+                                                    onClick={() => handleMarkAsRefunded(order)}
+                                                    disabled={order.refunded}
+                                                >
+                                                    <RotateCcw className="mr-2 size-3.5" />
+                                                    Mark as Refunded
                                                 </DropdownMenuItem>
                                                 {order.stripe_payment_intent_id != null && (
                                                     <DropdownMenuItem
