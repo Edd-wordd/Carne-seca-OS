@@ -23,6 +23,7 @@ import {
 import { cn } from '@/lib/utils/helpers';
 import { toast } from 'sonner';
 import { updateOrder } from '@/app/actions/orders/updateOrder';
+import { updateFulfillment } from '@/app/actions/orders/updateFulfillment';
 import { markAsRefunded } from '@/app/actions/orders/markAsRefunded';
 import { OrderPackingSlipDialog } from './OrderPackingSlipDialog';
 import { OrderDetailDialog } from './OrderDetailDialog';
@@ -239,28 +240,9 @@ export function OrdersTable({
 
     const handleQuickFulfillmentUpdate = async (order, nextFulfillment) => {
         if (!order || order.refunded) return;
-        const customer_name = (order.customer_name ?? '').trim() || 'Unknown';
-        const customer_email = (order.customer_email ?? '').trim();
-        const source = order.source === 'pos' ? 'pos' : 'website';
-        const a = order.shipping_address ?? {};
-        const shipping_address = {
-            line1: String(a.line1 ?? '').trim(),
-            line2: String(a.line2 ?? '').trim(),
-            city: String(a.city ?? '').trim(),
-            state: String(a.state ?? '').trim(),
-            zip: String(a.zip ?? '').trim(),
-            country: String(a.country ?? '').trim(),
-        };
-        const tracking_number = (order.tracking_number ?? '').trim();
-
-        const result = await updateOrder({
+        const result = await updateFulfillment({
             orderId: order.id,
-            customer: customer_name,
-            email: customer_email,
-            source,
-            address: shipping_address,
             fulfillment: nextFulfillment,
-            tracking: tracking_number,
         });
 
         if (!result?.success) {
@@ -427,6 +409,16 @@ export function OrdersTable({
                                                 >
                                                     <Printer className="mr-2 size-3.5" />
                                                     Print packing slip
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100"
+                                                    onClick={() => handleQuickFulfillmentUpdate(order, 'delivered')}
+                                                    disabled={
+                                                        normalizeFulfillmentValue(order.fulfillment_status) ===
+                                                            'delivered' || order.refunded
+                                                    }
+                                                >
+                                                    Mark as Delivered
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className="cursor-pointer text-xs focus:bg-zinc-800 focus:text-zinc-100 text-red-400 focus:text-red-400"
