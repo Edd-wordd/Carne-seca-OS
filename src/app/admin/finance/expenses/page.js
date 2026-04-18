@@ -11,7 +11,19 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, Download, TrendingUp, Receipt, Truck, Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import {
+    Search,
+    Download,
+    TrendingUp,
+    Receipt,
+    Truck,
+    Plus,
+    MoreHorizontal,
+    Pencil,
+    Trash2,
+    ChevronLeft,
+    ChevronRight,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils/helpers';
 import { AddExpenseModal } from './_components/AddExpenseModal';
@@ -114,6 +126,51 @@ function matchesExpenseDateRange(dateStr, dateRange) {
     return true;
 }
 
+const PAGE_SIZE = 5;
+
+function ExpensesPaginationBar({ total, currentPage, pageSize, onPageChange }) {
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const start = (currentPage - 1) * pageSize;
+    const end = Math.min(start + pageSize, total);
+
+    if (total === 0) return null;
+
+    return (
+        <div className="flex w-full items-center justify-between gap-4 border-t border-zinc-800/80 px-4 py-3">
+            <p className="text-zinc-500 text-xs">
+                Showing {start + 1}–{end} of {total}
+            </p>
+            <div className="flex items-center gap-1">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1 border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 hover:border-zinc-600 disabled:opacity-50 disabled:hover:bg-zinc-900/80"
+                    onClick={() => onPageChange((p) => Math.max(1, p - 1))}
+                    disabled={currentPage <= 1}
+                >
+                    <ChevronLeft className="size-3.5" />
+                    Prev
+                </Button>
+                <span className="px-2 text-xs text-zinc-500">
+                    Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1 border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 hover:border-zinc-600 disabled:opacity-50 disabled:hover:bg-zinc-900/80"
+                    onClick={() => onPageChange((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage >= totalPages}
+                >
+                    Next
+                    <ChevronRight className="size-3.5" />
+                </Button>
+            </div>
+        </div>
+    );
+}
+
 export default function ExpensesPage() {
     const [expenses, setExpenses] = React.useState(() => [...MOCK_EXPENSES]);
     const [addOpen, setAddOpen] = React.useState(false);
@@ -122,6 +179,7 @@ export default function ExpensesPage() {
     const [query, setQuery] = React.useState('');
     const [categoryFilter, setCategoryFilter] = React.useState('all');
     const [dateRange, setDateRange] = React.useState({ from: undefined, to: undefined });
+    const [currentPage, setCurrentPage] = React.useState(1);
     const [snapshotNow] = React.useState(() => Date.now());
 
     const categoryOptions = React.useMemo(() => Object.keys(CATEGORY_STYLES), []);
@@ -148,6 +206,14 @@ export default function ExpensesPage() {
             );
         });
     }, [categoryFilter, query, expenses, dateRange]);
+
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [query, categoryFilter, dateRange]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredExpenses.length / PAGE_SIZE));
+    const safePage = Math.min(currentPage, totalPages);
+    const paginatedExpenses = filteredExpenses.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
     const kpis = React.useMemo(() => {
         const total = filteredExpenses.reduce((s, x) => s + x.amountCents, 0);
@@ -284,7 +350,7 @@ export default function ExpensesPage() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                filteredExpenses.map((x) => (
+                                paginatedExpenses.map((x) => (
                                     <TableRow
                                         key={x.id}
                                         className="group border-zinc-700/80 transition-colors hover:!bg-zinc-700/50"
@@ -361,6 +427,12 @@ export default function ExpensesPage() {
                             )}
                         </TableBody>
                     </Table>
+                    <ExpensesPaginationBar
+                        total={filteredExpenses.length}
+                        currentPage={safePage}
+                        pageSize={PAGE_SIZE}
+                        onPageChange={setCurrentPage}
+                    />
                 </div>
             </div>
 
