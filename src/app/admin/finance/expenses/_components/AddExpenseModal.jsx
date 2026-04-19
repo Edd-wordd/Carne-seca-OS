@@ -115,7 +115,7 @@ export function AddExpenseModal({ open, onOpenChange, categoryOptions, paymentMe
             vendor,
             vendorId,
             category: category || defaultCategory,
-            note: note.trim() || '—',
+            note: note.trim() || null,
             amountCents,
             paymentMethod,
         });
@@ -185,9 +185,7 @@ export function AddExpenseModal({ open, onOpenChange, categoryOptions, paymentMe
                             }}
                             className="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-xs text-zinc-100 shadow-xs outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            <option value="">
-                                {suppliersLoading ? 'Loading suppliers…' : 'Select supplier…'}
-                            </option>
+                            <option value="">{suppliersLoading ? 'Loading suppliers…' : 'Select supplier…'}</option>
                             {suppliers.map((s) => (
                                 <option key={s.supplier_id} value={s.supplier_id}>
                                     {s.name}
