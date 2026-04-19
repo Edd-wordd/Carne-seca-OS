@@ -104,7 +104,7 @@ export function ExpensesClient({ initialExpenses = [] }) {
     const kpis = React.useMemo(() => {
         const total = filteredExpenses.reduce((s, x) => s + x.amountCents, 0);
         const thisWeek = filteredExpenses
-            .filter((x) => new Date(x.date).getTime() >= snapshotNow - 7 * 24 * 60 * 60 * 1000)
+            .filter((x) => (expenseDateMs(x.date) ?? 0) >= snapshotNow - 7 * 24 * 60 * 60 * 1000)
             .reduce((s, x) => s + x.amountCents, 0);
         const avgTicket = filteredExpenses.length ? Math.round(total / filteredExpenses.length) : 0;
         return { total, thisWeek, avgTicket };
