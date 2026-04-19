@@ -12,14 +12,20 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PAYMENT_METHOD_OPTIONS, normalizePaymentMethod } from './expensePaymentMethods';
-
 function dollarsFromCents(cents) {
     const n = (Number(cents) || 0) / 100;
     return String(n);
 }
 
-export function EditExpenseModal({ expense, open, onOpenChange, categoryOptions, onSave }) {
+export function EditExpenseModal({
+    expense,
+    open,
+    onOpenChange,
+    categoryOptions,
+    paymentMethodOptions,
+    normalizePaymentMethod,
+    onSave,
+}) {
     const [date, setDate] = React.useState('');
     const [vendor, setVendor] = React.useState('');
     const [category, setCategory] = React.useState('');
@@ -39,7 +45,7 @@ export function EditExpenseModal({ expense, open, onOpenChange, categoryOptions,
         setAmount(dollarsFromCents(expense.amountCents));
         setPaymentMethod(normalizePaymentMethod(expense.paymentMethod));
         setError(null);
-    }, [open, expense, defaultCategory]);
+    }, [open, expense, defaultCategory, normalizePaymentMethod]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -161,7 +167,7 @@ export function EditExpenseModal({ expense, open, onOpenChange, categoryOptions,
                                 onChange={(e) => setPaymentMethod(e.target.value)}
                                 className="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-xs text-zinc-100 shadow-xs outline-none focus-visible:ring-[3px]"
                             >
-                                {PAYMENT_METHOD_OPTIONS.map((m) => (
+                                {paymentMethodOptions.map((m) => (
                                     <option key={m} value={m}>
                                         {m}
                                     </option>

@@ -12,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PAYMENT_METHOD_OPTIONS } from './expensePaymentMethods';
 import { getSuppliers } from '@/lib/supabase/queries/supplies/getSuppliers';
 
 const VENDOR_ONE_OFF = '__one_off__';
@@ -28,7 +27,7 @@ function normalizeSuppliersList(raw) {
         .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 }
 
-export function AddExpenseModal({ open, onOpenChange, categoryOptions, onAdd }) {
+export function AddExpenseModal({ open, onOpenChange, categoryOptions, paymentMethodOptions, onAdd }) {
     const [date, setDate] = React.useState('');
     const [supplierSelect, setSupplierSelect] = React.useState('');
     const [customVendor, setCustomVendor] = React.useState('');
@@ -236,7 +235,7 @@ export function AddExpenseModal({ open, onOpenChange, categoryOptions, onAdd }) 
                                 onChange={(e) => setPaymentMethod(e.target.value)}
                                 className="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-xs text-zinc-100 shadow-xs outline-none focus-visible:ring-[3px]"
                             >
-                                {PAYMENT_METHOD_OPTIONS.map((m) => (
+                                {paymentMethodOptions.map((m) => (
                                     <option key={m} value={m}>
                                         {m}
                                     </option>

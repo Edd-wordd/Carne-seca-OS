@@ -10,8 +10,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { normalizePaymentMethod } from './expensePaymentMethods';
-
 function formatCurrency(cents) {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -19,7 +17,7 @@ function formatCurrency(cents) {
     }).format((Number(cents) || 0) / 100);
 }
 
-export function DeleteExpenseModal({ expense, open, onOpenChange, onConfirm }) {
+export function DeleteExpenseModal({ expense, open, onOpenChange, normalizePaymentMethod, onConfirm }) {
     const handleDelete = () => {
         if (!expense) return;
         onConfirm(expense.id);
