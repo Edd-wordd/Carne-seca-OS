@@ -13,10 +13,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PAYMENT_METHOD_OPTIONS } from './expensePaymentMethods';
+import { getSuppliers } from '@/lib/supabase/queries/supplies/getSuppliers';
+
+const VENDOR_ONE_OFF = '__one_off__';
+
+function normalizeSuppliersList(raw) {
+    const list = Array.isArray(raw) ? raw : [];
+    return list
+        .map((s) => ({
+            supplier_id: String(s.supplier_id ?? s.id ?? ''),
+            name: String(s.name ?? '').trim(),
+        }))
+        .filter((s) => s.supplier_id && s.name)
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+}
 
 export function AddExpenseModal({ open, onOpenChange, categoryOptions, onAdd }) {
     const [date, setDate] = React.useState('');
-    const [vendor, setVendor] = React.useState('');
+    const [supplierSelect, setSupplierSelect] = React.useState('');
+    const [customVendor, setCustomVendor] = React.useState('');
+    const [suppliers, setSuppliers] = React.useState([]);
+    const [suppliersLoading, setSuppliersLoading] = React.useState(false);
     const [category, setCategory] = React.useState('');
     const [note, setNote] = React.useState('');
     const [amount, setAmount] = React.useState('');
@@ -24,11 +41,13 @@ export function AddExpenseModal({ open, onOpenChange, categoryOptions, onAdd }) 
     const [error, setError] = React.useState(null);
 
     const defaultCategory = categoryOptions[0] ?? '';
+    const isOneOff = supplierSelect === VENDOR_ONE_OFF;
 
     const reset = React.useCallback(() => {
         const today = new Date().toISOString().slice(0, 10);
         setDate(today);
-        setVendor('');
+        setSupplierSelect('');
+        setCustomVendor('');
         setCategory(defaultCategory);
         setNote('');
         setAmount('');
@@ -40,13 +59,51 @@ export function AddExpenseModal({ open, onOpenChange, categoryOptions, onAdd }) 
         if (open) reset();
     }, [open, reset]);
 
+    React.useEffect(() => {
+        if (!open) return;
+        let cancelled = false;
+        setSuppliersLoading(true);
+        getSuppliers()
+            .then((raw) => {
+                if (cancelled) return;
+                setSuppliers(normalizeSuppliersList(raw));
+            })
+            .catch(() => {
+                if (!cancelled) setSuppliers([]);
+            })
+            .finally(() => {
+                if (!cancelled) setSuppliersLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [open]);
+
     const handleSubmit = (e) => {
         e.preventDefault();
         setError(null);
-        const v = vendor.trim();
-        if (!v) {
-            setError('Vendor is required.');
+        if (!supplierSelect) {
+            setError('Select a supplier or one-off vendor.');
             return;
+        }
+        let vendor;
+        let vendorId = null;
+        if (isOneOff) {
+            const v = customVendor.trim();
+            if (!v) {
+                setError('Enter the vendor name for this one-off expense.');
+                return;
+            }
+            vendor = v;
+            vendorId = null;
+        } else {
+            const row = suppliers.find((s) => s.supplier_id === supplierSelect);
+            if (!row) {
+                setError('Selected supplier was not found. Try again or use one-off.');
+                return;
+            }
+            vendor = row.name;
+            vendorId = supplierSelect;
         }
         const parsed = Number.parseFloat(amount);
         if (!Number.isFinite(parsed) || parsed <= 0) {
@@ -56,7 +113,8 @@ export function AddExpenseModal({ open, onOpenChange, categoryOptions, onAdd }) 
         const amountCents = Math.round(parsed * 100);
         onAdd({
             date: date || new Date().toISOString().slice(0, 10),
-            vendor: v,
+            vendor,
+            vendorId,
             category: category || defaultCategory,
             note: note.trim() || '—',
             amountCents,
@@ -114,16 +172,40 @@ export function AddExpenseModal({ open, onOpenChange, categoryOptions, onAdd }) 
                     </div>
 
                     <div className="space-y-1.5">
-                        <Label htmlFor="expense-vendor" className="text-xs text-zinc-400">
+                        <Label htmlFor="expense-vendor-supplier" className="text-xs text-zinc-400">
                             Vendor
                         </Label>
-                        <Input
-                            id="expense-vendor"
-                            placeholder="Who was paid?"
-                            value={vendor}
-                            onChange={(e) => setVendor(e.target.value)}
-                            className="h-9 border-zinc-700 bg-zinc-950 text-xs text-zinc-100"
-                        />
+                        <select
+                            id="expense-vendor-supplier"
+                            value={supplierSelect}
+                            disabled={suppliersLoading}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                setSupplierSelect(v);
+                                if (v !== VENDOR_ONE_OFF) setCustomVendor('');
+                            }}
+                            className="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-xs text-zinc-100 shadow-xs outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            <option value="">
+                                {suppliersLoading ? 'Loading suppliers…' : 'Select supplier…'}
+                            </option>
+                            {suppliers.map((s) => (
+                                <option key={s.supplier_id} value={s.supplier_id}>
+                                    {s.name}
+                                </option>
+                            ))}
+                            <option value={VENDOR_ONE_OFF}>Other (one-off vendor)</option>
+                        </select>
+                        {isOneOff ? (
+                            <Input
+                                id="expense-vendor-custom"
+                                placeholder="Vendor name (not in list)"
+                                value={customVendor}
+                                onChange={(e) => setCustomVendor(e.target.value)}
+                                className="h-9 border-zinc-700 bg-zinc-950 text-xs text-zinc-100"
+                                autoComplete="organization"
+                            />
+                        ) : null}
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
