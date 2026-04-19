@@ -40,6 +40,27 @@ const PAYMENT_METHOD_DB_TO_LABEL = {
     other: 'Other',
 };
 
+/** Admin UI category label (see `CATEGORY_STYLES`) -> `expenses.category` CHECK value. */
+const CATEGORY_LABEL_TO_DB = {
+    Packaging: 'packaging',
+    'Raw Materials': 'raw_materials',
+    Seasoning: 'seasoning',
+    Logistics: 'logistics',
+    Software: 'software',
+    Other: 'other',
+};
+
+export function categoryLabelToDb(label) {
+    const s = String(label ?? '').trim();
+    return CATEGORY_LABEL_TO_DB[s] ?? 'other';
+}
+
+export function paymentMethodLabelToDb(label) {
+    const s = String(label ?? '').trim();
+    const entry = Object.entries(PAYMENT_METHOD_DB_TO_LABEL).find(([, v]) => v === s);
+    return entry ? entry[0] : 'other';
+}
+
 /** Map DB `payment_method` to the label string used in the admin expenses UI (1:1, no collapsing). */
 function paymentMethodUiFromDb(db) {
     const s = String(db ?? '').toLowerCase();
