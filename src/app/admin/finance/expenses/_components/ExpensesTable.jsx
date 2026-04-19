@@ -17,6 +17,8 @@ export const CATEGORY_STYLES = {
     Packaging: 'border-indigo-500/30 bg-indigo-500/10 text-indigo-400',
     Seasoning: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
     Logistics: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-400',
+    Software: 'border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-400',
+    Other: 'border-zinc-600 bg-zinc-800/70 text-zinc-300',
 };
 
 export function formatCurrency(cents) {
@@ -112,7 +114,9 @@ export function ExpensesTable({
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Date</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-[10px]">Payment method</TableHead>
                             <TableHead className="text-zinc-400 h-8 px-3 text-right text-[10px]">Amount</TableHead>
-                            <TableHead className="text-zinc-400 h-8 px-2 text-right text-[10px] w-14">Actions</TableHead>
+                            <TableHead className="text-zinc-400 h-8 px-2 text-right text-[10px] w-14">
+                                Actions
+                            </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -157,10 +161,7 @@ export function ExpensesTable({
                                     <TableCell className="text-zinc-100 px-3 py-1.5 text-right text-[11px] font-medium tabular-nums group-hover:text-white">
                                         {formatCurrency(x.amountCents)}
                                     </TableCell>
-                                    <TableCell
-                                        className="px-2 py-1.5 text-right"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
+                                    <TableCell className="px-2 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button
