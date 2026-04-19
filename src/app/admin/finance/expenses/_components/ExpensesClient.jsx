@@ -11,15 +11,14 @@ import { EditExpenseModal } from './EditExpenseModal';
 import { DeleteExpenseModal } from './DeleteExpenseModal';
 import { ExpensesTable, CATEGORY_STYLES } from './ExpensesTable';
 import { ExpensesKpiCards } from './ExpensesKpiCards';
-
-/** Allowed values for reconciliation (cash / card / check). */
-const PAYMENT_METHOD_OPTIONS = ['Cash', 'Card', 'Check'];
+import { EXPENSE_PAYMENT_METHOD_UI_OPTIONS } from '@/lib/utils/normalizeExpenseFromDb';
 
 function normalizePaymentMethod(value) {
     const s = String(value ?? '').trim();
     if (s === 'ACH') return 'Check';
-    if (PAYMENT_METHOD_OPTIONS.includes(s)) return s;
-    return 'Card';
+    if (EXPENSE_PAYMENT_METHOD_UI_OPTIONS.includes(s)) return s;
+    if (s === 'Card') return 'Credit card';
+    return EXPENSE_PAYMENT_METHOD_UI_OPTIONS[0] ?? 'Cash';
 }
 
 function nextExpenseId(rows) {
@@ -87,7 +86,9 @@ export function ExpensesClient({ initialExpenses = [] }) {
             return (
                 x.id.toLowerCase().includes(q) ||
                 x.vendor.toLowerCase().includes(q) ||
-                x.note.toLowerCase().includes(q) ||
+                String(x.note ?? '')
+                    .toLowerCase()
+                    .includes(q) ||
                 x.category.toLowerCase().includes(q) ||
                 String(normalizePaymentMethod(x.paymentMethod))
                     .toLowerCase()
@@ -192,7 +193,7 @@ export function ExpensesClient({ initialExpenses = [] }) {
                 open={addOpen}
                 onOpenChange={setAddOpen}
                 categoryOptions={categoryOptions}
-                paymentMethodOptions={PAYMENT_METHOD_OPTIONS}
+                paymentMethodOptions={EXPENSE_PAYMENT_METHOD_UI_OPTIONS}
                 onAdd={handleAddExpense}
             />
 
@@ -203,7 +204,7 @@ export function ExpensesClient({ initialExpenses = [] }) {
                     if (!o) setEditExpense(null);
                 }}
                 categoryOptions={categoryOptions}
-                paymentMethodOptions={PAYMENT_METHOD_OPTIONS}
+                paymentMethodOptions={EXPENSE_PAYMENT_METHOD_UI_OPTIONS}
                 normalizePaymentMethod={normalizePaymentMethod}
                 onSave={handleSaveExpense}
             />

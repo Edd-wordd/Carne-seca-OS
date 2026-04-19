@@ -1,11 +1,6 @@
 function formatLocalDate(isoOrDate) {
     if (!isoOrDate) return '';
-    const d = new Date(isoOrDate);
-    if (Number.isNaN(d.getTime())) return '';
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
+    return String(isoOrDate).slice(0, 10);
 }
 
 const CATEGORY_DB_TO_LABEL = {
@@ -22,14 +17,33 @@ function categoryLabel(slug) {
     return CATEGORY_DB_TO_LABEL[s] ?? 'Other';
 }
 
-/** Map DB payment_method to the short labels used in the admin expenses UI. */
+/** Display labels for `public.expenses.payment_method` CHECK values; order matches admin dropdown. */
+export const EXPENSE_PAYMENT_METHOD_UI_OPTIONS = Object.freeze([
+    'Cash',
+    'Check',
+    'Credit card',
+    'Debit card',
+    'Venmo',
+    'Zelle',
+    'Wire',
+    'Other',
+]);
+
+const PAYMENT_METHOD_DB_TO_LABEL = {
+    cash: 'Cash',
+    check: 'Check',
+    credit_card: 'Credit card',
+    debit_card: 'Debit card',
+    venmo: 'Venmo',
+    zelle: 'Zelle',
+    wire: 'Wire',
+    other: 'Other',
+};
+
+/** Map DB `payment_method` to the label string used in the admin expenses UI (1:1, no collapsing). */
 function paymentMethodUiFromDb(db) {
     const s = String(db ?? '').toLowerCase();
-    if (s === 'cash') return 'Cash';
-    if (s === 'check') return 'Check';
-    if (s === 'credit_card' || s === 'debit_card' || s === 'venmo' || s === 'zelle' || s === 'other') return 'Card';
-    if (s === 'wire') return 'Check';
-    return 'Card';
+    return PAYMENT_METHOD_DB_TO_LABEL[s] ?? 'Other';
 }
 
 /**
@@ -37,13 +51,14 @@ function paymentMethodUiFromDb(db) {
  */
 export function normalizeExpenseFromDb(row) {
     if (!row?.id) return null;
+    const noteTrimmed = row.note == null ? '' : String(row.note).trim();
     return {
         id: String(row.id),
         date: formatLocalDate(row.purchased_at),
         vendor: row.vendor ?? '',
         vendorId: row.vendor_id != null ? String(row.vendor_id) : null,
         category: categoryLabel(row.category),
-        note: row.note?.trim() ? row.note : '—',
+        note: noteTrimmed || null,
         amountCents: Number(row.amount_cents) || 0,
         paymentMethod: paymentMethodUiFromDb(row.payment_method),
     };

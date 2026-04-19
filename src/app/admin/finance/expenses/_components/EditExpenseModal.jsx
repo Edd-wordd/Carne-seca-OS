@@ -31,7 +31,7 @@ export function EditExpenseModal({
     const [category, setCategory] = React.useState('');
     const [note, setNote] = React.useState('');
     const [amount, setAmount] = React.useState('');
-    const [paymentMethod, setPaymentMethod] = React.useState('Card');
+    const [paymentMethod, setPaymentMethod] = React.useState(() => paymentMethodOptions[0] ?? 'Cash');
     const [error, setError] = React.useState(null);
 
     const defaultCategory = categoryOptions[0] ?? '';
@@ -41,7 +41,11 @@ export function EditExpenseModal({
         setDate(expense.date ?? '');
         setVendor(expense.vendor ?? '');
         setCategory(expense.category || defaultCategory);
-        setNote(expense.note === '—' ? '' : (expense.note ?? ''));
+        setNote(
+            expense.note === '—' || expense.note == null
+                ? ''
+                : String(expense.note).trim(),
+        );
         setAmount(dollarsFromCents(expense.amountCents));
         setPaymentMethod(normalizePaymentMethod(expense.paymentMethod));
         setError(null);
@@ -66,7 +70,7 @@ export function EditExpenseModal({
             date: date || expense.date,
             vendor: v,
             category: category || defaultCategory,
-            note: note.trim() || '—',
+            note: note.trim() || null,
             amountCents,
             paymentMethod,
         });

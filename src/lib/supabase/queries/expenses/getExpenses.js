@@ -14,7 +14,7 @@ async function getExpensesHandler() {
             .is('deleted_at', null)
             .order('purchased_at', { ascending: false });
 
-        if (error) return { success: false, message: error.message };
+        if (error) return { success: false, message: error?.message ?? 'Unable to get Expenses' };
 
         return { success: true, data: data ?? [] };
     } catch (error) {

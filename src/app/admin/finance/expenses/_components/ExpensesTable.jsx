@@ -150,7 +150,9 @@ export function ExpensesTable({
                                         </span>
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] group-hover:text-zinc-300">
-                                        {x.note}
+                                        {x.note?.trim() ? x.note : (
+                                            <span className="text-zinc-600">—</span>
+                                        )}
                                     </TableCell>
                                     <TableCell className="text-zinc-400 px-3 py-1.5 text-[11px] tabular-nums group-hover:text-zinc-300">
                                         {x.date}

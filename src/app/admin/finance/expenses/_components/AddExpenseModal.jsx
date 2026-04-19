@@ -36,7 +36,7 @@ export function AddExpenseModal({ open, onOpenChange, categoryOptions, paymentMe
     const [category, setCategory] = React.useState('');
     const [note, setNote] = React.useState('');
     const [amount, setAmount] = React.useState('');
-    const [paymentMethod, setPaymentMethod] = React.useState('Card');
+    const [paymentMethod, setPaymentMethod] = React.useState(() => paymentMethodOptions[0] ?? 'Cash');
     const [error, setError] = React.useState(null);
 
     const defaultCategory = categoryOptions[0] ?? '';
@@ -50,9 +50,9 @@ export function AddExpenseModal({ open, onOpenChange, categoryOptions, paymentMe
         setCategory(defaultCategory);
         setNote('');
         setAmount('');
-        setPaymentMethod('Card');
+        setPaymentMethod(paymentMethodOptions[0] ?? 'Cash');
         setError(null);
-    }, [defaultCategory]);
+    }, [defaultCategory, paymentMethodOptions]);
 
     React.useEffect(() => {
         if (open) reset();
