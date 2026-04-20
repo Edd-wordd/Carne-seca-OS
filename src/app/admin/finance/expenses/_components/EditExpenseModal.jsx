@@ -163,7 +163,11 @@ export function EditExpenseModal({
                     <DialogDescription className="text-xs text-zinc-500">
                         {expense ? (
                             <>
-                                Update <span className="font-mono text-zinc-400">{expense.id}</span>.
+                                Update{' '}
+                                <span className="font-mono text-zinc-400">
+                                    {expense.expenseNumber?.trim() ? expense.expenseNumber : '—'}
+                                </span>
+                                .
                             </>
                         ) : null}
                     </DialogDescription>

@@ -75,58 +75,6 @@ export default function PnLPage() {
                 ))}
             </div>
 
-            <Card className="border-zinc-800 bg-zinc-900/70">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-zinc-100">Bottom line</CardTitle>
-                    <CardDescription className="text-[10px] text-zinc-500">{data.label}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4 font-mono text-sm">
-                        <div className="flex justify-between gap-4 text-zinc-300">
-                            <span>Revenue</span>
-                            <span className="tabular-nums text-emerald-400">
-                                {formatCurrency(data.revenueCents)}
-                            </span>
-                        </div>
-                        <div className="mt-2 flex justify-between gap-4 text-zinc-500">
-                            <span className="flex items-center gap-1.5">
-                                <Minus className="size-3" />
-                                Expenses
-                            </span>
-                            <span className="tabular-nums text-red-400/90">
-                                {formatCurrency(data.expensesCents)}
-                            </span>
-                        </div>
-                        <div className="mt-2 flex justify-between gap-4 text-zinc-500">
-                            <span className="flex items-center gap-1.5">
-                                <Minus className="size-3" />
-                                Payouts
-                            </span>
-                            <span className="tabular-nums text-amber-400/90">
-                                {formatCurrency(data.payoutsCents)}
-                            </span>
-                        </div>
-                        <div className="mt-3 border-t border-zinc-800 pt-3 flex justify-between gap-4 text-zinc-100">
-                            <span className="font-sans text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                                Net profit
-                            </span>
-                            <span
-                                className={cn(
-                                    'tabular-nums text-lg font-bold',
-                                    netCents >= 0 ? 'text-emerald-400' : 'text-red-400',
-                                )}
-                            >
-                                {formatCurrency(netCents)}
-                            </span>
-                        </div>
-                    </div>
-                    <p className="text-[10px] text-zinc-500">
-                        Net margin on revenue:{' '}
-                        <span className="tabular-nums text-zinc-400">{marginPct}%</span>
-                    </p>
-                </CardContent>
-            </Card>
-
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                 <Card className="border-zinc-800 bg-zinc-900/70">
                     <CardContent className="flex items-start justify-between p-4">
@@ -178,6 +126,58 @@ export default function PnLPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            <Card className="border-zinc-800 bg-zinc-900/70">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-zinc-100">Bottom line</CardTitle>
+                    <CardDescription className="text-[10px] text-zinc-500">{data.label}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4 font-mono text-sm">
+                        <div className="flex justify-between gap-4 text-zinc-300">
+                            <span>Revenue</span>
+                            <span className="tabular-nums text-emerald-400">
+                                {formatCurrency(data.revenueCents)}
+                            </span>
+                        </div>
+                        <div className="mt-2 flex justify-between gap-4 text-zinc-500">
+                            <span className="flex items-center gap-1.5">
+                                <Minus className="size-3" />
+                                Expenses
+                            </span>
+                            <span className="tabular-nums text-red-400/90">
+                                {formatCurrency(data.expensesCents)}
+                            </span>
+                        </div>
+                        <div className="mt-2 flex justify-between gap-4 text-zinc-500">
+                            <span className="flex items-center gap-1.5">
+                                <Minus className="size-3" />
+                                Payouts
+                            </span>
+                            <span className="tabular-nums text-amber-400/90">
+                                {formatCurrency(data.payoutsCents)}
+                            </span>
+                        </div>
+                        <div className="mt-3 border-t border-zinc-800 pt-3 flex justify-between gap-4 text-zinc-100">
+                            <span className="font-sans text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                                Net profit
+                            </span>
+                            <span
+                                className={cn(
+                                    'tabular-nums text-lg font-bold',
+                                    netCents >= 0 ? 'text-emerald-400' : 'text-red-400',
+                                )}
+                            >
+                                {formatCurrency(netCents)}
+                            </span>
+                        </div>
+                    </div>
+                    <p className="text-[10px] text-zinc-500">
+                        Net margin on revenue:{' '}
+                        <span className="tabular-nums text-zinc-400">{marginPct}%</span>
+                    </p>
+                </CardContent>
+            </Card>
         </div>
     );
 }
