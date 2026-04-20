@@ -13,21 +13,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getSuppliers } from '@/lib/supabase/queries/supplies/getSuppliers';
+import { normalizeSuppliersList, VENDOR_ONE_OFF } from './expenseVendorUtils';
 
-const VENDOR_ONE_OFF = '__one_off__';
-
-function normalizeSuppliersList(raw) {
-    const list = Array.isArray(raw) ? raw : [];
-    return list
-        .map((s) => ({
-            supplier_id: String(s.supplier_id ?? s.id ?? ''),
-            name: String(s.name ?? '').trim(),
-        }))
-        .filter((s) => s.supplier_id && s.name)
-        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
-}
-
-export function AddExpenseModal({ open, onOpenChange, categoryOptions, paymentMethodOptions, onAdd }) {
+export function AddExpenseModal({
+    open,
+    onOpenChange,
+    categoryOptions,
+    paymentMethodOptions,
+    isPending = false,
+    onAdd,
+}) {
     const [date, setDate] = React.useState('');
     const [supplierSelect, setSupplierSelect] = React.useState('');
     const [customVendor, setCustomVendor] = React.useState('');
@@ -78,8 +73,9 @@ export function AddExpenseModal({ open, onOpenChange, categoryOptions, paymentMe
         };
     }, [open]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        if (isPending) return;
         setError(null);
         if (!supplierSelect) {
             setError('Select a supplier or one-off vendor.');
@@ -110,7 +106,7 @@ export function AddExpenseModal({ open, onOpenChange, categoryOptions, paymentMe
             return;
         }
         const amountCents = Math.round(parsed * 100);
-        onAdd({
+        await onAdd({
             date: date || new Date().toISOString().slice(0, 10),
             vendor,
             vendorId,
@@ -119,7 +115,6 @@ export function AddExpenseModal({ open, onOpenChange, categoryOptions, paymentMe
             amountCents,
             paymentMethod,
         });
-        onOpenChange(false);
     };
 
     return (
@@ -134,7 +129,7 @@ export function AddExpenseModal({ open, onOpenChange, categoryOptions, paymentMe
                 <DialogHeader>
                     <DialogTitle className="text-zinc-100">Add expense</DialogTitle>
                     <DialogDescription className="text-xs text-zinc-500">
-                        Log a spend entry. Saved locally in this session (mock UI).
+                        Log a spend entry.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -266,8 +261,12 @@ export function AddExpenseModal({ open, onOpenChange, categoryOptions, paymentMe
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" className="bg-zinc-100 text-zinc-900 hover:bg-zinc-200">
-                            Save expense
+                        <Button
+                            type="submit"
+                            disabled={isPending}
+                            className="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+                        >
+                            {isPending ? 'Saving…' : 'Save expense'}
                         </Button>
                     </DialogFooter>
                 </form>

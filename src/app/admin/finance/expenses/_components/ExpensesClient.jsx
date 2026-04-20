@@ -12,6 +12,9 @@ import { DeleteExpenseModal } from './DeleteExpenseModal';
 import { ExpensesTable, CATEGORY_STYLES } from './ExpensesTable';
 import { ExpensesKpiCards } from './ExpensesKpiCards';
 import { EXPENSE_PAYMENT_METHOD_UI_OPTIONS } from '@/lib/utils/normalizeExpenseFromDb';
+import { addExpense } from '@/app/actions/expenses/addExpense';
+import { updateExpense } from '@/app/actions/expenses/updateExpense';
+import { deleteExpense } from '@/app/actions/expenses/deleteExpense';
 
 function normalizePaymentMethod(value) {
     const s = String(value ?? '').trim();
@@ -19,15 +22,6 @@ function normalizePaymentMethod(value) {
     if (EXPENSE_PAYMENT_METHOD_UI_OPTIONS.includes(s)) return s;
     if (s === 'Card') return 'Credit card';
     return EXPENSE_PAYMENT_METHOD_UI_OPTIONS[0] ?? 'Cash';
-}
-
-function nextExpenseId(rows) {
-    let max = 0;
-    for (const x of rows) {
-        const m = /^EXP-(\d+)$/.exec(x.id);
-        if (m) max = Math.max(max, Number(m[1]));
-    }
-    return `EXP-${max + 1}`;
 }
 
 function expenseDateMs(dateStr) {
@@ -63,12 +57,17 @@ export function ExpensesClient({ initialExpenses = [] }) {
     });
     const [addOpen, setAddOpen] = React.useState(false);
     const [editExpense, setEditExpense] = React.useState(null);
-    const [deleteExpense, setDeleteExpense] = React.useState(null);
+    const [expenseToDelete, setExpenseToDelete] = React.useState(null);
     const [query, setQuery] = React.useState('');
     const [categoryFilter, setCategoryFilter] = React.useState('all');
     const [dateRange, setDateRange] = React.useState({ from: undefined, to: undefined });
     const [currentPage, setCurrentPage] = React.useState(1);
     const [snapshotNow] = React.useState(() => Date.now());
+
+    // isPending states — one per action
+    const [isAdding, setIsAdding] = React.useState(false);
+    const [isSaving, setIsSaving] = React.useState(false);
+    const [isDeleting, setIsDeleting] = React.useState(false);
 
     const categoryOptions = React.useMemo(() => Object.keys(CATEGORY_STYLES), []);
 
@@ -90,9 +89,7 @@ export function ExpensesClient({ initialExpenses = [] }) {
                     .toLowerCase()
                     .includes(q) ||
                 x.category.toLowerCase().includes(q) ||
-                String(normalizePaymentMethod(x.paymentMethod))
-                    .toLowerCase()
-                    .includes(q)
+                String(normalizePaymentMethod(x.paymentMethod)).toLowerCase().includes(q)
             );
         });
     }, [categoryFilter, query, expenses, dateRange]);
@@ -110,18 +107,53 @@ export function ExpensesClient({ initialExpenses = [] }) {
         return { total, thisWeek, avgTicket };
     }, [filteredExpenses, snapshotNow]);
 
-    const handleAddExpense = React.useCallback((payload) => {
-        setExpenses((prev) => [{ id: nextExpenseId(prev), ...payload }, ...prev]);
+    const handleAddExpense = React.useCallback(async (payload) => {
+        setIsAdding(true);
+        try {
+            const result = await addExpense(payload);
+            if (!result.success) {
+                toast.error(result.message ?? 'Failed to add expense');
+                return;
+            }
+            // Use the normalized row returned from the DB — not the local payload
+            setExpenses((prev) => [result.data, ...prev]);
+            setAddOpen(false);
+            toast.success('Expense added');
+        } finally {
+            setIsAdding(false);
+        }
     }, []);
 
-    const handleSaveExpense = React.useCallback((id, updates) => {
-        setExpenses((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
-        toast.success('Expense updated');
+    const handleSaveExpense = React.useCallback(async (id, updates) => {
+        setIsSaving(true);
+        try {
+            const result = await updateExpense({ id, ...updates });
+            if (!result.success) {
+                toast.error(result.message ?? 'Failed to update expense');
+                return;
+            }
+            setExpenses((prev) => prev.map((e) => (e.id === id ? result.data : e)));
+            setEditExpense(null);
+            toast.success('Expense updated');
+        } finally {
+            setIsSaving(false);
+        }
     }, []);
 
-    const handleDeleteExpense = React.useCallback((id) => {
-        setExpenses((prev) => prev.filter((e) => e.id !== id));
-        toast.success('Expense removed');
+    const handleDeleteExpense = React.useCallback(async (id) => {
+        setIsDeleting(true);
+        try {
+            const result = await deleteExpense({ id });
+            if (!result.success) {
+                toast.error(result.message ?? 'Failed to delete expense');
+                return;
+            }
+            setExpenses((prev) => prev.filter((e) => e.id !== id));
+            setExpenseToDelete(null);
+            toast.success('Expense deleted');
+        } finally {
+            setIsDeleting(false);
+        }
     }, []);
 
     return (
@@ -185,7 +217,7 @@ export function ExpensesClient({ initialExpenses = [] }) {
                 currentPage={currentPage}
                 onPageChange={setCurrentPage}
                 onEdit={setEditExpense}
-                onDelete={setDeleteExpense}
+                onDelete={setExpenseToDelete}
                 normalizePaymentMethod={normalizePaymentMethod}
             />
 
@@ -194,6 +226,7 @@ export function ExpensesClient({ initialExpenses = [] }) {
                 onOpenChange={setAddOpen}
                 categoryOptions={categoryOptions}
                 paymentMethodOptions={EXPENSE_PAYMENT_METHOD_UI_OPTIONS}
+                isPending={isAdding}
                 onAdd={handleAddExpense}
             />
 
@@ -206,16 +239,18 @@ export function ExpensesClient({ initialExpenses = [] }) {
                 categoryOptions={categoryOptions}
                 paymentMethodOptions={EXPENSE_PAYMENT_METHOD_UI_OPTIONS}
                 normalizePaymentMethod={normalizePaymentMethod}
+                isPending={isSaving}
                 onSave={handleSaveExpense}
             />
 
             <DeleteExpenseModal
-                expense={deleteExpense}
-                open={deleteExpense != null}
+                expense={expenseToDelete}
+                open={expenseToDelete != null}
                 onOpenChange={(o) => {
-                    if (!o) setDeleteExpense(null);
+                    if (!o) setExpenseToDelete(null);
                 }}
                 normalizePaymentMethod={normalizePaymentMethod}
+                isPending={isDeleting}
                 onConfirm={handleDeleteExpense}
             />
         </div>

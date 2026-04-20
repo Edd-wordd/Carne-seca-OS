@@ -12,6 +12,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { getSuppliers } from '@/lib/supabase/queries/supplies/getSuppliers';
+import { normalizeSuppliersList, VENDOR_ONE_OFF } from './expenseVendorUtils';
+
 function dollarsFromCents(cents) {
     const n = (Number(cents) || 0) / 100;
     return String(n);
@@ -24,10 +27,14 @@ export function EditExpenseModal({
     categoryOptions,
     paymentMethodOptions,
     normalizePaymentMethod,
+    isPending = false,
     onSave,
 }) {
     const [date, setDate] = React.useState('');
-    const [vendor, setVendor] = React.useState('');
+    const [supplierSelect, setSupplierSelect] = React.useState('');
+    const [customVendor, setCustomVendor] = React.useState('');
+    const [suppliers, setSuppliers] = React.useState([]);
+    const [suppliersLoading, setSuppliersLoading] = React.useState(false);
     const [category, setCategory] = React.useState('');
     const [note, setNote] = React.useState('');
     const [amount, setAmount] = React.useState('');
@@ -35,11 +42,11 @@ export function EditExpenseModal({
     const [error, setError] = React.useState(null);
 
     const defaultCategory = categoryOptions[0] ?? '';
+    const isOneOff = supplierSelect === VENDOR_ONE_OFF;
 
     React.useEffect(() => {
         if (!open || !expense) return;
         setDate(expense.date ?? '');
-        setVendor(expense.vendor ?? '');
         setCategory(expense.category || defaultCategory);
         setNote(
             expense.note === '—' || expense.note == null
@@ -51,14 +58,79 @@ export function EditExpenseModal({
         setError(null);
     }, [open, expense, defaultCategory, normalizePaymentMethod]);
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (!expense) return;
-        setError(null);
-        const v = vendor.trim();
-        if (!v) {
-            setError('Vendor is required.');
+    React.useEffect(() => {
+        if (!open || !expense) return;
+        const vid =
+            expense.vendorId != null && String(expense.vendorId).trim() !== ''
+                ? String(expense.vendorId).trim()
+                : null;
+        if (!vid) {
+            setSupplierSelect(VENDOR_ONE_OFF);
+            setCustomVendor(expense.vendor ?? '');
             return;
+        }
+        if (suppliers.length === 0) {
+            setSupplierSelect('');
+            setCustomVendor('');
+            return;
+        }
+        const match = suppliers.find((s) => s.supplier_id === vid);
+        if (match) {
+            setSupplierSelect(vid);
+            setCustomVendor('');
+        } else {
+            setSupplierSelect(VENDOR_ONE_OFF);
+            setCustomVendor(expense.vendor ?? '');
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- use expense id/vendor fields so parent re-renders with a new object ref do not fight in-progress edits
+    }, [open, expense?.id, expense?.vendorId, expense?.vendor, suppliers]);
+
+    React.useEffect(() => {
+        if (!open) return;
+        let cancelled = false;
+        setSuppliersLoading(true);
+        getSuppliers()
+            .then((raw) => {
+                if (cancelled) return;
+                setSuppliers(normalizeSuppliersList(raw));
+            })
+            .catch(() => {
+                if (!cancelled) setSuppliers([]);
+            })
+            .finally(() => {
+                if (!cancelled) setSuppliersLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [open]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!expense || isPending) return;
+        setError(null);
+        if (!supplierSelect) {
+            setError('Select a supplier or one-off vendor.');
+            return;
+        }
+        let vendor;
+        let vendorId = null;
+        if (isOneOff) {
+            const v = customVendor.trim();
+            if (!v) {
+                setError('Enter the vendor name for this one-off expense.');
+                return;
+            }
+            vendor = v;
+            vendorId = null;
+        } else {
+            const row = suppliers.find((s) => s.supplier_id === supplierSelect);
+            if (!row) {
+                setError('Selected supplier was not found. Try again or use one-off.');
+                return;
+            }
+            vendor = row.name;
+            vendorId = supplierSelect;
         }
         const parsed = Number.parseFloat(amount);
         if (!Number.isFinite(parsed) || parsed <= 0) {
@@ -66,15 +138,15 @@ export function EditExpenseModal({
             return;
         }
         const amountCents = Math.round(parsed * 100);
-        onSave(expense.id, {
+        await onSave(expense.id, {
             date: date || expense.date,
-            vendor: v,
+            vendor,
+            vendorId,
             category: category || defaultCategory,
             note: note.trim() || null,
             amountCents,
             paymentMethod,
         });
-        onOpenChange(false);
     };
 
     return (
@@ -91,8 +163,7 @@ export function EditExpenseModal({
                     <DialogDescription className="text-xs text-zinc-500">
                         {expense ? (
                             <>
-                                Update <span className="font-mono text-zinc-400">{expense.id}</span>. Session only
-                                (mock UI).
+                                Update <span className="font-mono text-zinc-400">{expense.id}</span>.
                             </>
                         ) : null}
                     </DialogDescription>
@@ -131,16 +202,38 @@ export function EditExpenseModal({
                     </div>
 
                     <div className="space-y-1.5">
-                        <Label htmlFor="edit-expense-vendor" className="text-xs text-zinc-400">
+                        <Label htmlFor="edit-expense-vendor-supplier" className="text-xs text-zinc-400">
                             Vendor
                         </Label>
-                        <Input
-                            id="edit-expense-vendor"
-                            placeholder="Who was paid?"
-                            value={vendor}
-                            onChange={(e) => setVendor(e.target.value)}
-                            className="h-9 border-zinc-700 bg-zinc-950 text-xs text-zinc-100"
-                        />
+                        <select
+                            id="edit-expense-vendor-supplier"
+                            value={supplierSelect}
+                            disabled={suppliersLoading}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                setSupplierSelect(v);
+                                if (v !== VENDOR_ONE_OFF) setCustomVendor('');
+                            }}
+                            className="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-xs text-zinc-100 shadow-xs outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            <option value="">{suppliersLoading ? 'Loading suppliers…' : 'Select supplier…'}</option>
+                            {suppliers.map((s) => (
+                                <option key={s.supplier_id} value={s.supplier_id}>
+                                    {s.name}
+                                </option>
+                            ))}
+                            <option value={VENDOR_ONE_OFF}>Other (one-off vendor)</option>
+                        </select>
+                        {isOneOff ? (
+                            <Input
+                                id="edit-expense-vendor-custom"
+                                placeholder="Vendor name (not in list)"
+                                value={customVendor}
+                                onChange={(e) => setCustomVendor(e.target.value)}
+                                className="h-9 border-zinc-700 bg-zinc-950 text-xs text-zinc-100"
+                                autoComplete="organization"
+                            />
+                        ) : null}
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -204,8 +297,12 @@ export function EditExpenseModal({
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" className="bg-zinc-100 text-zinc-900 hover:bg-zinc-200">
-                            Save changes
+                        <Button
+                            type="submit"
+                            disabled={isPending}
+                            className="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+                        >
+                            {isPending ? 'Saving…' : 'Save changes'}
                         </Button>
                     </DialogFooter>
                 </form>

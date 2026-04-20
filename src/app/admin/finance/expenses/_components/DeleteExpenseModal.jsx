@@ -17,11 +17,17 @@ function formatCurrency(cents) {
     }).format((Number(cents) || 0) / 100);
 }
 
-export function DeleteExpenseModal({ expense, open, onOpenChange, normalizePaymentMethod, onConfirm }) {
-    const handleDelete = () => {
-        if (!expense) return;
-        onConfirm(expense.id);
-        onOpenChange(false);
+export function DeleteExpenseModal({
+    expense,
+    open,
+    onOpenChange,
+    normalizePaymentMethod,
+    isPending = false,
+    onConfirm,
+}) {
+    const handleDelete = async () => {
+        if (!expense || isPending) return;
+        await onConfirm(expense.id);
     };
 
     return (
@@ -35,7 +41,7 @@ export function DeleteExpenseModal({ expense, open, onOpenChange, normalizePayme
                 <DialogHeader>
                     <DialogTitle className="text-zinc-100">Delete expense</DialogTitle>
                     <DialogDescription className="text-xs text-zinc-400">
-                        This removes the row from your current session (mock UI — not the database).
+                        This marks the expense as deleted. It will no longer appear in this list.
                     </DialogDescription>
                 </DialogHeader>
                 {expense ? (
@@ -60,10 +66,11 @@ export function DeleteExpenseModal({ expense, open, onOpenChange, normalizePayme
                     </Button>
                     <Button
                         type="button"
+                        disabled={isPending}
                         className="bg-red-600 text-white hover:bg-red-500"
                         onClick={handleDelete}
                     >
-                        Delete expense
+                        {isPending ? 'Deleting…' : 'Delete expense'}
                     </Button>
                 </DialogFooter>
             </DialogContent>
