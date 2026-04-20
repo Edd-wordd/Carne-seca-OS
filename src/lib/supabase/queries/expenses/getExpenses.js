@@ -10,7 +10,7 @@ async function getExpensesHandler() {
     try {
         const { data, error } = await supabase
             .from('expenses')
-            .select('id, category, vendor, vendor_id, note, payment_method, purchased_at, amount_cents')
+            .select('id, expense_number, category, vendor, vendor_id, note, payment_method, purchased_at, amount_cents')
             .is('deleted_at', null)
             .order('purchased_at', { ascending: false });
 

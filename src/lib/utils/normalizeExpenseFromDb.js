@@ -75,6 +75,7 @@ export function normalizeExpenseFromDb(row) {
     const noteTrimmed = row.note == null ? '' : String(row.note).trim();
     return {
         id: String(row.id),
+        expenseNumber: row.expense_number ?? '',
         date: formatLocalDate(row.purchased_at),
         vendor: row.vendor ?? '',
         vendorId: row.vendor_id != null ? String(row.vendor_id) : null,

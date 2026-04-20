@@ -60,7 +60,7 @@ async function updateExpenseHandler(
             })
             .eq('id', idStr)
             .is('deleted_at', null)
-            .select('id, category, vendor, vendor_id, note, payment_method, purchased_at, amount_cents')
+            .select('id, expense_number, category, vendor, vendor_id, note, payment_method, purchased_at, amount_cents')
             .single();
 
         if (error) return { success: false, message: error.message ?? 'Failed to update expense' };

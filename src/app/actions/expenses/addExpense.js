@@ -53,7 +53,7 @@ async function addExpenseHandler(
                 purchased_at: purchasedAt,
                 amount_cents: cents,
             })
-            .select('id, category, vendor, vendor_id, note, payment_method, purchased_at, amount_cents')
+            .select('id, expense_number, category, vendor, vendor_id, note, payment_method, purchased_at, amount_cents')
             .single();
 
         if (error) return { success: false, message: error.message ?? 'Failed to add expense' };
