@@ -1,7 +1,5 @@
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Toaster } from 'sonner';
-import ConditionalHeader from '../components/layout/ConditionalHeader';
-import StoreHeader from '../components/layout/StoreHeader';
 import './globals.css';
 import PosthogProvider from './providers/PosthogProvider.jsx';
 import { ClerkProvider } from '@clerk/nextjs';
@@ -27,7 +25,7 @@ export default function RootLayout({ children }) {
             <PosthogProvider>
                 <html lang="en">
                     <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                        <ConditionalHeader storeHeader={<StoreHeader />}>{children}</ConditionalHeader>
+                        {children}
                         <Toaster position="top-center" richColors />
                     </body>
                 </html>
